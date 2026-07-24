@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Pack Write"
+  short_description: "Preview or write validated drafts to Feishu review"
+  default_prompt: "Use $reddit-pack-write to preview or deliver an approved Reddit pack to Feishu review."

@@ -1,0 +1,27 @@
+{
+  "pipeline": {
+    "draft_id": "Draft ID",
+    "source_title": "Source Blog 标题",
+    "source_url": "Source Blog URL",
+    "pool_record_id": "Blog Pool Record ID",
+    "source_publish_date": "Source Blog Publish Date",
+    "account_code": "Account Code",
+    "account_role": "Account Role",
+    "subreddit": "Subreddit",
+    "post_type": "Post Type",
+    "suggested_day": "Suggested Day",
+    "title": "Title",
+    "body": "Body",
+    "link_policy": "Link Policy",
+    "milvus_mention_basis": "Milvus Mention Basis",
+    "angle": "Angle",
+    "voice_fingerprint": "Voice Fingerprint",
+    "screening_json": "Screening JSON",
+    "char_count": "字符数",
+    "status": "Status",
+    "publish_url": "Publish URL",
+    "publish_date": "Publish Date",
+    "publisher": "Publisher",
+    "reviewer_notes": "Reviewer Notes"
+  }
+}

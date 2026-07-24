@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.py[cod]
+.DS_Store
+.playwright-mcp/
+output/
+*.log
+
+# Local credentials and tokens
+.env
+.env.*
+config/feishu-config.json
+credentials*.json
+token*.json
+*.pem
+*.key

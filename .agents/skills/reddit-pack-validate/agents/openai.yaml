@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Pack Validate"
+  short_description: "Validate Reddit drafts without writing to Feishu"
+  default_prompt: "Use $reddit-pack-validate to check a Reddit pack without writing anything."

@@ -1,0 +1,61 @@
+[
+  {
+    "account_code": "R1",
+    "technical_lane": "hands-on RAG builder",
+    "keyword_signals": [
+      "rag",
+      "retrieval",
+      "chatbot",
+      "local",
+      "self-hosted",
+      "quick and dirty",
+      "prototype",
+      "pgvector",
+      "vector store",
+      "semantic search",
+      "langchain",
+      "llamaindex",
+      "agent",
+      "agents"
+    ],
+    "preferred_topics": [
+      "local and self-hosted RAG",
+      "pgvector vs dedicated vector databases",
+      "hybrid search for RAG"
+    ],
+    "preferred_subreddits": ["r/Rag", "r/AI_Agents"],
+    "assignment_reason": "Preserve the practical RAG-builder persona: implementation questions, small-team defaults, and tooling tradeoffs. Choose a matching Post Type without changing the topic voice."
+  },
+  {
+    "account_code": "R2",
+    "technical_lane": "data platform and production ops",
+    "keyword_signals": [
+      "kubernetes",
+      "k8s",
+      "scaling",
+      "production",
+      "cost",
+      "memory",
+      "diskann",
+      "nvme",
+      "pipeline",
+      "sync",
+      "etl",
+      "latency",
+      "throughput",
+      "benchmark",
+      "vdbbench",
+      "lakebase",
+      "storage engine",
+      "ai data infra"
+    ],
+    "preferred_topics": [
+      "Kubernetes operations for vector databases",
+      "incremental sync for vector stores",
+      "DiskANN and memory footprint",
+      "benchmark quality"
+    ],
+    "preferred_subreddits": ["r/vectordatabase", "r/dataengineering"],
+    "assignment_reason": "Preserve the production-minded data-platform persona: infra, cost, scale, benchmark quality, and operational caveats. Choose a matching Post Type without changing the topic voice."
+  }
+]

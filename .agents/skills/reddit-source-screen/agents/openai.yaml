@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Source Screen"
+  short_description: "Screen sources for the fixed R1 and R2 Reddit lanes"
+  default_prompt: "Use $reddit-source-screen to evaluate pool rows or one blog URL for R1/R2 suitability."

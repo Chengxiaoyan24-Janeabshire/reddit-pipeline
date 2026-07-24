@@ -1,0 +1,338 @@
+{
+  "active_accounts": [
+    "R1",
+    "R2"
+  ],
+  "weekly_pack_size": 4,
+  "open_question_policy": "optional",
+  "account_policies": {
+    "R1": {
+      "identity_visibility": "anonymous",
+      "disclosure": "",
+      "first_person_rule": "'I built' is allowed when source-supported, but never reveal a real identity, employer, contributor role, maintainer role, or affiliation.",
+      "brand_rule": "The title must not mention Milvus. The body may mention Milvus once when the technical background or data is source-supported. Never mention Zilliz.",
+      "max_milvus_body_mentions": 1,
+      "link_mode": "no_link",
+      "default_link_policy": "no_link",
+      "notes": "R1 never includes outbound links. A source-supported Milvus body mention requires milvus_mention_basis."
+    },
+    "R2": {
+      "identity_visibility": "anonymous",
+      "disclosure": "",
+      "first_person_rule": "'I built' is allowed when source-supported, but never reveal a real identity, employer, contributor role, maintainer role, or affiliation.",
+      "brand_rule": "The title must not mention Milvus. The body may mention Milvus once when the technical background or data is source-supported. Never mention Zilliz.",
+      "max_milvus_body_mentions": 1,
+      "link_mode": "no_link",
+      "default_link_policy": "no_link",
+      "notes": "R2 never includes outbound links."
+    }
+  },
+  "weekly_slots": [
+    {
+      "account_code": "R1",
+      "subreddit": "r/Rag",
+      "lane": "rag",
+      "reference_markdown": "reference/subreddit_rule/rag/rag.md",
+      "reference_screenshots": [
+        "reference/subreddit_rule/rag/tutorial.png",
+        "reference/subreddit_rule/rag/discussion.png",
+        "reference/subreddit_rule/rag/tools.png",
+        "reference/subreddit_rule/rag/showcase.png"
+      ],
+      "post_types": [
+        "Tutorial",
+        "Discussion",
+        "Tools & Resources",
+        "Showcase"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Tutorial": {
+          "topic_fit": [
+            "step-by-step RAG implementation",
+            "chunking or retrieval workflow",
+            "evaluation or debugging method"
+          ],
+          "signals": [
+            "tutorial",
+            "how to",
+            "guide",
+            "step by step",
+            "walkthrough",
+            "implementation"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Discussion": {
+          "topic_fit": [
+            "RAG tradeoff",
+            "production failure",
+            "pgvector vs dedicated vector store",
+            "hybrid-search decision"
+          ],
+          "signals": [
+            "tradeoff",
+            "trade-off",
+            "comparison",
+            "versus",
+            "vs",
+            "production",
+            "failure",
+            "question"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Tools & Resources": {
+          "topic_fit": [
+            "RAG tool selection",
+            "framework or resource comparison",
+            "practical tool list"
+          ],
+          "signals": [
+            "tool",
+            "tools",
+            "resource",
+            "resources",
+            "library",
+            "framework",
+            "list"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Showcase": {
+          "topic_fit": [
+            "source-supported RAG project",
+            "retrieval experiment",
+            "architecture demonstration"
+          ],
+          "signals": [
+            "built",
+            "project",
+            "demo",
+            "showcase",
+            "experiment"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    },
+    {
+      "account_code": "R1",
+      "subreddit": "r/AI_Agents",
+      "lane": "ai_agents",
+      "reference_markdown": "reference/subreddit_rule/agent/agent.md",
+      "reference_screenshots": [
+        "reference/subreddit_rule/agent/tutorial.png",
+        "reference/subreddit_rule/agent/discussion.png",
+        "reference/subreddit_rule/agent/resource request.png"
+      ],
+      "post_types": [
+        "Tutorial",
+        "Discussion",
+        "Resource Request"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Tutorial": {
+          "topic_fit": [
+            "agent workflow implementation",
+            "tool-use design",
+            "memory or retrieval pattern"
+          ],
+          "signals": [
+            "tutorial",
+            "how to",
+            "workflow",
+            "implementation",
+            "design",
+            "step by step"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Discussion": {
+          "topic_fit": [
+            "agent reliability tradeoff",
+            "memory design",
+            "production agent behavior",
+            "tool-use failure"
+          ],
+          "signals": [
+            "tradeoff",
+            "worth",
+            "production",
+            "failure",
+            "reliability",
+            "question",
+            "comparison"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Resource Request": {
+          "topic_fit": [
+            "genuine request for agent learning resources",
+            "request for frameworks or evaluation references"
+          ],
+          "signals": [
+            "resource request",
+            "recommend",
+            "recommendation",
+            "course",
+            "training",
+            "certification",
+            "learning path"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    },
+    {
+      "account_code": "R2",
+      "subreddit": "r/vectordatabase",
+      "lane": "vector_database",
+      "reference_markdown": "reference/subreddit_rule/vectordatabase/vectordatabase.md",
+      "reference_screenshots": [
+        "reference/subreddit_rule/vectordatabase/example 1.png",
+        "reference/subreddit_rule/vectordatabase/example 2.png"
+      ],
+      "post_types": [
+        "No fixed post type"
+      ],
+      "default_post_type": "No fixed post type",
+      "post_type_rules": {
+        "No fixed post type": {
+          "topic_fit": [
+            "vector DB cost",
+            "migration",
+            "benchmark",
+            "self-hosting",
+            "filtering",
+            "production operations"
+          ],
+          "signals": [],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link",
+          "link_guidance": "R2 never includes outbound links."
+        }
+      }
+    },
+    {
+      "account_code": "R2",
+      "subreddit": "r/dataengineering",
+      "lane": "data_engineering",
+      "reference_markdown": "reference/subreddit_rule/dataengineering/dataengineering.md",
+      "reference_screenshots": [
+        "reference/subreddit_rule/dataengineering/blog.png",
+        "reference/subreddit_rule/dataengineering/discussion.png",
+        "reference/subreddit_rule/dataengineering/opensource.png",
+        "reference/subreddit_rule/dataengineering/personal project showcase.png"
+      ],
+      "post_types": [
+        "Blog",
+        "Discussion",
+        "Open Source",
+        "Personal Project Showcase"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Blog": {
+          "topic_fit": [
+            "production pipeline write-up",
+            "architecture case study",
+            "operational lessons"
+          ],
+          "signals": [
+            "architecture",
+            "pipeline",
+            "case study",
+            "production",
+            "lessons learned",
+            "engineering"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Discussion": {
+          "topic_fit": [
+            "cost or reliability question",
+            "platform tradeoff",
+            "operational risk discussion"
+          ],
+          "signals": [
+            "tradeoff",
+            "cost",
+            "reliability",
+            "question",
+            "worth",
+            "alternative",
+            "operations"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Open Source": {
+          "topic_fit": [
+            "open-source data tool",
+            "streaming or pipeline library",
+            "measured OSS implementation"
+          ],
+          "signals": [
+            "open source",
+            "open-source",
+            "github",
+            "oss",
+            "library",
+            "framework"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Personal Project Showcase": {
+          "topic_fit": [
+            "source-supported personal data project",
+            "working pipeline or platform demo"
+          ],
+          "signals": [
+            "built",
+            "my project",
+            "side project",
+            "personal project",
+            "showcase"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    }
+  ]
+}

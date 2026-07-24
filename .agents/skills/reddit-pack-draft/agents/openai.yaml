@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Pack Draft"
+  short_description: "Draft Reddit-native JSON for the fixed four content slots"
+  default_prompt: "Use $reddit-pack-draft to turn screened sources into R1/R2 Reddit draft JSON."

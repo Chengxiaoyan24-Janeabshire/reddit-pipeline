@@ -1,0 +1,90 @@
+[
+  {
+    "source_title": "Example retrieval workflow article",
+    "source_url": "https://example.com/retrieval-workflow",
+    "pool_blog_id": "example-rag-001",
+    "items": [
+      {
+        "account_code": "R1",
+        "content_type": "technical_post",
+        "subreddit": "r/Rag",
+        "post_type": "Tutorial",
+        "suggested_day": "2026-07-21",
+        "title": "A small retrieval-debugging loop that catches bad chunks early",
+        "body": "This step-by-step tutorial presents a retrieval-testing implementation that separates chunk inspection from answer evaluation. The walkthrough has four passes: sample failed queries, inspect the retrieved passages, label the likely failure source, and change only one variable before rerunning the same set. The failure labels can start with parsing, chunk boundaries, metadata filtering, ranking, and answer synthesis. Keeping synthesis separate matters because a prompt change can hide a retrieval miss without improving recall. It also helps to save the query, expected evidence, retrieved chunk IDs, filter state, corpus version, and evaluation timestamp so the result can be reproduced after an index rebuild. The part that still needs judgment is deciding when a passage is relevant but not sufficient versus simply irrelevant. That distinction affects whether the next change should target chunking, reranking, or source coverage. What additional failure label or measurement would you add before tuning the retriever?",
+        "disclosure": "",
+        "link_policy": "no_link",
+        "milvus_mention_basis": "",
+        "angle": "step by step retrieval debugging method",
+        "voice_fingerprint": "personal_build_log",
+        "length_tier": "standard_post"
+      }
+    ]
+  },
+  {
+    "source_title": "Example agent reliability article",
+    "source_url": "https://example.com/agent-reliability",
+    "pool_blog_id": "example-agent-001",
+    "items": [
+      {
+        "account_code": "R1",
+        "content_type": "technical_post",
+        "subreddit": "r/AI_Agents",
+        "post_type": "Discussion",
+        "suggested_day": "2026-07-23",
+        "title": "Where should an agent stop retrying a tool call?",
+        "body": "Tool-use failures become difficult to reason about when every case gets another generic retry. The cases seem different: a transient timeout may deserve a retry, invalid arguments may need replanning, and a successful call with low-quality output may need a different tool entirely. A single retry counter hides those distinctions and can increase cost without improving reliability. One possible model is to classify failures before deciding the next action: transport errors can use bounded exponential backoff, schema errors can return structured feedback to the planner, permission errors should stop immediately, and weak-but-valid results can trigger a different tool or a human checkpoint. The harder part is preventing the classifier itself from becoming another opaque model decision. Logging the chosen class, retry budget, tool arguments, and final outcome seems necessary for evaluation. How are people separating transport failures, planning failures, and result-quality failures in production agents, and which categories should never retry automatically?",
+        "disclosure": "",
+        "link_policy": "no_link",
+        "milvus_mention_basis": "",
+        "angle": "agent reliability tradeoff",
+        "voice_fingerprint": "personal_build_log",
+        "length_tier": "standard_post"
+      }
+    ]
+  },
+  {
+    "source_title": "Example vector database operations article",
+    "source_url": "https://example.com/vector-operations",
+    "pool_blog_id": "example-vector-001",
+    "items": [
+      {
+        "account_code": "R2",
+        "content_type": "technical_post",
+        "subreddit": "r/vectordatabase",
+        "post_type": "No fixed post type",
+        "suggested_day": "2026-07-22",
+        "title": "What usually dominates vector database cost after the first scale jump?",
+        "body": "For a filtered vector workload where the index can no longer stay comfortably in memory, the obvious cost inputs are vector count, dimensions, replicas, query rate, and update frequency. Filtering selectivity and compaction behavior can change the answer because the same nominal dataset may require very different candidate scans and maintenance work. It also seems useful to separate steady-state infrastructure cost from the engineering time required for index rebuilds, capacity changes, backups, and incident recovery. A comparison that reports only query latency can miss replica overhead, ingestion spikes, and the operational cost of keeping filters consistent with source data. The measurements under consideration are p50/p95/p99 latency, recall at a fixed candidate budget, write amplification, memory per million vectors, rebuild time, and operator hours per month. Which measurements have been most predictive of real cost in your deployments, and what cost appeared only after the first major scale jump?",
+        "disclosure": "",
+        "link_policy": "no_link",
+        "milvus_mention_basis": "",
+        "angle": "vector database cost and production operations",
+        "voice_fingerprint": "structured_design_question",
+        "length_tier": "standard_post"
+      }
+    ]
+  },
+  {
+    "source_title": "Example incremental pipeline article",
+    "source_url": "https://example.com/incremental-pipeline",
+    "pool_blog_id": "example-data-001",
+    "items": [
+      {
+        "account_code": "R2",
+        "content_type": "technical_post",
+        "subreddit": "r/dataengineering",
+        "post_type": "Discussion",
+        "suggested_day": "2026-07-24",
+        "title": "Who should own freshness when an embedding pipeline falls behind?",
+        "body": "Consider a pipeline that reads source changes, creates embeddings, and updates a serving index. The difficult case is not a full outage; it is a growing lag where every component is technically healthy. The source team sees completed writes, the embedding workers see successful jobs, and the serving layer sees an index that is simply older than expected. This creates a reliability tradeoff and an ownership question: one team controls event production, another controls compute throughput, and a third owns the user-visible freshness target. A single end-to-end lag metric is useful, but it does not say whether to slow ingestion, scale workers, skip low-priority updates, or temporarily serve stale results. Per-stage queue age and oldest-unprocessed-event timestamps would help, along with an explicit backpressure policy. Would you put the freshness SLO and incident ownership with the source pipeline, the embedding stage, or the serving platform? What operational signal should trigger escalation before users notice stale data?",
+        "disclosure": "",
+        "link_policy": "no_link",
+        "milvus_mention_basis": "",
+        "angle": "incremental pipeline reliability discussion",
+        "voice_fingerprint": "structured_design_question",
+        "length_tier": "standard_post"
+      }
+    ]
+  }
+]

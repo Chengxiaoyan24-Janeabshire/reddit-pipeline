@@ -1,0 +1,6 @@
+{
+  "app_id": "cli_xxx",
+  "app_secret": "xxx",
+  "reddit_doc_folder_token": "optional_folder_token_for_reddit_review_docs",
+  "base_url": "https://zilliverse.feishu.cn"
+}

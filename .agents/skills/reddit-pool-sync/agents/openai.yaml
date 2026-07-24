@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Pool Sync"
+  short_description: "Sync published All Content Blog Post rows into Reddit pool"
+  default_prompt: "Use $reddit-pool-sync to preview and sync published Blog Post rows from Content All in One."
