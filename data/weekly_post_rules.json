@@ -240,92 +240,78 @@
     },
     {
       "account_code": "R2",
-      "subreddit": "r/dataengineering",
-      "lane": "data_engineering",
-      "reference_markdown": "reference/subreddit_rule/dataengineering/dataengineering.md",
+      "subreddit": "r/LocalLLaMA",
+      "lane": "local_llama",
+      "reference_markdown": "reference/subreddit_rule/Localllama/locallama.md",
       "reference_screenshots": [
-        "reference/subreddit_rule/dataengineering/blog.png",
-        "reference/subreddit_rule/dataengineering/discussion.png",
-        "reference/subreddit_rule/dataengineering/opensource.png",
-        "reference/subreddit_rule/dataengineering/personal project showcase.png"
+        "reference/subreddit_rule/Localllama/discussion.png",
+        "reference/subreddit_rule/Localllama/help.png",
+        "reference/subreddit_rule/Localllama/resources.png"
       ],
       "post_types": [
-        "Blog",
         "Discussion",
-        "Open Source",
-        "Personal Project Showcase"
+        "Question | Help",
+        "Resources"
       ],
       "default_post_type": "Discussion",
       "post_type_rules": {
-        "Blog": {
-          "topic_fit": [
-            "production pipeline write-up",
-            "architecture case study",
-            "operational lessons"
-          ],
-          "signals": [
-            "architecture",
-            "pipeline",
-            "case study",
-            "production",
-            "lessons learned",
-            "engineering"
-          ],
-          "allowed_link_policies": [
-            "no_link"
-          ],
-          "default_link_policy": "no_link"
-        },
         "Discussion": {
           "topic_fit": [
-            "cost or reliability question",
-            "platform tradeoff",
-            "operational risk discussion"
+            "local model or quantization tradeoff",
+            "self-hosted inference design discussion",
+            "local RAG architecture or evaluation"
           ],
           "signals": [
             "tradeoff",
+            "trade-off",
             "cost",
-            "reliability",
+            "comparison",
+            "versus",
+            "vs",
+            "discussion",
+            "debate"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Question | Help": {
+          "topic_fit": [
+            "focused troubleshooting request",
+            "hardware or model-selection question",
+            "local RAG failure with concrete context"
+          ],
+          "signals": [
+            "help",
             "question",
-            "worth",
-            "alternative",
-            "operations"
+            "issue",
+            "problem",
+            "error",
+            "not working",
+            "recommend",
+            "advice"
           ],
           "allowed_link_policies": [
             "no_link"
           ],
           "default_link_policy": "no_link"
         },
-        "Open Source": {
+        "Resources": {
           "topic_fit": [
-            "open-source data tool",
-            "streaming or pipeline library",
-            "measured OSS implementation"
+            "curated local LLM tools or references",
+            "model, runtime, or RAG resource comparison",
+            "practical source-supported resource list"
           ],
           "signals": [
-            "open source",
-            "open-source",
-            "github",
-            "oss",
-            "library",
+            "resource",
+            "resources",
+            "tool",
+            "tools",
+            "list",
+            "guide",
+            "collection",
             "framework"
-          ],
-          "allowed_link_policies": [
-            "no_link"
-          ],
-          "default_link_policy": "no_link"
-        },
-        "Personal Project Showcase": {
-          "topic_fit": [
-            "source-supported personal data project",
-            "working pipeline or platform demo"
-          ],
-          "signals": [
-            "built",
-            "my project",
-            "side project",
-            "personal project",
-            "showcase"
           ],
           "allowed_link_policies": [
             "no_link"

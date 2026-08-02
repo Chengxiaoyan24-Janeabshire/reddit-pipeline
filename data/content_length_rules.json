@@ -8,7 +8,7 @@
     "code_allowed": false,
     "max_code_blocks": 0,
     "best_for": ["brief discussion", "resource request", "single focused community question"],
-    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/dataengineering"],
+    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/LocalLLaMA"],
     "notes": "用于原生短讨论或 Resource Request。仍要给出足够上下文；开放问题可有可无，不要为了达到 standard_post 长度而填充。"
   },
   {
@@ -20,7 +20,7 @@
     "code_allowed": false,
     "max_code_blocks": 0,
     "best_for": ["technical_post", "comparison_post", "subreddit-native discussion prompt"],
-    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/dataengineering"],
+    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/LocalLLaMA"],
     "notes": "默认技术帖长度。重点写清约束、tradeoff 和问题，不像 blog 摘要。"
   },
   {
@@ -32,7 +32,7 @@
     "code_allowed": false,
     "max_code_blocks": 0,
     "best_for": ["postmortem", "deep comparison", "production lessons", "benchmark methodology"],
-    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/dataengineering"],
+    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/LocalLLaMA"],
     "notes": "适合有真实技术细节、失败过程、评估方法的内容。不要为了变长而扩写。"
   },
   {
@@ -46,7 +46,7 @@
     "max_code_lines_total": 45,
     "preferred_code_languages": ["python", "sql", "bash", "go", "javascript", "typescript", "json", "yaml"],
     "best_for": ["tutorial-like implementation", "debugging workflow", "minimal reproducible example", "ops checklist with commands"],
-    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/dataengineering"],
+    "good_subreddits": ["r/Rag", "r/AI_Agents", "r/vectordatabase", "r/LocalLLaMA"],
     "notes": "只有当 blog 本身有实现细节、命令、schema、pipeline 或 SDK 代码时使用。代码要短，可复制，不能像广告 demo。"
   }
 ]

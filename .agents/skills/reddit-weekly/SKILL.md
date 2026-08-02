@@ -34,7 +34,7 @@ any one of these skills directly without triggering later stages.
    - R1 → `r/Rag`
    - R1 → `r/AI_Agents`
    - R2 → `r/vectordatabase`
-   - R2 → `r/dataengineering`
+   - R2 → `r/LocalLLaMA`
 4. Use `$reddit-pack-validate` with weekly enforcement.
 5. Use `$reddit-pack-write` to preview, then write to Feishu review only after
    validation succeeds.

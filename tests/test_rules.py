@@ -13,7 +13,9 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import append_pack
+import append_pack_to_feishu
 import sync_blog_pool_from_content_all_in_one as pool_sync
+import weekly_post_rules
 
 
 def base_item():
@@ -88,6 +90,61 @@ class PoolSyncRulesTest(unittest.TestCase):
 
 
 class DraftValidationRulesTest(unittest.TestCase):
+    def test_weekly_slots_use_localllama_instead_of_dataengineering(self):
+        slots = {
+            (slot["account_code"], slot["subreddit"])
+            for slot in weekly_post_rules.load_rules()["weekly_slots"]
+        }
+        self.assertEqual(
+            slots,
+            {
+                ("R1", "r/Rag"),
+                ("R1", "r/AI_Agents"),
+                ("R2", "r/vectordatabase"),
+                ("R2", "r/LocalLLaMA"),
+            },
+        )
+        self.assertNotIn(("R2", "r/dataengineering"), slots)
+
+    def test_localllama_post_types_match_reference_overlays(self):
+        slot = weekly_post_rules.slot_for("r/LocalLLaMA")
+        self.assertEqual(
+            slot["post_types"],
+            ["Discussion", "Question | Help", "Resources"],
+        )
+        self.assertEqual(
+            weekly_post_rules.recommend_post_type(
+                "r/LocalLLaMA",
+                "I need help debugging a local model issue that is not working.",
+            ),
+            "Question | Help",
+        )
+
+    def test_weekly_slot_reference_files_exist(self):
+        for slot in weekly_post_rules.load_rules()["weekly_slots"]:
+            reference_markdown = ROOT / slot["reference_markdown"]
+            self.assertTrue(reference_markdown.is_file(), reference_markdown)
+            for screenshot in slot.get("reference_screenshots", []):
+                screenshot_path = ROOT / screenshot
+                self.assertTrue(screenshot_path.is_file(), screenshot_path)
+
+    def test_weekly_validation_rejects_retired_dataengineering_slot(self):
+        expected_specs = [
+            {"items": [{"account_code": code, "subreddit": subreddit}]}
+            for code, subreddit in [
+                ("R1", "r/Rag"),
+                ("R1", "r/AI_Agents"),
+                ("R2", "r/vectordatabase"),
+                ("R2", "r/LocalLLaMA"),
+            ]
+        ]
+        self.assertEqual(append_pack_to_feishu.validate_weekly_specs(expected_specs), [])
+
+        expected_specs[-1]["items"][0]["subreddit"] = "r/dataengineering"
+        errors = append_pack_to_feishu.validate_weekly_specs(expected_specs)
+        self.assertTrue(any("missing slots" in error for error in errors))
+        self.assertTrue(any("unexpected slots" in error for error in errors))
+
     def test_open_question_is_optional(self):
         declarative = base_item()
         question = copy.deepcopy(declarative)

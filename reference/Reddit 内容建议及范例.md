@@ -79,25 +79,26 @@ time since the last meaningful write, and observed query latency.
 Do teams usually trigger compaction from thresholds, schedule it for quiet windows,
 or require manual approval after checking current write load?
 
-## 范例 4：Data Engineering Discussion
+## 范例 4：LocalLLaMA Question | Help
 
 ### Title
 
-Where should incremental embedding sync own its checkpoints?
+How do you tell whether a local RAG miss is retrieval or context pressure?
 
 ### Body
 
-An incremental pipeline has at least three different progress markers: the source
-change stream position, the transformation version, and the destination write
-checkpoint. Treating them as one offset makes replay simple until the embedding
-model changes or a partial batch succeeds.
+A local RAG answer can fail even when the relevant passage exists in the source.
+The retriever may have missed it, the chunk may be too broad, or the prompt may be
+packing enough surrounding text that the useful evidence gets diluted.
 
-I am leaning toward immutable source offsets plus versioned transformation metadata,
-with destination idempotency handled separately. The tradeoff is more state to
-observe and more complicated recovery tooling.
+I would log the retrieved chunk IDs and scores first, then rerun the same question
+with the known-good passage inserted directly. If the answer still fails, the next
+variables are context length, prompt structure, and model choice rather than the
+index. The harder case is when the answer improves only after removing other
+retrieved chunks.
 
-How do you separate these checkpoints without making routine backfills and partial
-replays too operationally expensive?
+What is the smallest diagnostic sequence you use to separate retrieval failure
+from context-window or model-quality failure on a local setup?
 
 ## 使用提醒
 

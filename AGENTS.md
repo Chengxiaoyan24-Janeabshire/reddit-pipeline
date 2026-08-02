@@ -29,7 +29,7 @@ root with `python3 scripts/...`.
 - Do not use Medium Sync, Medium Daily, EN Content, or the retired calendar
   view.
 - Generate exactly four weekly slots: R1 → `r/Rag`, R1 → `r/AI_Agents`, R2 →
-  `r/vectordatabase`, and R2 → `r/dataengineering`.
+  `r/vectordatabase`, and R2 → `r/LocalLLaMA`.
 - Use `No fixed post type` for `r/vectordatabase`; every other item must use a
   configured subreddit Post Type.
 

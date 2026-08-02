@@ -92,18 +92,17 @@
           "compact bullet questions"
         ]
       },
-      "r/dataengineering": {
+      "r/LocalLLaMA": {
         "reference_files": [
-          "reference/subreddit_rule/dataengineering/blog.png",
-          "reference/subreddit_rule/dataengineering/discussion.png",
-          "reference/subreddit_rule/dataengineering/opensource.png",
-          "reference/subreddit_rule/dataengineering/personal project showcase.png"
+          "reference/subreddit_rule/Localllama/discussion.png",
+          "reference/subreddit_rule/Localllama/help.png",
+          "reference/subreddit_rule/Localllama/resources.png"
         ],
         "apply_only": [
           "Post Type",
-          "architecture narrative",
-          "discussion brevity",
-          "open-source or project structure"
+          "local-model or RAG context framing",
+          "focused help-question structure",
+          "resource-list structure"
         ]
       }
     },

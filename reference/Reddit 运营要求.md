@@ -15,7 +15,7 @@
 | 账号 | 固定 Subreddit |
 |---|---|
 | R1 | r/Rag、r/AI_Agents |
-| R2 | r/vectordatabase、r/dataengineering |
+| R2 | r/vectordatabase、r/LocalLLaMA |
 
 每个槽位必须使用对应社区允许的 Post Type。r/vectordatabase 写入
 `No fixed post type`，表示规则已检查但社区没有固定类型。

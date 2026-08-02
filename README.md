@@ -3,7 +3,7 @@
 > 基本规则
 >
 > - 只生成供人工审核和手动发布的 Reddit 草稿，不登录、不发帖、不回复、不点赞、不投票、不养号。
-> - 每周固定四个槽位：R1 → `r/Rag`、`r/AI_Agents`；R2 → `r/vectordatabase`、`r/dataengineering`。
+> - 每周固定四个槽位：R1 → `r/Rag`、`r/AI_Agents`；R2 → `r/vectordatabase`、`r/LocalLLaMA`。
 > - R1/R2 绝对匿名，Disclosure 为空；`I built` 可以保留，但必须有来源支持且不能暴露身份或 affiliation。
 > - 标题不能出现 Milvus；正文最多出现一次 Milvus，并填写来源依据；任何生成内容不能出现 Zilliz。
 > - R1/R2 全部 `no_link`，标题、正文和链接字段都不能有 URL。

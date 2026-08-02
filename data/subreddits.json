@@ -59,24 +59,23 @@
     "notes": "This is the only weekly target without a fixed flair/Post Type. Screenshots are structural examples only; never copy identities, links, disclosure, or claims. The title cannot mention Milvus; the body may mention it once with source-supported context. Never mention Zilliz."
   },
   {
-    "name": "r/dataengineering",
+    "name": "r/LocalLLaMA",
     "account_code": "R2",
     "priority": "high",
     "fit": [
-      "data pipelines",
-      "CDC and sync",
-      "production maintenance",
-      "scale, cost, and reliability"
+      "local and open-weight LLMs",
+      "self-hosted inference",
+      "local RAG and tooling",
+      "hardware, quantization, cost, and reliability"
     ],
-    "content_that_works": "Operational lessons, system diagrams, measured constraints, open-source implementation detail, or a focused discussion question.",
+    "content_that_works": "Concrete model, quantization, hardware, context-window, retrieval, or serving constraints; reproducible observations; and a focused discussion or help question.",
     "post_types": [
-      "Blog",
       "Discussion",
-      "Open Source",
-      "Personal Project Showcase"
+      "Question | Help",
+      "Resources"
     ],
     "default_post_type": "Discussion",
     "link_policy": "R2 always uses no_link.",
-    "notes": "Use the sanitized dataengineering markdown and four labeled screenshots as structural Post Type examples only; never copy identities, links, disclosure, or claims. The title cannot mention Milvus; the body may mention it once with source-supported context. Never mention Zilliz."
+    "notes": "Use the sanitized LocalLLaMA markdown and three labeled screenshots as structural Post Type examples only; never copy identities, links, disclosure, hardware results, or claims. The title cannot mention Milvus; the body may mention it once with source-supported context. Never mention Zilliz."
   }
 ]

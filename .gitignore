@@ -4,6 +4,8 @@ __pycache__/
 .DS_Store
 .playwright-mcp/
 output/
+/packs/
+/tmp/
 *.log
 
 # Local credentials and tokens

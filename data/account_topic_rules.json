@@ -28,7 +28,7 @@
   },
   {
     "account_code": "R2",
-    "technical_lane": "data platform and production ops",
+    "technical_lane": "AI data platform, local inference, and production ops",
     "keyword_signals": [
       "kubernetes",
       "k8s",
@@ -47,15 +47,27 @@
       "vdbbench",
       "lakebase",
       "storage engine",
-      "ai data infra"
+      "ai data infra",
+      "local llm",
+      "local model",
+      "self-hosted",
+      "llama",
+      "ollama",
+      "llama.cpp",
+      "quantization",
+      "inference",
+      "vram",
+      "gpu"
     ],
     "preferred_topics": [
       "Kubernetes operations for vector databases",
       "incremental sync for vector stores",
       "DiskANN and memory footprint",
-      "benchmark quality"
+      "benchmark quality",
+      "local and self-hosted RAG",
+      "local model serving and hardware fit"
     ],
-    "preferred_subreddits": ["r/vectordatabase", "r/dataengineering"],
-    "assignment_reason": "Preserve the production-minded data-platform persona: infra, cost, scale, benchmark quality, and operational caveats. Choose a matching Post Type without changing the topic voice."
+    "preferred_subreddits": ["r/vectordatabase", "r/LocalLLaMA"],
+    "assignment_reason": "Preserve the production-minded AI data-platform persona: infra, local inference, cost, scale, benchmark quality, and operational caveats. Choose a matching Post Type without changing the topic voice."
   }
 ]

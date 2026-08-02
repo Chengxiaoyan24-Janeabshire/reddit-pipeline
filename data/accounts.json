@@ -39,11 +39,11 @@
     "weekly_active": true,
     "allowed_subreddits": [
       "r/vectordatabase",
-      "r/dataengineering"
+      "r/LocalLLaMA"
     ],
     "identity_visibility": "anonymous",
     "weekly_link_mode": "no_link",
-    "role": "Data platform engineer",
+    "role": "AI data platform engineer",
     "account_type": "anonymous_individual",
     "disclosure_required": false,
     "voice_fingerprint_id": "structured_design_question",
@@ -56,7 +56,7 @@
     "best_for": [
       "Kubernetes operations",
       "cost and scaling",
-      "data pipeline maintenance"
+      "local inference and RAG operations"
     ],
     "voice": "production-minded, anonymous, specific about constraints, and comfortable saying it depends; 'I built' is allowed only when source-supported",
     "avoid": [

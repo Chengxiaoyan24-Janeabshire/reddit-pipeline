@@ -66,22 +66,22 @@
     ]
   },
   {
-    "source_title": "Example incremental pipeline article",
-    "source_url": "https://example.com/incremental-pipeline",
-    "pool_blog_id": "example-data-001",
+    "source_title": "Example local RAG diagnostics article",
+    "source_url": "https://example.com/local-rag-diagnostics",
+    "pool_blog_id": "example-local-001",
     "items": [
       {
         "account_code": "R2",
         "content_type": "technical_post",
-        "subreddit": "r/dataengineering",
-        "post_type": "Discussion",
+        "subreddit": "r/LocalLLaMA",
+        "post_type": "Question | Help",
         "suggested_day": "2026-07-24",
-        "title": "Who should own freshness when an embedding pipeline falls behind?",
-        "body": "Consider a pipeline that reads source changes, creates embeddings, and updates a serving index. The difficult case is not a full outage; it is a growing lag where every component is technically healthy. The source team sees completed writes, the embedding workers see successful jobs, and the serving layer sees an index that is simply older than expected. This creates a reliability tradeoff and an ownership question: one team controls event production, another controls compute throughput, and a third owns the user-visible freshness target. A single end-to-end lag metric is useful, but it does not say whether to slow ingestion, scale workers, skip low-priority updates, or temporarily serve stale results. Per-stage queue age and oldest-unprocessed-event timestamps would help, along with an explicit backpressure policy. Would you put the freshness SLO and incident ownership with the source pipeline, the embedding stage, or the serving platform? What operational signal should trigger escalation before users notice stale data?",
+        "title": "How do you isolate retrieval failure from context pressure in local RAG?",
+        "body": "A local RAG answer can fail even when the relevant passage exists in the source. The retriever may have missed it, the chunk may be too broad, or the prompt may be packing enough surrounding text that the useful evidence gets diluted. I would start by saving the retrieved chunk IDs, scores, filters, and exact prompt for a small set of failed questions. The next pass would insert the known-good passage directly while keeping the model and prompt fixed. If the answer still fails, the likely variables move from indexing toward context length, prompt structure, quantization, or model capability. The harder case is when the answer improves only after removing other retrieved chunks, because that can look like a retrieval problem even when the correct evidence was present. A useful test matrix might compare top-k, chunk size, reranking, context budget, and the same known-good passage across two quantizations. What is the smallest diagnostic sequence you use before switching models or rebuilding the index?",
         "disclosure": "",
         "link_policy": "no_link",
         "milvus_mention_basis": "",
-        "angle": "incremental pipeline reliability discussion",
+        "angle": "local RAG troubleshooting with retrieval and context isolation",
         "voice_fingerprint": "structured_design_question",
         "length_tier": "standard_post"
       }

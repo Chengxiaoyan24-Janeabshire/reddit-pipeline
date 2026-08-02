@@ -35,7 +35,7 @@ or factual claims.
 ## Weekly Slots
 
 Create exactly R1 → `r/Rag`, R1 → `r/AI_Agents`, R2 →
-`r/vectordatabase`, and R2 → `r/dataengineering`. Use `No fixed post type` for
+`r/vectordatabase`, and R2 → `r/LocalLLaMA`. Use `No fixed post type` for
 `r/vectordatabase`.
 
 ## Draft Rules

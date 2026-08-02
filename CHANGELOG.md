@@ -10,6 +10,22 @@
 4. 描述能力、行为和用户结果，不写成文件名清单。
 5. Change Log 与对应代码、规则或文档在同一批 push 中提交。
 
+## 2026-08-02 — Knowledge closeout safeguards
+
+### Fixed
+
+- 本地生成的 weekly pack 和 PDF 校验临时文件现在默认不进入 Git，降低审核草稿或中间产物被误推到 GitHub 的风险。
+- Reference PDF 交付物与当前 Markdown 规则重新同步，LocalLLaMA 周槽位相关说明不再只停留在可编辑源文件中。
+- 回归测试现在会检查每个固定周槽位引用的 Markdown 和截图真实存在，避免规则路径与交付资产再次脱节。
+
+## 2026-07-29 — R2 LocalLLaMA weekly lane
+
+### Changed
+
+- R2 的第二个固定周槽位从 `r/dataengineering` 迁移到 `r/LocalLLaMA`，四槽校验、筛选和飞书审核现在统一使用新渠道。
+- LocalLLaMA 槽位按新截图支持 `Discussion`、`Question | Help` 和 `Resources`，同时保留 R2 的匿名、无链接、稳定 persona 和来源依据边界。
+- R2 的 topic 匹配扩展到本地模型、自托管推理、量化、硬件适配和本地 RAG，不再推荐退役的 data engineering 槽位。
+
 ## 2026-07-24 — Initial cleaned Reddit pipeline
 
 ### Added
