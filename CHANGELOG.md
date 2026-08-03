@@ -10,6 +10,22 @@
 4. 描述能力、行为和用户结果，不写成文件名清单。
 5. Change Log 与对应代码、规则或文档在同一批 push 中提交。
 
+## 2026-08-03 — Published Reddit post monitoring
+
+### Added
+
+- 新增 `$reddit-post-monitor`，可通过已发布帖子的公开 `.json` 端点预览 upvotes、评论数、估算 downvotes、upvote ratio 和帖子状态，并在明确授权后写回 Reddit Persona Pipeline。
+- 新增评论摘要、`Public Opinion Alert` 和多值 `Milvus Signal`，支持识别负面讨论、Milvus 问题/对比/采用意向及 Zilliz mention，同时不把 Reddit 用户名写入飞书。
+- 新增本地 URL JSON 输入、浏览器保存 JSON fallback 和人工分析覆盖文件，允许在 Reddit 对命令行客户端返回 403/429 时继续只读处理，并在 live write 前复核自动评论归纳与信号判断。
+- 新增带 digest 的 preview snapshot；live write 只能消费已复核快照，若飞书目标行或字段计划发生变化就拒绝写入。
+
+### Changed
+
+- 发布后状态现在区分 Active、Removed、Deleted、Locked、Archived 和 Unavailable；只有成功确认 Removed/Deleted 时才把原有 `Status` 更新为 `Cancel`。
+- Downvote 字段明确标为 `Downvotes (Estimated)`，避免把 Reddit 未公开的精确 downvote 数量误报为真实指标。
+- Reddit share link 会先解析到 canonical submission URL；非 HTTPS、非帖子路径和本地输入触发的 live write 会被拒绝，删除作者账号也不再被误判为帖子删除。
+- 自动摘要只输出聚合主题和情绪计数，不把原始评论片段写入飞书；评论样本默认关闭，只能显式开启用于本地复核。
+
 ## 2026-08-02 — Knowledge closeout safeguards
 
 ### Fixed

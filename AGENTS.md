@@ -3,8 +3,9 @@
 ## Purpose
 
 Generate a fixed four-slot weekly Reddit content pack from recent official blog
-ideas. The pipeline creates drafts for human review and manual publishing; it
-never performs Reddit account activity.
+ideas, then monitor manually published posts through Reddit's public JSON
+surface. The pipeline creates drafts and review metadata; it never performs
+Reddit account activity.
 
 ## Skills
 
@@ -16,8 +17,10 @@ stage Skill when the user wants only one step:
 - `$reddit-pack-draft`: produce draft JSON only;
 - `$reddit-pack-validate`: validate only, with no writes;
 - `$reddit-pack-write`: preview or write validated drafts to Feishu review.
+- `$reddit-post-monitor`: preview or update published-post metrics, status,
+  comment summaries, public-opinion alerts, and Milvus signals.
 
-All six Skills live under `.agents/skills/`. Run their scripts from the project
+All seven Skills live under `.agents/skills/`. Run their scripts from the project
 root with `python3 scripts/...`.
 
 ## Source and weekly contract
@@ -64,10 +67,14 @@ root with `python3 scripts/...`.
 - `reference/subreddit_rule/`: sanitized community guidance and screenshots.
 - `reference/*.md`: editable Reference content; corresponding PDFs are generated
   deliverables.
+- `scripts/reddit_post_monitor.py`: public Reddit JSON parsing, status,
+  approximate downvotes, comment triage, and Feishu monitoring field contract.
 
-Pipeline outputs contain only final draft content and structured review fields.
-Do not write reasoning, scratch notes, credentials, or private account details
-into output.
+Draft delivery outputs contain only final draft content and structured review
+fields. Monitoring dry-runs may include sanitized comment samples without
+Reddit author usernames or links so a human can review the summary; Feishu
+receives only the summary, metrics, status, alerts, and signals. Do not write
+reasoning, scratch notes, credentials, or private account details into output.
 
 ## Feishu workflow
 
@@ -78,12 +85,24 @@ python3 scripts/sync_blog_pool_from_content_all_in_one.py --since-date 2026-01-0
 python3 scripts/screen_feishu_pool.py --dry-run
 python3 scripts/append_pack_to_feishu.py --validate-only --weekly < packs.json
 python3 scripts/append_pack_to_feishu.py --weekly --dry-run < packs.json
+python3 scripts/sync_reddit_post_metrics.py --from-feishu --ensure-fields
 ```
 
 Live writes are allowed only when the user explicitly requests the matching
-sync, screening, or delivery step. Reddit publishing remains manual and is
-tracked in `Reddit Persona Pipeline` with `Status`, `Publish URL`, `Publish
-Date`, and `Publisher`.
+sync, screening, delivery, or monitoring step. Reddit publishing remains manual
+and is tracked in `Reddit Persona Pipeline` with `Status`, `Publish URL`,
+`Publish Date`, and `Publisher`.
+
+Published-post monitoring uses public read-only `.json` GET requests only. It
+must not collect usernames into Feishu or perform Reddit account activity.
+Reddit does not expose exact public downvotes; store only the explicitly labeled
+`Downvotes (Estimated)` value. Set `Status = Cancel` only when a successful JSON
+response proves the post is removed or deleted; do not cancel on locks, archives,
+deleted authors, rate limits, or transient fetch failures. Resolve Reddit share
+links before appending `.json`; when Reddit blocks the command-line runtime,
+browser-saved JSON may be read locally. Every live monitoring write must use the
+exact dry-run snapshot and must fail closed if the Feishu target set or field
+plan changed after preview.
 
 ## Change Log
 

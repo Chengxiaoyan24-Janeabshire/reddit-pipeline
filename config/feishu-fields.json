@@ -22,6 +22,16 @@
     "publish_url": "Publish URL",
     "publish_date": "Publish Date",
     "publisher": "Publisher",
-    "reviewer_notes": "Reviewer Notes"
+    "reviewer_notes": "Reviewer Notes",
+    "reddit_json_url": "Reddit JSON URL",
+    "upvotes": "Upvotes",
+    "comments": "Comments",
+    "estimated_downvotes": "Downvotes (Estimated)",
+    "upvote_ratio": "Upvote Ratio",
+    "reddit_post_status": "Reddit Post Status",
+    "comment_summary": "Comment Summary",
+    "public_opinion_alert": "Public Opinion Alert",
+    "milvus_signal": "Milvus Signal",
+    "reddit_metrics_updated_at": "Reddit Metrics Updated At"
   }
 }

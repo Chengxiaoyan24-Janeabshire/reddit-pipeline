@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Post Monitor"
+  short_description: "Sync Reddit metrics and comment signals to Feishu"
+  default_prompt: "Use $reddit-post-monitor to preview published Reddit metrics, comment summaries, status, and monitoring signals before updating Feishu."
