@@ -10,6 +10,22 @@
 4. 描述能力、行为和用户结果，不写成文件名清单。
 5. Change Log 与对应代码、规则或文档在同一批 push 中提交。
 
+## 2026-08-03 — Offline Reddit JSON Content parsing
+
+### Added
+
+- 新增 `$reddit-json-content-parse`：只读取人工粘贴到飞书 `Reddit JSON Content` 的完整 JSON，预览并回写互动指标、帖子状态、评论摘要、舆情预警和 Milvus 信号。
+- 解析预览会绑定记录集合、字段计划和每条 JSON 内容的 SHA-256；正式写入前若内容或表结构变化会拒绝执行。
+
+### Changed
+
+- 发布后流程改为完全离线解析。空 JSON 内容行显示为等待粘贴，不作为失败，也不会访问 Reddit 或覆盖 `Reddit JSON` / `Reddit JSON Content`。
+- 任意检测到的负面评论至少触发 `Watch`；重复或更强的负面讨论可升级为 `Alert`。
+
+### Removed
+
+- 退役会访问 Reddit `.json` 端点的 `$reddit-post-monitor` 及 URL 生成流程，当前仓库只保留人工复制 JSON 后的解析 Skill。
+
 ## 2026-08-03 — Published Reddit post monitoring
 
 ### Added

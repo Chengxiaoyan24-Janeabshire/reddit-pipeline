@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit JSON Content Parse"
+  short_description: "Parse pasted Reddit JSON into Feishu monitoring fields"
+  default_prompt: "Use $reddit-json-content-parse to parse Feishu Reddit JSON Content offline, preview the metrics and comment signals, and write only after approval."

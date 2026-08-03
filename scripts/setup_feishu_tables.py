@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 
 import feishu_client
-import reddit_post_monitor
+import reddit_json_content
 
 ROOT = Path(__file__).resolve().parents[1]
 TABLE_CONFIG = ROOT / "config" / "feishu-tables.json"
@@ -132,7 +132,7 @@ def build_schemas():
         {"field_name": "Publish Date", "type": 5, "property": date_prop()},
         {"field_name": "Publisher", "type": 3, "property": single_select(["Jenny", "Lumina"])},
         {"field_name": "Reviewer Notes", "type": 1},
-    ] + reddit_post_monitor.monitor_field_defs(),
+    ] + reddit_json_content.json_workflow_field_defs(),
     }
 
 CONFIG_KEYS = {

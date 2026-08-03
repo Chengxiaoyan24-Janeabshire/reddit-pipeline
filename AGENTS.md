@@ -3,9 +3,9 @@
 ## Purpose
 
 Generate a fixed four-slot weekly Reddit content pack from recent official blog
-ideas, then monitor manually published posts through Reddit's public JSON
-surface. The pipeline creates drafts and review metadata; it never performs
-Reddit account activity.
+ideas, then parse Reddit JSON that a human has pasted into Feishu for published
+post review. The pipeline creates drafts and review metadata; it never performs
+Reddit account activity or fetches Reddit JSON itself.
 
 ## Skills
 
@@ -17,8 +17,9 @@ stage Skill when the user wants only one step:
 - `$reddit-pack-draft`: produce draft JSON only;
 - `$reddit-pack-validate`: validate only, with no writes;
 - `$reddit-pack-write`: preview or write validated drafts to Feishu review.
-- `$reddit-post-monitor`: preview or update published-post metrics, status,
-  comment summaries, public-opinion alerts, and Milvus signals.
+- `$reddit-json-content-parse`: parse pasted `Reddit JSON Content`, then preview
+  or update published-post metrics, status, comment summaries,
+  public-opinion alerts, and Milvus signals.
 
 All seven Skills live under `.agents/skills/`. Run their scripts from the project
 root with `python3 scripts/...`.
@@ -67,11 +68,11 @@ root with `python3 scripts/...`.
 - `reference/subreddit_rule/`: sanitized community guidance and screenshots.
 - `reference/*.md`: editable Reference content; corresponding PDFs are generated
   deliverables.
-- `scripts/reddit_post_monitor.py`: public Reddit JSON parsing, status,
-  approximate downvotes, comment triage, and Feishu monitoring field contract.
+- `scripts/reddit_json_content.py`: pasted Reddit JSON parsing, status,
+  approximate downvotes, comment triage, and Feishu parsing field contract.
 
 Draft delivery outputs contain only final draft content and structured review
-fields. Monitoring dry-runs may include sanitized comment samples without
+fields. JSON-content parsing dry-runs may include sanitized comment samples without
 Reddit author usernames or links so a human can review the summary; Feishu
 receives only the summary, metrics, status, alerts, and signals. Do not write
 reasoning, scratch notes, credentials, or private account details into output.
@@ -85,24 +86,23 @@ python3 scripts/sync_blog_pool_from_content_all_in_one.py --since-date 2026-01-0
 python3 scripts/screen_feishu_pool.py --dry-run
 python3 scripts/append_pack_to_feishu.py --validate-only --weekly < packs.json
 python3 scripts/append_pack_to_feishu.py --weekly --dry-run < packs.json
-python3 scripts/sync_reddit_post_metrics.py --from-feishu --ensure-fields
+python3 scripts/parse_reddit_json_content.py --from-feishu --snapshot-out packs/reddit-json-content-preview.json
 ```
 
 Live writes are allowed only when the user explicitly requests the matching
-sync, screening, delivery, or monitoring step. Reddit publishing remains manual
+sync, screening, delivery, or JSON-content parsing step. Reddit publishing remains manual
 and is tracked in `Reddit Persona Pipeline` with `Status`, `Publish URL`,
 `Publish Date`, and `Publisher`.
 
-Published-post monitoring uses public read-only `.json` GET requests only. It
-must not collect usernames into Feishu or perform Reddit account activity.
+Published-post parsing reads only the complete JSON text a human pasted into
+`Reddit JSON Content`. It never opens Reddit, generates a URL, or performs
+Reddit account activity. Never overwrite `Reddit JSON` or `Reddit JSON Content`.
 Reddit does not expose exact public downvotes; store only the explicitly labeled
-`Downvotes (Estimated)` value. Set `Status = Cancel` only when a successful JSON
-response proves the post is removed or deleted; do not cancel on locks, archives,
-deleted authors, rate limits, or transient fetch failures. Resolve Reddit share
-links before appending `.json`; when Reddit blocks the command-line runtime,
-browser-saved JSON may be read locally. Every live monitoring write must use the
-exact dry-run snapshot and must fail closed if the Feishu target set or field
-plan changed after preview.
+`Downvotes (Estimated)` value. Set `Status = Cancel` only when valid pasted JSON
+proves the post is removed or deleted; do not cancel on locks, archives, deleted
+authors, empty content, or invalid JSON. Every live parse write must use the
+exact dry-run snapshot and must fail closed if the Feishu target set, JSON
+content hash, or field plan changed after preview.
 
 ## Change Log
 

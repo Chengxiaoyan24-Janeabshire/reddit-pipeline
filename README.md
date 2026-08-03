@@ -9,7 +9,7 @@
 > - R1/R2 全部 `no_link`，标题、正文和链接字段都不能有 URL。
 > - 开放问题可有可无，不为满足校验强行添加。
 > - 保留 `short_post`、`standard_post`、`long_post`、`code_long_post` 四个长度档位。
-> - 已发布帖子只通过公开 `.json` GET 做只读监控；Reddit 不公开精确 downvote，表中只保存明确标注的估算值。
+> - 已发布帖子只解析人工粘贴到飞书的完整 Reddit JSON；不会由脚本访问 Reddit。Reddit 不公开精确 downvote，表中只保存明确标注的估算值。
 
 ## 1. 整个 Pipeline 的逻辑
 
@@ -35,15 +35,15 @@ Content All in One / All content / all content
 
 人工审核与发布
   └─ 在 Reddit Persona Pipeline 维护发布状态
-      └─ reddit-post-monitor
-          ├─ 读取 Publish URL + .json
+      └─ reddit-json-content-parse
+          ├─ 读取 Reddit JSON Content
           ├─ 更新 votes/comments 与帖子状态
           ├─ 汇总评论和负面舆情预警
           └─ 标记评论中的 Milvus 信号
 ```
 
 `$reddit-weekly` 顺序协调五个阶段；五个阶段 Skill 也可以单独调用，单独调用时不会自动进入后续阶段。
-`$reddit-post-monitor` 是发布后的独立只读采集/飞书写回流程，不属于 weekly drafting 阶段。
+`$reddit-json-content-parse` 是发布后的独立离线解析/飞书写回流程，不属于 weekly drafting 阶段。
 
 ## 2. Skills 与触发方式
 
@@ -55,7 +55,7 @@ Content All in One / All content / all content
 | `reddit-pack-draft` | 只生成 Reddit-native 草稿 JSON | Pack JSON，不写 Feishu 或 Reddit |
 | `reddit-pack-validate` | 只校验草稿 | `{ok, validated, errors, warnings}`，无写入 |
 | `reddit-pack-write` | 预览或写入已经校验的草稿 | Feishu Content Docs 和 Persona Pipeline rows |
-| `reddit-post-monitor` | 监控人工发布后的 Reddit 帖子 | Dry-run JSON + 绑定快照；经授权时更新互动、状态、评论摘要与信号字段 |
+| `reddit-json-content-parse` | 解析人工粘贴的 Reddit JSON | Dry-run JSON + 绑定快照；经授权时更新互动、状态、评论摘要与信号字段 |
 
 常用触发：
 
@@ -65,7 +65,7 @@ Content All in One / All content / all content
 - “给这篇 blog 起草 Reddit 内容” → `$reddit-pack-draft`
 - “检查这个 Reddit pack” → `$reddit-pack-validate`
 - “把已批准的 pack 写进飞书” → `$reddit-pack-write`
-- “更新已发布 Reddit 帖子的互动和评论” → `$reddit-post-monitor`
+- “解析 Reddit JSON Content 并更新互动和评论” → `$reddit-json-content-parse`
 
 ## 3. 每一步的输入与输出
 
@@ -77,7 +77,7 @@ Content All in One / All content / all content
 | Validate | 单个 pack 或 pack 列表 | 四槽、账号/社区、Post Type、匿名、Milvus/Zilliz、URL、长度、代码、重复正文 | 只读 JSON；开放问题有无都不报错或警告 |
 | Feishu review | 已通过 validation 的 pack | 再校验、构造无链接 Content Doc、映射 review metadata | Dry run 只预览；live write 创建 Docs/rows 并增加 pool 生成计数 |
 | Manual publish | 人工批准的草稿 | 人工决定是否发布 | 人工维护 `Status`、`Publish URL`、`Publish Date`、`Publisher` |
-| Post monitor | `Status = Published` 且有 `Publish URL` 的 review row，或本地 Reddit URL JSON | 解析 share link 后读取公开 `.json`、帖子状态、评论内容、舆情和 Milvus 信号；不读取 Reddit author 字段 | 默认只预览并生成绑定快照；经授权时只按该快照创建监控字段并逐行更新 Feishu |
+| JSON content parse | `Status = Published` 的 review row 及人工粘贴的 `Reddit JSON Content` | 离线校验 JSON、解析帖子状态、评论内容、舆情和 Milvus 信号；不请求 Reddit，不读取 Reddit author 字段 | 空内容行列为等待；默认只预览并生成绑定快照；经授权时只按该快照更新 Feishu |
 
 同步源固定为：
 
@@ -167,14 +167,14 @@ Content All in One / All content / all content
 
 主要 review 字段：`Draft ID`、`Source Blog URL`、`Blog Pool Record ID`、`Account Code`、`Subreddit`、`Post Type`、`Content Doc`、`Link Policy`、`Milvus Mention Basis`、`Voice Fingerprint`、`Length Tier`、`Status`、`Publish URL`、`Publish Date` 和 `Publisher`。
 
-发布后监控字段：`Reddit JSON URL`、`Upvotes`、`Comments`、`Downvotes (Estimated)`、`Upvote Ratio`、`Reddit Post Status`、`Comment Summary`、`Public Opinion Alert`、`Milvus Signal` 和 `Reddit Metrics Updated At`。只有 `Removed`/`Deleted` 会自动把现有 `Status` 改为 `Cancel`。
+发布后人工输入字段：`Reddit JSON`（可选链接）和 `Reddit JSON Content`（完整 JSON 文本）。解析结果字段：`Upvotes`、`Comments`、`Downvotes (Estimated)`、`Upvote Ratio`、`Reddit Post Status`、`Comment Summary`、`Public Opinion Alert`、`Milvus Signal` 和 `Reddit Metrics Updated At`。解析 Skill 不会覆盖两个输入字段；只有有效 JSON 证明 `Removed`/`Deleted` 时才自动把现有 `Status` 改为 `Cancel`。
 
 ## 9. 主要目录
 
 | 路径 | 内容 |
 |---|---|
-| `.agents/skills/` | 一个 weekly router、五个 drafting 阶段 Skills 和一个发布后监控 Skill；不是独立 runtime 或 Agent 项目 |
-| `scripts/` | 当前有效的 sync、screen、validate、Feishu write、post monitor、schema setup 和 PDF rebuild runtime |
+| `.agents/skills/` | 一个 weekly router、五个 drafting 阶段 Skills 和一个发布后 JSON 解析 Skill；不是独立 runtime 或 Agent 项目 |
+| `scripts/` | 当前有效的 sync、screen、validate、Feishu write、JSON content parse、schema setup 和 PDF rebuild runtime |
 | `data/` | 账号、topic、fingerprint、weekly、subreddit 与长度机器规则 |
 | `config/` | 无 secret 的 Feishu table/view ID、字段映射和 credential template |
 | `reference/` | 可编辑 Markdown、生成的 PDF，以及 subreddit Post Type/结构截图 |
@@ -213,30 +213,25 @@ python3 scripts/append_pack_to_feishu.py --validate-only --weekly < samples/week
 # Feishu delivery preview
 python3 scripts/append_pack_to_feishu.py --weekly --dry-run < samples/weekly_pack.example.json
 
-# Published-post monitoring preview and write-bound snapshot;
+# Parse pasted Reddit JSON Content and create a write-bound snapshot;
 # no Feishu fields or records are changed
-python3 scripts/sync_reddit_post_metrics.py \
+python3 scripts/parse_reddit_json_content.py \
   --from-feishu \
-  --ensure-fields \
-  --snapshot-out packs/reddit-monitor-preview.json
+  --sample-comments 12 \
+  --snapshot-out packs/reddit-json-content-preview.json
 
-# If Reddit returns 403/429, save each reported canonical JSON response in the
-# browser as packs/reddit-json/<post_id>.json, then preview from those files
-python3 scripts/sync_reddit_post_metrics.py \
+# Optional: replace automatic summary/alert/signal values with reviewed values
+python3 scripts/parse_reddit_json_content.py \
   --from-feishu \
-  --ensure-fields \
-  --reddit-json-dir packs/reddit-json \
-  --snapshot-out packs/reddit-monitor-preview.json
+  --analysis-json packs/reddit-json-analysis.json \
+  --snapshot-out packs/reddit-json-content-preview.json
 
 # Live Feishu update after explicit approval of the exact preview snapshot
-python3 scripts/sync_reddit_post_metrics.py \
+python3 scripts/parse_reddit_json_content.py \
   --from-feishu \
   --ensure-fields \
-  --snapshot-in packs/reddit-monitor-preview.json \
+  --snapshot-in packs/reddit-json-content-preview.json \
   --write
-
-# Local Reddit URL JSON preview without Feishu
-python3 scripts/sync_reddit_post_metrics.py --input-json reddit-posts.json
 
 # Regression tests
 python3 -m unittest

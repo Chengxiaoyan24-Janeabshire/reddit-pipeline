@@ -1,23 +1,13 @@
 #!/usr/bin/env python3
-"""Core helpers for read-only Reddit JSON monitoring and Feishu patches."""
+"""Parse pasted Reddit JSON without making Reddit network requests."""
 import copy
 import html
 import json
 import re
-import urllib.error
-import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 
 
-POST_STATUS_OPTIONS = [
-    "Active",
-    "Removed",
-    "Deleted",
-    "Locked",
-    "Archived",
-    "Unavailable",
-]
+POST_STATUS_OPTIONS = ["Active", "Removed", "Deleted", "Locked", "Archived"]
 ALERT_OPTIONS = ["None", "Watch", "Alert"]
 MILVUS_SIGNAL_OPTIONS = [
     "Milvus Mention",
@@ -29,8 +19,12 @@ MILVUS_SIGNAL_OPTIONS = [
     "Zilliz Mention",
 ]
 
-MONITOR_FIELD_DEFS = [
-    {"field_name": "Reddit JSON URL", "type": 15},
+JSON_INPUT_FIELD_DEFS = [
+    {"field_name": "Reddit JSON", "type": 15},
+    {"field_name": "Reddit JSON Content", "type": 1},
+]
+
+PARSE_RESULT_FIELD_DEFS = [
     {"field_name": "Upvotes", "type": 2, "property": {"formatter": "0"}},
     {"field_name": "Comments", "type": 2, "property": {"formatter": "0"}},
     {"field_name": "Downvotes (Estimated)", "type": 2, "property": {"formatter": "0"}},
@@ -106,6 +100,10 @@ NEGATIVE_TERMS = [
     "doesn't work",
     "does not work",
     "not working",
+    "don't like",
+    "do not like",
+    "skeptical",
+    "overhyped",
 ]
 STRONG_NEGATIVE_TERMS = [
     "broken",
@@ -145,22 +143,40 @@ QUESTION_TERMS = ["how", "what", "why", "when", "which", "anyone", "does", "can"
 
 THEME_TERMS = {
     "RAG/retrieval": ["rag", "retrieval", "rerank", "chunk"],
+    "graph retrieval": [
+        "graph rag",
+        "graphrag",
+        "graph database",
+        "graph db",
+        "multi hop",
+        "multi-hop",
+        "knowledge graph",
+        "neighbor nodes",
+        "neighbour nodes",
+    ],
     "indexing/search": ["index", "search", "bm25", "hybrid"],
     "performance/scale": ["latency", "performance", "scale", "memory", "throughput"],
-    "cost/operations": ["cost", "expensive", "deploy", "production", "kubernetes"],
+    "cost/operations": ["cost", "expensive", "deploy", "production", "kubernetes", "sync"],
+    "evaluation quality": ["benchmark", "evaluation", "recall", "dataset"],
     "local models": ["local model", "llama", "ollama", "quantization", "vram"],
-    "vector databases": ["vector database", "vectordb", "milvus", "pgvector", "qdrant", "weaviate", "pinecone"],
+    "vector databases": [
+        "vector database",
+        "vectordb",
+        "milvus",
+        "pgvector",
+        "qdrant",
+        "weaviate",
+        "pinecone",
+    ],
 }
 
 
-class RedditFetchError(RuntimeError):
-    def __init__(self, status, message):
-        super().__init__(message)
-        self.status = status
+def json_workflow_field_defs():
+    return copy.deepcopy(JSON_INPUT_FIELD_DEFS + PARSE_RESULT_FIELD_DEFS)
 
 
-def monitor_field_defs():
-    return copy.deepcopy(MONITOR_FIELD_DEFS)
+def parse_required_field_defs():
+    return copy.deepcopy([JSON_INPUT_FIELD_DEFS[1]] + PARSE_RESULT_FIELD_DEFS)
 
 
 def normalize_text(value):
@@ -175,87 +191,19 @@ def sanitize_comment_text(value):
     return text
 
 
-def _validate_reddit_url(url):
-    raw = str(url or "").strip()
-    if not raw:
-        raise ValueError("Reddit Publish URL is empty")
-    parsed = urllib.parse.urlsplit(raw)
-    host = (parsed.hostname or "").lower()
-    if parsed.scheme.lower() != "https":
-        raise ValueError(f"Reddit URL must use HTTPS: {raw}")
-    if not (host == "redd.it" or host == "reddit.com" or host.endswith(".reddit.com")):
-        raise ValueError(f"Not a Reddit URL: {raw}")
-    if parsed.username or parsed.password or parsed.port:
-        raise ValueError(f"Reddit URL must not contain credentials or a custom port: {raw}")
-    return raw, parsed, host
-
-
-def reddit_post_id(url):
-    _, parsed, _ = _validate_reddit_url(url)
-    match = re.search(r"(?:^|/)comments/([a-z0-9]+)(?:/|$)", parsed.path, re.IGNORECASE)
-    if not match:
-        raise ValueError(f"Reddit URL is not a canonical submission URL: {url}")
-    return match.group(1).lower()
-
-
-def normalize_reddit_json_url(url, limit=500):
-    raw, parsed, _ = _validate_reddit_url(url)
-    reddit_post_id(raw)
-    path = parsed.path.rstrip("/")
-    if not path.endswith(".json"):
-        path += ".json"
-    query = urllib.parse.urlencode({"raw_json": 1, "limit": max(1, int(limit)), "sort": "top"})
-    return urllib.parse.urlunsplit(("https", parsed.netloc, path, query, ""))
-
-
-def resolve_reddit_permalink(url, user_agent, timeout=30):
-    raw, parsed, host = _validate_reddit_url(url)
-    is_share_link = bool(re.search(r"/r/[^/]+/s/[^/]+/?$", parsed.path, re.IGNORECASE))
-    if host != "redd.it" and not is_share_link:
-        reddit_post_id(raw)
-        return raw
-    request = urllib.request.Request(
-        raw,
-        headers={"User-Agent": user_agent},
-        method="GET",
-    )
+def decode_json_content(raw_content):
+    text = str(raw_content or "").lstrip("\ufeff").strip()
+    if not text:
+        raise ValueError("Reddit JSON Content is empty")
+    fenced = re.fullmatch(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.IGNORECASE | re.DOTALL)
+    if fenced:
+        text = fenced.group(1).strip()
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            resolved = response.geturl()
-    except urllib.error.HTTPError as exc:
-        raise RedditFetchError(exc.code, f"Reddit share URL returned HTTP {exc.code}") from exc
-    except urllib.error.URLError as exc:
-        raise RedditFetchError(None, f"Reddit share URL resolution failed: {exc.reason}") from exc
-    try:
-        _, resolved_parsed, _ = _validate_reddit_url(resolved)
-        reddit_post_id(resolved)
-    except ValueError as exc:
-        raise RedditFetchError(None, f"Reddit share URL did not resolve to a submission: {resolved}") from exc
-    return urllib.parse.urlunsplit(("https", resolved_parsed.netloc, resolved_parsed.path, "", ""))
-
-
-def fetch_reddit_json(json_url, user_agent, timeout=30):
-    request = urllib.request.Request(
-        json_url,
-        headers={
-            "Accept": "application/json",
-            "User-Agent": user_agent,
-        },
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            raw = response.read()
-            try:
-                return json.loads(raw)
-            except json.JSONDecodeError as exc:
-                raise RedditFetchError(
-                    getattr(response, "status", 200),
-                    "Reddit endpoint returned non-JSON content; resolve share links before adding .json",
-                ) from exc
-    except urllib.error.HTTPError as exc:
-        raise RedditFetchError(exc.code, f"Reddit JSON returned HTTP {exc.code}") from exc
-    except urllib.error.URLError as exc:
-        raise RedditFetchError(None, f"Reddit JSON request failed: {exc.reason}") from exc
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            f"Reddit JSON Content is invalid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}"
+        ) from exc
 
 
 def _children(listing):
@@ -271,16 +219,18 @@ def flatten_comments(children, limit=500):
         for child in nodes or []:
             if len(comments) >= limit:
                 return
-            if child.get("kind") != "t1":
+            if not isinstance(child, dict) or child.get("kind") != "t1":
                 continue
             data = child.get("data") or {}
             body = sanitize_comment_text(data.get("body"))
-            if body and body not in {"[deleted]", "[removed]"}:
-                comments.append({
-                    "body": body,
-                    "score": int(data.get("score") or 0),
-                    "depth": int(data.get("depth") or depth),
-                })
+            if body and body.lower() not in {"[deleted]", "[removed]"}:
+                comments.append(
+                    {
+                        "body": body,
+                        "score": int(data.get("score") or 0),
+                        "depth": int(data.get("depth") or depth),
+                    }
+                )
             replies = data.get("replies")
             if isinstance(replies, dict):
                 visit(_children(replies), depth + 1)
@@ -334,14 +284,14 @@ def _comment_sentiment(body):
     return "neutral", False
 
 
-def _truncate(text, limit=150):
+def _truncate(text, limit=500):
     text = normalize_text(text)
     if len(text) <= limit:
         return text
     return text[: limit - 1].rstrip() + "…"
 
 
-def analyze_comments(comments, sample_count=12):
+def analyze_comments(comments, sample_count=0):
     substantive = [comment for comment in comments if len(comment.get("body", "")) >= 8]
     sentiment_counts = {"positive": 0, "negative": 0, "neutral": 0}
     strong_negative = []
@@ -365,9 +315,13 @@ def analyze_comments(comments, sample_count=12):
     negative_count = sentiment_counts["negative"]
     negative_ratio = (negative_count / total) if total else 0
     highest_strong_score = max((comment.get("score", 0) for comment in strong_negative), default=0)
-    if len(strong_negative) >= 2 or (strong_negative and negative_ratio >= 0.4 and highest_strong_score >= 2):
+    if (
+        len(strong_negative) >= 2
+        or (strong_negative and negative_ratio >= 0.4 and highest_strong_score >= 2)
+        or (negative_count >= 3 and negative_ratio >= 0.5)
+    ):
         alert = "Alert"
-    elif strong_negative or (negative_count >= 2 and negative_ratio >= 0.3):
+    elif negative_count:
         alert = "Watch"
     else:
         alert = "None"
@@ -379,7 +333,10 @@ def analyze_comments(comments, sample_count=12):
             signals.append("Milvus Mention")
         if "zilliz" in combined:
             signals.append("Zilliz Mention")
-        if any("?" in comment["body"] or _matches(comment["body"], QUESTION_TERMS) for comment, _ in milvus_comments):
+        if any(
+            "?" in comment["body"] or _matches(comment["body"], QUESTION_TERMS)
+            for comment, _ in milvus_comments
+        ):
             signals.append("Milvus Question")
         if any(sentiment == "positive" for _, sentiment in milvus_comments):
             signals.append("Milvus Positive")
@@ -419,13 +376,13 @@ def analyze_comments(comments, sample_count=12):
             "negative_ratio": round(negative_ratio, 3),
         },
         "comments_sample": [
-            {"score": comment.get("score", 0), "body": _truncate(comment["body"], 500)}
+            {"score": comment.get("score", 0), "body": _truncate(comment["body"])}
             for comment in top_comments[: max(0, int(sample_count))]
         ],
     }
 
 
-def parse_reddit_payload(payload, publish_url, json_url, max_comments=500, sample_count=12):
+def parse_reddit_payload(payload, publish_url="", max_comments=500, sample_count=0):
     if not isinstance(payload, list) or not payload:
         raise ValueError("Unexpected Reddit JSON shape: expected a listing array")
     post_children = _children(payload[0])
@@ -437,13 +394,13 @@ def parse_reddit_payload(payload, publish_url, json_url, max_comments=500, sampl
     analysis = analyze_comments(comments, sample_count=sample_count)
     score = post.get("score")
     upvote_ratio = post.get("upvote_ratio")
+    ups = post.get("ups")
     return {
         "publish_url": publish_url,
-        "reddit_json_url": json_url,
         "post_title": normalize_text(post.get("title")),
         "post_status": detect_post_status(post),
         "metrics": {
-            "upvotes": int(post.get("ups") or 0),
+            "upvotes": int(ups if ups is not None else (score or 0)),
             "comments": int(post.get("num_comments") or 0),
             "score": int(score or 0),
             "upvote_ratio": float(upvote_ratio) if upvote_ratio is not None else None,
@@ -454,29 +411,13 @@ def parse_reddit_payload(payload, publish_url, json_url, max_comments=500, sampl
     }
 
 
-def unavailable_report(publish_url, json_url, status=404):
-    return {
-        "publish_url": publish_url,
-        "reddit_json_url": json_url,
-        "post_title": "",
-        "post_status": "Unavailable",
-        "metrics": {
-            "upvotes": None,
-            "comments": None,
-            "score": None,
-            "upvote_ratio": None,
-            "estimated_downvotes": None,
-            "comments_retrieved": 0,
-        },
-        "comment_analysis": {
-            "comment_summary": f"Reddit JSON 端点返回 HTTP {status}，本次无法读取评论。",
-            "public_opinion_alert": "None",
-            "milvus_signal": [],
-            "sentiment_counts": {"positive": 0, "negative": 0, "neutral": 0},
-            "alert_basis": {"http_status": status},
-            "comments_sample": [],
-        },
-    }
+def parse_reddit_json_content(raw_content, publish_url="", max_comments=500, sample_count=0):
+    return parse_reddit_payload(
+        decode_json_content(raw_content),
+        publish_url=publish_url,
+        max_comments=max_comments,
+        sample_count=sample_count,
+    )
 
 
 def apply_analysis_override(report, override):
@@ -504,16 +445,11 @@ def apply_analysis_override(report, override):
     return report
 
 
-def as_url_field(url):
-    return {"link": url, "text": url}
-
-
 def build_feishu_patch(report, updated_at=None):
     metrics = report.get("metrics") or {}
     analysis = report.get("comment_analysis") or {}
     timestamp = updated_at or datetime.now(timezone.utc)
     fields = {
-        "Reddit JSON URL": as_url_field(report["reddit_json_url"]),
         "Reddit Post Status": report["post_status"],
         "Comment Summary": analysis.get("comment_summary", ""),
         "Public Opinion Alert": analysis.get("public_opinion_alert", "None"),
