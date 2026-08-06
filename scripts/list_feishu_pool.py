@@ -4,6 +4,7 @@ import argparse
 import json
 
 import feishu_client
+import weekly_post_rules
 
 
 def as_int(value):
@@ -43,6 +44,8 @@ def main():
             "record_id": item["record_id"],
             "blog_url": feishu_client.extract_url(fields.get("Blog URL")),
             "blog_title": feishu_client.extract_text(fields.get("Blog 标题")),
+            "publish_date": fields.get("Publish Date"),
+            "recent_priority": weekly_post_rules.is_recent_source(fields.get("Publish Date")),
             "url_status": feishu_client.extract_text(fields.get("URL 状态")),
             "screening_status": feishu_client.extract_text(fields.get("筛选状态")),
             "screening_score": fields.get("筛选分数", 0),
@@ -60,6 +63,7 @@ def main():
             if row["generated_count"] > 0:
                 continue
         out.append(row)
+    out.sort(key=lambda row: weekly_post_rules.source_priority_key(row["publish_date"]))
     print(json.dumps(out, ensure_ascii=False, indent=2))
 
 

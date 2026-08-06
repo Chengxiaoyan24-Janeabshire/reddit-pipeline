@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import feishu_client
 import official_blog_catalog
+import weekly_post_rules
 
 DEFAULT_SINCE = "2026-01-01"
 DEFAULT_SOURCE_APP = "TXy3bCKznaz89fseyo3cPMShnyb"
@@ -108,8 +109,12 @@ def source_candidates(app_token, table_id, view_id, catalog, since):
             "title": (metadata or {}).get("title") or clean_title(fields.get("Title & Topic")),
             "publish_date": int(published_at.timestamp() * 1000),
         })
+    candidates = sorted(
+        deduped.values(),
+        key=lambda row: weekly_post_rules.source_priority_key(row["publish_date"]),
+    )
     return (
-        list(deduped.values()),
+        candidates,
         skipped_unknown_date,
         skipped_before_since,
         skipped_non_blog,
@@ -147,6 +152,13 @@ def main():
         if feishu_client.extract_url(item.get("fields", {}).get("Blog URL"))
     }
     new_items = [row for row in candidates if norm_url(row["url"]) not in existing_urls]
+    recency_rules = weekly_post_rules.load_rules()
+    priority_days = weekly_post_rules.priority_window_days(recency_rules)
+    cutoff = weekly_post_rules.recent_cutoff(rules=recency_rules)
+    for row in candidates:
+        row["recent_priority"] = weekly_post_rules.is_recent_source(
+            row["publish_date"], rules=recency_rules
+        )
     records = [
         filter_existing_fields({
             "Blog URL": {"link": row["url"], "text": row["url"]},
@@ -169,6 +181,10 @@ def main():
         "source_table_id": source_table,
         "source_view_id": source_view,
         "since_date": args.since_date,
+        "priority_window_days": priority_days,
+        "recent_cutoff": cutoff.date().isoformat(),
+        "recent_eligible": sum(1 for row in candidates if row["recent_priority"]),
+        "recent_new": sum(1 for row in new_items if row["recent_priority"]),
         "eligible_unique": len(candidates),
         "already_in_pool": len(candidates) - len(new_items),
         "new": len(new_items),

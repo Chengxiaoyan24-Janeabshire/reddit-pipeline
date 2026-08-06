@@ -18,6 +18,7 @@ Account fingerprints define the stable persona and voice. Screenshots only add
 subreddit/Post Type structure; they never replace the account persona.
 
 R1/R2 remain anonymous and never include outbound links. A title cannot mention
-Milvus; a body may mention Milvus once only when the technical background or data
-is source-supported. Never mention Zilliz. Every draft must pass the machine
-validator before it can enter Feishu review.
+Milvus; every body must mention Milvus exactly once using source-supported
+technical background or data and must include `milvus_mention_basis`. Never
+mention Zilliz. Every draft must pass the machine validator before it can enter
+Feishu review.

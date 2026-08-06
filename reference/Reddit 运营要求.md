@@ -25,8 +25,8 @@
 - R1/R2 必须绝对匿名，Disclosure 为空。
 - 可以写 `I built`，但不得暴露真实身份、雇主、贡献者或维护者身份、
   affiliation、客户身份或代表某个组织发言。
-- 标题不得出现 Milvus。正文最多出现一次 Milvus，且必须有技术背景或数据来源
-  支撑，并填写 `milvus_mention_basis`。
+- 标题不得出现 Milvus。每篇正文必须恰好出现一次 Milvus，且必须有技术背景或
+  数据来源支撑，并填写 `milvus_mention_basis`。
 - 任何位置都不得出现 Zilliz。
 - 不得编造第一人称经历、客户故事、benchmark 或结果。
 
@@ -52,5 +52,7 @@
 输出只能包含最终草稿和结构化审核字段，不得包含推理过程、账号隐私、
 登录信息或内部草稿备注。所有 Reddit 发布和互动必须由人工完成。
 
-开放问题结尾可有可无；自然存在时保留，不为了校验强行补问题。原生短讨论或
+首段必须立即建立有来源支持的第一人称视角，并少量使用自然 language buffers
+表达判断或不确定性。Tutorial 用结论、验证步骤或下一步收尾，不追加问题；
+Discussion 的互动邀请可选，使用柔和表达而不是生硬问句。原生短讨论或
 Resource Request 使用 `short_post`；普通技术讨论继续使用 `standard_post`。

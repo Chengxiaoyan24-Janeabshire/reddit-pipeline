@@ -38,7 +38,9 @@ user asked only for preview.
 
 Create one URL-free Content Doc per draft, write structured review metadata to
 `Reddit Persona Pipeline`, and increment referenced pool counts. Store
-`milvus_mention_basis` in review metadata when present; do not append links.
+`milvus_mention_basis` in review metadata when the live Base has the configured
+field; otherwise keep it in the validated pack JSON and skip the absent field.
+Do not append links.
 
 ## Safety Boundary
 

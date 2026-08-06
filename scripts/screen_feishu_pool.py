@@ -55,6 +55,11 @@ def main():
     }
 
     records = feishu_client.list_records(app_token, pool_table)
+    records.sort(
+        key=lambda item: screen_and_assign.weekly_post_rules.source_priority_key(
+            item.get("fields", {}).get("Publish Date")
+        )
+    )
     results = []
     for item in records:
         if args.record_id and item["record_id"] != args.record_id:
@@ -70,6 +75,7 @@ def main():
             "title": feishu_client.extract_text(fields.get("Blog 标题")),
             "url": feishu_client.extract_url(fields.get("Blog URL")),
             "notes": feishu_client.extract_text(fields.get("备注")),
+            "publish_date": fields.get("Publish Date"),
         }
         screened = screen_and_assign.screen_row(row, account_rules, topics, top_n=2, no_fetch=args.no_fetch)
         status_map = {
@@ -125,6 +131,10 @@ def main():
             "record_id": item["record_id"],
             "title": row["title"],
             "url": row["url"],
+            "publish_date": row["publish_date"],
+            "recent_priority": screen_and_assign.weekly_post_rules.is_recent_source(
+                row["publish_date"]
+            ),
             "update": update,
             "assignments": screened.get("assignments", []),
         })

@@ -1,5 +1,6 @@
 import copy
 import json
+import re
 import sys
 import unittest
 from datetime import datetime, timezone
@@ -28,11 +29,12 @@ def base_item():
         "body": (
             "I built a small retrieval test around fixed queries and explicit "
             "failure labels. It separates parsing, chunking, filtering, ranking, "
-            "and answer synthesis so one change can be evaluated at a time."
+            "and answer synthesis, and I would probably evaluate one change at a time. "
+            "The retrieval layer uses Milvus."
         ),
         "disclosure": "",
         "link_policy": "no_link",
-        "milvus_mention_basis": "",
+        "milvus_mention_basis": "The source names Milvus as the retrieval layer.",
         "angle": "retrieval tradeoff",
         "voice_fingerprint": "personal_build_log",
         "length_tier": "short_post",
@@ -88,8 +90,128 @@ class PoolSyncRulesTest(unittest.TestCase):
         self.assertEqual(unknown, [])
         self.assertEqual((before, non_blog, missing_url), (0, 0, 0))
 
+    def test_source_candidates_are_sorted_newest_first(self):
+        records = []
+        for record_id, day in [("rec-older", 20), ("rec-newer", 30)]:
+            records.append(
+                {
+                    "record_id": record_id,
+                    "fields": {
+                        "Category": "Blog Post",
+                        "Status": "Published",
+                        "Publish URL": f"https://milvus.io/blog/{record_id}",
+                        "Publish Date": int(
+                            datetime(2026, 7, day, tzinfo=timezone.utc).timestamp() * 1000
+                        ),
+                        "Title & Topic": record_id,
+                    },
+                }
+            )
+
+        with mock.patch.object(
+            pool_sync.feishu_client, "list_records", return_value=records
+        ), mock.patch.object(
+            pool_sync.official_blog_catalog, "lookup", return_value=None
+        ):
+            candidates, *_ = pool_sync.source_candidates(
+                "app",
+                "table",
+                "view",
+                catalog={},
+                since=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            )
+
+        self.assertEqual(
+            [row["record_id"] for row in candidates],
+            ["rec-newer", "rec-older"],
+        )
+
 
 class DraftValidationRulesTest(unittest.TestCase):
+    def test_checked_in_reference_examples_follow_current_contract(self):
+        paths = [
+            ROOT / "reference/Milvus blog for repurpose.md",
+            ROOT / "reference/Reddit 内容建议及范例.md",
+        ]
+        checked = 0
+        for path in paths:
+            text = path.read_text()
+            examples = re.split(r"(?m)^## (?:Example|范例)", text)[1:]
+            for example in examples:
+                title_match = re.search(
+                    r"(?ms)^### Title\s+(.+?)\n\n### Body", example
+                )
+                body_match = re.search(
+                    r"(?ms)^### Body\s+(.+?)(?=\n\n### |\Z)", example
+                )
+                basis_match = re.search(
+                    r"(?ms)^### Milvus mention basis\s+(.+?)(?=\n\n### |\Z)",
+                    example,
+                )
+                self.assertIsNotNone(title_match, path)
+                self.assertIsNotNone(body_match, path)
+                self.assertIsNotNone(basis_match, path)
+                title = title_match.group(1).strip()
+                body = body_match.group(1).strip()
+                opening = re.split(r"\n\s*\n", body, maxsplit=1)[0]
+                self.assertEqual(len(append_pack.MILVUS_PATTERN.findall(title)), 0)
+                self.assertEqual(len(append_pack.MILVUS_PATTERN.findall(body)), 1)
+                self.assertFalse(append_pack.ZILLIZ_PATTERN.search(body))
+                self.assertTrue(append_pack.FIRST_PERSON_OPENING_PATTERN.search(opening))
+                if "Question | Help" not in example:
+                    self.assertFalse(body.endswith("?"))
+                checked += 1
+        self.assertEqual(checked, 6)
+
+    def test_checked_in_weekly_sample_satisfies_current_contract(self):
+        specs = json.loads((ROOT / "samples/weekly_pack.example.json").read_text())
+        self.assertEqual(append_pack_to_feishu.validate_weekly_specs(specs), [])
+        for spec in specs:
+            errors, warnings = append_pack.validate(spec)
+            self.assertEqual(errors, [])
+            self.assertEqual(warnings, [])
+
+    def test_feishu_date_field_uses_millisecond_timestamp(self):
+        self.assertEqual(
+            append_pack_to_feishu.feishu_date_value("2026-07-16"),
+            int(datetime(2026, 7, 16, tzinfo=timezone.utc).timestamp() * 1000),
+        )
+        self.assertEqual(
+            append_pack_to_feishu.feishu_date_value(1784160000000),
+            1784160000000,
+        )
+
+    def test_existing_content_doc_url_is_preserved_for_write_recovery(self):
+        spec = {
+            "items": [
+                {
+                    **base_item(),
+                    "content_doc_url": "https://example.feishu.cn/docx/doc-token",
+                }
+            ]
+        }
+        draft = append_pack_to_feishu.build_drafts(spec, 1, [])[0]
+        self.assertEqual(
+            draft["content_doc_url"],
+            "https://example.feishu.cn/docx/doc-token",
+        )
+
+    def test_weekly_sources_prioritize_last_seven_days_with_fallback(self):
+        rules = weekly_post_rules.load_rules()
+        policy = rules["source_recency_policy"]
+        self.assertEqual(policy["priority_window_days"], 7)
+        self.assertTrue(policy["fallback_to_older"])
+
+        as_of = datetime(2026, 8, 4, 12, tzinfo=timezone.utc)
+        recent = datetime(2026, 7, 30, tzinfo=timezone.utc)
+        older = datetime(2026, 7, 20, tzinfo=timezone.utc)
+        self.assertTrue(weekly_post_rules.is_recent_source(recent, as_of, rules))
+        self.assertFalse(weekly_post_rules.is_recent_source(older, as_of, rules))
+        self.assertLess(
+            weekly_post_rules.source_priority_key(recent, as_of, rules),
+            weekly_post_rules.source_priority_key(older, as_of, rules),
+        )
+
     def test_weekly_slots_use_localllama_instead_of_dataengineering(self):
         slots = {
             (slot["account_code"], slot["subreddit"])
@@ -145,15 +267,62 @@ class DraftValidationRulesTest(unittest.TestCase):
         self.assertTrue(any("missing slots" in error for error in errors))
         self.assertTrue(any("unexpected slots" in error for error in errors))
 
-    def test_open_question_is_optional(self):
+    def test_discussion_direct_question_gets_soft_close_warning(self):
         declarative = base_item()
         question = copy.deepcopy(declarative)
         question["body"] += " What would you measure next?"
 
-        for item in (declarative, question):
-            errors, warnings = errors_for(item)
-            self.assertEqual(errors, [])
-            self.assertFalse(any("question" in warning.lower() for warning in warnings))
+        errors, warnings = errors_for(declarative)
+        self.assertEqual(errors, [])
+        self.assertFalse(any("interrogative" in warning.lower() for warning in warnings))
+
+        errors, warnings = errors_for(question)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("interrogative" in warning.lower() for warning in warnings))
+
+    def test_discussion_soft_invitation_avoids_question_warning(self):
+        item = base_item()
+        item["body"] += (
+            " I am curious what others would measure next. "
+            "Would love to hear your thoughts."
+        )
+        errors, warnings = errors_for(item)
+        self.assertEqual(errors, [])
+        self.assertFalse(any("interrogative" in warning.lower() for warning in warnings))
+
+    def test_tutorial_question_ending_fails(self):
+        item = base_item()
+        item["post_type"] = "Tutorial"
+        item["body"] += " What would you try next?"
+        errors, _ = errors_for(item)
+        self.assertTrue(any("Tutorial posts must end" in error for error in errors))
+
+    def test_non_first_person_opening_warns(self):
+        item = base_item()
+        item["body"] = (
+            "Most retrieval tests start with fixed queries and explicit labels. "
+            "The pipeline separates parsing, filtering, ranking, and synthesis. "
+            "The retrieval layer uses Milvus."
+        )
+        errors, warnings = errors_for(item)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("first-person" in warning for warning in warnings))
+
+    def test_missing_language_buffer_warns(self):
+        item = base_item()
+        item["body"] = (
+            "I built a retrieval test around fixed queries and explicit labels. "
+            "It separates parsing, filtering, ranking, and answer synthesis. "
+            "The retrieval layer uses Milvus."
+        )
+        errors, warnings = errors_for(item)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("language buffers" in warning for warning in warnings))
+
+    def test_post_type_closing_policy_keeps_fixed_weekly_slots(self):
+        rules = weekly_post_rules.load_rules()
+        self.assertIn("Do not end with a question", rules["post_type_closing_policy"]["Tutorial"])
+        self.assertIn("Would love to hear your thoughts", rules["post_type_closing_policy"]["Discussion"])
 
     def test_inferred_short_body_uses_short_post(self):
         item = base_item()
@@ -182,17 +351,28 @@ class DraftValidationRulesTest(unittest.TestCase):
 
     def test_one_supported_milvus_body_mention_passes(self):
         item = base_item()
-        item["body"] += " The source uses Milvus for the retrieval layer."
-        item["milvus_mention_basis"] = "The source names the retrieval layer."
         errors, _ = errors_for(item)
         self.assertEqual(errors, [])
 
+    def test_zero_milvus_body_mentions_fail(self):
+        item = base_item()
+        item["body"] = item["body"].replace(" The retrieval layer uses Milvus.", "")
+        item["milvus_mention_basis"] = ""
+        errors, _ = errors_for(item)
+        self.assertTrue(any("exactly once" in error and "found 0" in error for error in errors))
+
+    def test_one_milvus_body_mention_without_basis_fails(self):
+        item = base_item()
+        item["milvus_mention_basis"] = ""
+        errors, _ = errors_for(item)
+        self.assertTrue(any("requires milvus_mention_basis" in error for error in errors))
+
     def test_two_milvus_body_mentions_fail(self):
         item = base_item()
-        item["body"] += " Milvus is used for storage, and Milvus is used for search."
+        item["body"] += " Milvus is also used for filtered search."
         item["milvus_mention_basis"] = "The source names the storage system."
         errors, _ = errors_for(item)
-        self.assertTrue(any("at most 1" in error for error in errors))
+        self.assertTrue(any("exactly once" in error and "found 2" in error for error in errors))
 
     def test_zilliz_fails(self):
         item = base_item()

@@ -2,6 +2,7 @@
 """Load and apply the fixed weekly Reddit account/subreddit/post-type rules."""
 import json
 import re
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -10,6 +11,53 @@ RULES_PATH = ROOT / "data" / "weekly_post_rules.json"
 
 def load_rules():
     return json.loads(RULES_PATH.read_text())
+
+
+def source_recency_policy(rules=None):
+    rules = rules or load_rules()
+    return rules.get("source_recency_policy", {})
+
+
+def priority_window_days(rules=None):
+    policy = source_recency_policy(rules)
+    return max(1, int(policy.get("priority_window_days", 7)))
+
+
+def publish_datetime(value):
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, (int, float)):
+        seconds = value / 1000 if value > 10_000_000_000 else value
+        return datetime.fromtimestamp(seconds, tz=timezone.utc)
+    text = str(value or "").strip()
+    if not text:
+        return None
+    for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%Y-%m-%d %H:%M:%S"):
+        try:
+            return datetime.strptime(text, fmt).replace(tzinfo=timezone.utc)
+        except ValueError:
+            continue
+    return None
+
+
+def recent_cutoff(as_of=None, rules=None):
+    now = publish_datetime(as_of) or datetime.now(timezone.utc)
+    return now - timedelta(days=priority_window_days(rules))
+
+
+def is_recent_source(publish_date, as_of=None, rules=None):
+    published_at = publish_datetime(publish_date)
+    return bool(published_at and published_at >= recent_cutoff(as_of, rules))
+
+
+def source_priority_key(publish_date, as_of=None, rules=None):
+    published_at = publish_datetime(publish_date)
+    if not published_at:
+        return (2, 0)
+    return (
+        0 if is_recent_source(published_at, as_of, rules) else 1,
+        -published_at.timestamp(),
+    )
 
 
 def slots_by_subreddit(rules=None):

@@ -9,9 +9,11 @@ tooling tradeoffs.
 ## Post Types
 
 - `Tutorial`: step-by-step implementation, evaluation, debugging, or retrieval
-  workflow.
+  workflow. End with the final takeaway, verification step, or next action;
+  do not add a question at the end.
 - `Discussion`: a tradeoff, production failure, architecture choice, or open
-  technical question.
+  technical question. If inviting replies, use a soft conversational close
+  such as `Would love to hear your thoughts.` rather than a hard question.
 - `Tools & Resources`: a practical comparison or curated resource set with clear
   selection criteria.
 - `Showcase`: a source-supported project or experiment with enough implementation
@@ -19,13 +21,17 @@ tooling tradeoffs.
 
 ## Native structure
 
-1. Lead with the retrieval problem, not a product or blog summary.
-2. Include concrete constraints such as corpus size, update frequency, latency,
+1. Open in first person and lead with the retrieval problem, not a product or
+   blog summary. Keep the first-person setup source-supported.
+2. Use occasional language buffers such as `probably`, `one concern I have`,
+   or `my current view` for judgment calls; keep measured facts direct.
+3. Include concrete constraints such as corpus size, update frequency, latency,
    filtering, evaluation method, cost, or operational burden.
-3. Separate measured evidence from assumptions and unanswered questions.
-4. State failure cases and tradeoffs.
-5. Keep an open question when it naturally invites comparable experience; a
-   question ending is optional.
+4. Separate measured evidence from assumptions and unanswered questions.
+5. State failure cases and tradeoffs.
+6. Match the close to the Post Type: Tutorials do not end with questions;
+   Discussions may invite comparable experience softly without forcing a
+   question ending.
 
 ## Identity and brand boundary
 
@@ -33,8 +39,9 @@ tooling tradeoffs.
 - `I built` is allowed only when source-supported and without identity, employer,
   contributor/maintainer role, affiliation, customer identity, or project
   representation.
-- The title must not mention Milvus. The body may mention Milvus once only when
-  the technical background or data is source-supported. Never mention Zilliz.
+- The title must not mention Milvus. Every body must mention Milvus exactly once
+  using source-supported technical background or data and must include a
+  `milvus_mention_basis`. Never mention Zilliz.
 - Screenshots provide Post Type and structural cues only.
 
 ## Links

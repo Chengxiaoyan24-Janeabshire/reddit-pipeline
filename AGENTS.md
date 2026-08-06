@@ -30,6 +30,9 @@ root with `python3 scripts/...`.
   (`TXy3bCKznaz89fseyo3cPMShnyb` / `tblsyUaNiyPnhrFI` / `vewx5CDVdU`).
 - Require `Category = Blog Post`, `Status = Published`, an official `/blog/`
   URL, a recoverable publish date, and a date on or after `2026-01-01`.
+- Prefer suitable, ungenerated sources published within the latest 7 days.
+  If they cannot cover all four weekly slots, fill the remaining slots from
+  older suitable sources in descending publish-date order.
 - Do not use Medium Sync, Medium Daily, EN Content, or the retired calendar
   view.
 - Generate exactly four weekly slots: R1 → `r/Rag`, R1 → `r/AI_Agents`, R2 →
@@ -43,12 +46,18 @@ root with `python3 scripts/...`.
   employer, affiliation, contributor/maintainer status, or private account data.
 - `I built` is allowed only when supported by the source and without inventing
   personal history, customers, benchmarks, metrics, or results.
-- Titles cannot mention Milvus. A body may mention Milvus once when the source
-  supports the technical background or data; fill `milvus_mention_basis`.
+- Titles cannot mention Milvus. Every body must mention Milvus exactly once when
+  the source supports the technical background or data; fill
+  `milvus_mention_basis`. Replace a source that cannot support the required
+  mention.
 - Generated content cannot mention Zilliz.
 - R1/R2 are always `no_link`; reject URLs and `approved_link`.
-- Open community questions are optional. Preserve one when it fits; do not
-  force a question ending.
+- Open with a source-supported first-person setup and use sparse, grammatical
+  language buffers for judgments or uncertainty; do not invent personal history
+  or hedge source-supported facts.
+- Tutorials must not end with a question. Discussion reply invitations are
+  optional and, when used, should be soft and conversational rather than a hard
+  interrogative ending.
 - Keep all four length tiers: `short_post`, `standard_post`, `long_post`, and
   `code_long_post`. Use `short_post` only for genuinely concise content.
 - Screenshots provide Post Type and structural overlays only. Never copy their

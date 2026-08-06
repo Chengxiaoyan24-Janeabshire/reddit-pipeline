@@ -5,10 +5,11 @@
 > - 只生成供人工审核和手动发布的 Reddit 草稿，不登录、不发帖、不回复、不点赞、不投票、不养号。
 > - 每周固定四个槽位：R1 → `r/Rag`、`r/AI_Agents`；R2 → `r/vectordatabase`、`r/LocalLLaMA`。
 > - R1/R2 绝对匿名，Disclosure 为空；`I built` 可以保留，但必须有来源支持且不能暴露身份或 affiliation。
-> - 标题不能出现 Milvus；正文最多出现一次 Milvus，并填写来源依据；任何生成内容不能出现 Zilliz。
+> - 标题不能出现 Milvus；每篇正文必须恰好出现一次有来源依据的 Milvus，并填写 `milvus_mention_basis`；任何生成内容不能出现 Zilliz。
 > - R1/R2 全部 `no_link`，标题、正文和链接字段都不能有 URL。
-> - 开放问题可有可无，不为满足校验强行添加。
+> - 首段立即使用有来源支持的第一人称视角，并少量加入自然 language buffers；Tutorial 不以问题结尾，Discussion 如邀请互动则使用柔和表达。
 > - 保留 `short_post`、`standard_post`、`long_post`、`code_long_post` 四个长度档位。
+> - 本周选题优先使用最近 7 天发布、技术适配且尚未生成的 Blog；不足四槽时才按发布日期从新到旧使用更早来源。
 > - 已发布帖子只解析人工粘贴到飞书的完整 Reddit JSON；不会由脚本访问 Reddit。Reddit 不公开精确 downvote，表中只保存明确标注的估算值。
 
 ## 1. 整个 Pipeline 的逻辑
@@ -71,8 +72,8 @@ Content All in One / All content / all content
 
 | 步骤 | 输入 | 判断规则 | 输出 / 外部写入 |
 |---|---|---|---|
-| Pool sync | Content All in One `all content` view、cutoff date | `Category = Blog Post`、`Status = Published`、官方 `/blog/` URL、发布日期 ≥ `2026-01-01`、canonical URL 去重 | Dry run 只返回计数和候选；live sync 只新增 `Reddit Blog Pool` rows |
-| Source screen | Pending pool row 或单个 URL；抓取到的正文；topic/account rules | 技术密度、campaign/press 风险、R1/R2 topic score、固定 lane、Post Type | 筛选状态、分数、理由、Topic、Account、Subreddit、Post Type、`no_link` |
+| Pool sync | Content All in One `all content` view、cutoff date | `Category = Blog Post`、`Status = Published`、官方 `/blog/` URL、发布日期 ≥ `2026-01-01`、canonical URL 去重；发布日期倒序并标记最近 7 天 | Dry run 只返回计数和候选；live sync 只新增 `Reddit Blog Pool` rows |
+| Source screen | Pending pool row 或单个 URL；抓取到的正文；topic/account rules | 最近 7 天优先、技术密度、campaign/press 风险、R1/R2 topic score、固定 lane、Post Type | 筛选状态、分数、理由、Topic、Account、Subreddit、Post Type、`no_link` |
 | Draft | 已筛选来源事实；账号、指纹、长度、weekly、subreddit 与截图规则 | 先应用硬规则，再应用稳定指纹，再叠加 Post Type/截图结构，最后写来源事实 | 只返回最终 Pack JSON，不返回推理或私密账号信息 |
 | Validate | 单个 pack 或 pack 列表 | 四槽、账号/社区、Post Type、匿名、Milvus/Zilliz、URL、长度、代码、重复正文 | 只读 JSON；开放问题有无都不报错或警告 |
 | Feishu review | 已通过 validation 的 pack | 再校验、构造无链接 Content Doc、映射 review metadata | Dry run 只预览；live write 创建 Docs/rows 并增加 pool 生成计数 |
@@ -106,7 +107,7 @@ Content All in One / All content / all content
       "body": "...",
       "disclosure": "",
       "link_policy": "no_link",
-      "milvus_mention_basis": "",
+      "milvus_mention_basis": "The source-supported reason for the single body mention.",
       "angle": "...",
       "voice_fingerprint": "personal_build_log",
       "length_tier": "standard_post"
@@ -121,7 +122,7 @@ Content All in One / All content / all content
 
 | JSON | 使用阶段 | 决定什么 | 权限边界 |
 |---|---|---|---|
-| `data/weekly_post_rules.json` | Screen、Draft、Validate | R1/R2、四个固定槽位、Post Types、匿名、品牌、链接、开放问题策略 | 机器可读硬规则，优先级最高 |
+| `data/weekly_post_rules.json` | Screen、Draft、Validate | R1/R2、四个固定槽位、最近 7 天来源优先、Post Types、匿名、品牌、链接、开放问题策略 | 机器可读硬规则，优先级最高 |
 | `data/accounts.json` | Screen、Draft、Validate、Write | 账号角色、允许社区、默认 fingerprint、品牌边界 | 定义稳定 persona，不能扩大 weekly lane |
 | `data/account_topic_rules.json` | Screen | topic/keyword score 和 R1/R2 分配倾向 | 只排名，不创建新的 subreddit 权限 |
 | `data/user_fingerprints.json` | Draft、Validate | 长期稳定语气、格式和截图可叠加范围 | 胜过截图中的身份、拼写、链接和个人主张 |
@@ -140,10 +141,10 @@ Content All in One / All content / all content
 |---|---|
 | 旧资料中的 5–6 个账号、warm-up、回复、点赞或发帖自动化 | 只保留 R1/R2 四槽内容生成；所有 Reddit 操作由人工完成 |
 | 稳定“指纹/人设”与 subreddit 截图作者风格不同 | 稳定 fingerprint 是 persona；截图只是 Post Type/结构 overlay，不复制身份、雇主、链接、错别字、metrics 或经历 |
-| 旧规则要求完全不提 Milvus，其他例子又偏产品宣传 | 标题不提；正文最多一次且需要 source-supported basis；绝不提 Zilliz |
+| 旧规则要求完全不提 Milvus，其他例子又偏产品宣传 | 标题不提；每篇正文恰好一次且需要 source-supported basis；绝不提 Zilliz |
 | 旧 R1 manual-approved link 与示例中的 inline URL | R1/R2 统一 `no_link`，URL 和 `approved_link` 都拒绝 |
 | 旧同步链指向 Medium 或 calendar，并接受非 Published | 只从 All Content 的固定 view 同步 `Blog Post + Published` |
-| 旧规则强制以开放问题结尾 | 开放问题完全可选，有则保留，没有也不报错或警告 |
+| 旧规则强制以开放问题结尾 | Tutorial 不以问题结尾；Discussion 的互动邀请可选，使用柔和表达而非生硬问句 |
 | `topic_bank.json` 的广泛 community fit 与账号固定 lane | Topic 只能帮助排序，最终必须服从四个固定槽位 |
 | Tools/Blog/Open Source/Showcase 经常依赖外链 | 只有内容在无链接时仍完整，才使用该 Post Type；否则换角度或换来源 |
 
@@ -163,9 +164,9 @@ Content All in One / All content / all content
 | 表 | 用途 |
 |---|---|
 | `Reddit Blog Pool` (`tbl3yFyNWxEdC9OT`) | 来源、发布日期、筛选、Topic、R1/R2 和 Post Type 推荐 |
-| `Reddit Persona Pipeline` (`tbl7OQ8PLU0iwJNp`) | Draft metadata、Content Doc、Milvus 依据、长度、审核与人工发布状态 |
+| `Reddit Persona Pipeline` (`tbl7OQ8PLU0iwJNp`) | Draft metadata、Content Doc、长度、审核与人工发布状态；可用字段存在时也写入 Milvus 依据 |
 
-主要 review 字段：`Draft ID`、`Source Blog URL`、`Blog Pool Record ID`、`Account Code`、`Subreddit`、`Post Type`、`Content Doc`、`Link Policy`、`Milvus Mention Basis`、`Voice Fingerprint`、`Length Tier`、`Status`、`Publish URL`、`Publish Date` 和 `Publisher`。
+主要 review 字段：`Draft ID`、`Source Blog URL`、`Blog Pool Record ID`、`Account Code`、`Subreddit`、`Post Type`、`Content Doc`、`Link Policy`、`Voice Fingerprint`、`Length Tier`、`Status`、`Publish URL`、`Publish Date` 和 `Publisher`。`Milvus Mention Basis` 已在本地 schema 映射中定义，但当前 live Base 尚无该专用字段；writer 会跳过不存在的字段，依据仍以 pack JSON 中非空的 `milvus_mention_basis` 为准。
 
 发布后人工输入字段：`Reddit JSON`（可选链接）和 `Reddit JSON Content`（完整 JSON 文本）。解析结果字段：`Upvotes`、`Comments`、`Downvotes (Estimated)`、`Upvote Ratio`、`Reddit Post Status`、`Comment Summary`、`Public Opinion Alert`、`Milvus Signal` 和 `Reddit Metrics Updated At`。解析 Skill 不会覆盖两个输入字段；只有有效 JSON 证明 `Removed`/`Deleted` 时才自动把现有 `Status` 改为 `Cancel`。
 

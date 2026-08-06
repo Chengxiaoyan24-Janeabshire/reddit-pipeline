@@ -4,7 +4,7 @@ import argparse
 import json
 import re
 import sys
-from datetime import date
+from datetime import date, datetime, timezone
 
 import append_pack
 import feishu_client
@@ -13,6 +13,32 @@ import weekly_post_rules
 
 DATE_ID_RE = re.compile(r"^RD-\d{4}-\d{2}-\d{2}-")
 DEFAULT_PUBLISH_STATUS = "Pending"
+
+
+def feishu_date_value(value):
+    """Return a Feishu Date-field value as a Unix timestamp in milliseconds."""
+    if value in (None, ""):
+        return ""
+    if isinstance(value, datetime):
+        parsed = value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+        return int(parsed.timestamp() * 1000)
+    if isinstance(value, date):
+        parsed = datetime(value.year, value.month, value.day, tzinfo=timezone.utc)
+        return int(parsed.timestamp() * 1000)
+    if isinstance(value, (int, float)):
+        return int(value * 1000) if value < 100_000_000_000 else int(value)
+
+    text = str(value).strip()
+    if text.isdigit():
+        numeric = int(text)
+        return numeric * 1000 if numeric < 100_000_000_000 else numeric
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError(f"Invalid Source Blog Publish Date: {value!r}") from exc
+    if not parsed.tzinfo:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return int(parsed.timestamp() * 1000)
 
 
 def existing_count_today(app_token, table_id):
@@ -167,6 +193,7 @@ def build_drafts(spec, start_seq, topic_names):
             "code_allowed": length_tier == "code_long_post",
             "topic_tags": uniq(topic_tags),
             "char_count": len(body),
+            "content_doc_url": item.get("content_doc_url", ""),
         })
     return drafts
 
@@ -342,22 +369,31 @@ def main():
         pool_table,
         [spec.get("pool_record_id") or spec.get("pool_blog_id") for spec in specs],
     )
+    normalized_specs = []
+    for spec in specs:
+        normalized = dict(spec)
+        pool_record_id = spec.get("pool_record_id") or spec.get("pool_blog_id")
+        publish_date = spec.get("source_publish_date")
+        if not publish_date and pool_record_id:
+            publish_date = pool_publish_dates.get(pool_record_id, "")
+        normalized["source_publish_date"] = feishu_date_value(publish_date)
+        normalized_specs.append(normalized)
+    specs = normalized_specs
+
     all_records = []
     doc_urls = []
     pool_deltas = []
     doc_warnings = []
 
     for spec in specs:
-        pool_record_id = spec.get("pool_record_id") or spec.get("pool_blog_id")
-        if pool_record_id and not spec.get("source_publish_date"):
-            spec = dict(spec)
-            spec["source_publish_date"] = pool_publish_dates.get(pool_record_id, "")
         drafts = build_drafts(spec, start_seq, topic_names)
         start_seq += len(drafts)
         spec_record_count = 0
         for draft in drafts:
-            doc_url = ""
-            if not args.no_doc and not args.dry_run:
+            doc_url = (draft.get("content_doc_url") or "").strip()
+            if doc_url:
+                doc_urls.append(f"(dry-run: would reuse {doc_url})" if args.dry_run else doc_url)
+            elif not args.no_doc and not args.dry_run:
                 doc_title = draft["title"] or draft["draft_id"]
                 markdown = build_content_markdown(draft)
                 doc_url, warnings = feishu_docs.create_doc_from_markdown(doc_title, markdown, folder_token, base_url)

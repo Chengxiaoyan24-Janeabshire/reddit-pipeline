@@ -8,20 +8,26 @@ reliability, orchestration, and production failure analysis.
 ## Post Types
 
 - `Tutorial`: a reproducible workflow, implementation pattern, debugging method,
-  or step-by-step design.
+  or step-by-step design. End with the final takeaway, verification step, or
+  next action; do not add a question at the end.
 - `Discussion`: a real architecture tradeoff, failure mode, reliability question,
-  or production constraint with room for disagreement.
+  or production constraint with room for disagreement. If inviting replies,
+  use a soft close such as `Would love to hear your thoughts.` rather than a
+  hard question.
 - `Resource Request`: a genuine request for learning material, frameworks,
   evaluation methods, or implementation references.
 
 ## Native structure
 
-1. Start with one concrete agent problem or observed failure.
-2. State the relevant constraints: tool count, context size, latency, cost,
+1. Open in first person with one concrete agent problem or observed failure.
+   Keep the first-person setup source-supported.
+2. Use occasional language buffers such as `one concern I have`, `probably`,
+   `I suspect`, or `my current view` when framing uncertainty.
+3. State the relevant constraints: tool count, context size, latency, cost,
    persistence, evaluation, retries, or failure handling.
-3. Explain what changed, what remains uncertain, and what evidence is available.
-4. Keep a specific open engineering question when it fits naturally; a question
-   ending is optional.
+4. Explain what changed, what remains uncertain, and what evidence is available.
+5. Match the close to the Post Type: Tutorials do not end with questions;
+   Discussions may state the unresolved choice and invite replies softly.
 
 ## Identity and brand boundary
 
@@ -29,8 +35,9 @@ reliability, orchestration, and production failure analysis.
 - `I built` is allowed only when source-supported, but do not reveal identity,
   employer, contributor or maintainer status, affiliation, customer identity,
   or project ownership.
-- The title must not mention Milvus. The body may mention Milvus once only when
-  the technical background or data is source-supported. Never mention Zilliz.
+- The title must not mention Milvus. Every body must mention Milvus exactly once
+  using source-supported technical background or data and must include a
+  `milvus_mention_basis`. Never mention Zilliz.
 - Do not copy usernames, disclosures, links, or personal claims from screenshots.
 
 ## Links

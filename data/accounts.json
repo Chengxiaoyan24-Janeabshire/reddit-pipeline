@@ -15,8 +15,9 @@
     "brand_policy": {
       "may_mention_milvus": true,
       "may_mention_zilliz": false,
+      "required_milvus_body_mentions": 1,
       "max_milvus_body_mentions": 1,
-      "notes": "The title must not mention Milvus. The body may mention Milvus once only when the technical background or data is source-supported. Never mention Zilliz. No outbound links."
+      "notes": "The title must not mention Milvus. The body must mention Milvus exactly once, with source-supported technical background or data and a non-empty milvus_mention_basis. Never mention Zilliz. No outbound links."
     },
     "best_for": [
       "implementation questions",
@@ -27,7 +28,7 @@
     "avoid": [
       "real identity or employer details",
       "core contributor, maintainer, employee, or affiliation claims",
-      "Milvus in the title or more than once in the body",
+      "Milvus missing from the body, appearing in the title, or appearing more than once in the body",
       "Zilliz anywhere in the draft",
       "brand slogans and product promotion",
       "unsupported customer stories or benchmarks",
@@ -50,8 +51,9 @@
     "brand_policy": {
       "may_mention_milvus": true,
       "may_mention_zilliz": false,
+      "required_milvus_body_mentions": 1,
       "max_milvus_body_mentions": 1,
-      "notes": "The title must not mention Milvus. The body may mention Milvus once only when the technical background or data is source-supported. Never mention Zilliz. No outbound links."
+      "notes": "The title must not mention Milvus. The body must mention Milvus exactly once, with source-supported technical background or data and a non-empty milvus_mention_basis. Never mention Zilliz. No outbound links."
     },
     "best_for": [
       "Kubernetes operations",
@@ -62,7 +64,7 @@
     "avoid": [
       "real identity or employer details",
       "core contributor, maintainer, employee, or affiliation claims",
-      "Milvus in the title or more than once in the body",
+      "Milvus missing from the body, appearing in the title, or appearing more than once in the body",
       "Zilliz anywhere in the draft",
       "benchmark absolutism",
       "vendor cheerleading",

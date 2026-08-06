@@ -15,7 +15,9 @@ Run commands from the project root.
 
 Read `data/account_topic_rules.json`, `data/topic_bank.json`, and
 `data/weekly_post_rules.json`. Assign only active R1/R2 lanes and at most two
-accounts. Every recommendation uses `link_policy = no_link`.
+accounts. Every recommendation uses `link_policy = no_link`. Screen rows in the
+configured recency order: latest-7-day sources first, then older sources by
+descending publish date as fallback.
 
 ## Procedure
 
@@ -40,6 +42,8 @@ awards, and sources without enough technical detail.
 ## Checks
 
 - Do not force both accounts onto every source.
+- When using `--limit`, verify that recent ungenerated rows were screened before
+  older fallback rows.
 - Keep recommendations inside each account's fixed two subreddits.
 - Use `Suitable` for normal drafting; use `Borderline` only after human review.
 - Preserve screening reasons and scores as metadata, never draft prose.

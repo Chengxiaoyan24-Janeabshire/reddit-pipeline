@@ -13,14 +13,18 @@ community rules were checked; it is not a flair to imitate.
 
 ## Native structure
 
-1. State the system decision or failure clearly.
-2. Give the workload shape where supported: vector count, dimensions, QPS,
+1. Open in first person and state the system decision or failure clearly. Keep
+   the first-person setup source-supported.
+2. Use light buffers such as `my current view`, `probably`, `I suspect`, or
+   `I would likely` for recommendations; keep benchmark facts unhedged.
+3. Give the workload shape where supported: vector count, dimensions, QPS,
    latency target, filtering, update rate, hardware, consistency, and budget.
-3. Explain the benchmark or comparison method, including limitations.
-4. Name operational costs such as compaction, index rebuilds, memory, storage,
+4. Explain the benchmark or comparison method, including limitations.
+5. Name operational costs such as compaction, index rebuilds, memory, storage,
    migrations, backups, and observability.
-5. Keep a focused question about the tradeoff when it fits naturally; a question
-   ending is optional.
+6. When inviting replies, state the unresolved tradeoff and use a soft close
+   such as `Would love to hear your thoughts.` rather than ending with a hard
+   question.
 
 ## Identity and brand boundary
 
@@ -28,8 +32,9 @@ community rules were checked; it is not a flair to imitate.
 - `I built` is allowed only when source-supported.
 - Do not reveal identity, employer, contributor/maintainer role, affiliation,
   customer identity, or project representation.
-- The title must not mention Milvus. The body may mention Milvus once only when
-  the technical background or data is source-supported. Never mention Zilliz.
+- The title must not mention Milvus. Every body must mention Milvus exactly once
+  using source-supported technical background or data and must include a
+  `milvus_mention_basis`. Never mention Zilliz.
 - Do not copy usernames, disclosures, links, brand claims, or exact text from
   screenshots.
 

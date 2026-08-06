@@ -16,7 +16,7 @@ Reads JSON from stdin:
       "body": "...",
       "disclosure": "",
       "link_policy": "no_link",
-      "milvus_mention_basis": "",
+      "milvus_mention_basis": "The source-supported reason for the single body mention.",
       "angle": "..."
     }
   ]
@@ -71,6 +71,16 @@ VOTE_OR_BRIGADE_PHRASES = [
     "boost this",
     "let's all comment",
 ]
+
+FIRST_PERSON_OPENING_PATTERN = re.compile(
+    r"\b(?:i|i'm|i’ve|i've|i'd|i’d|my)\b",
+    re.IGNORECASE,
+)
+LANGUAGE_BUFFER_PATTERN = re.compile(
+    r"\b(?:probably|one concern i have|my current view|i suspect|"
+    r"i would (?:probably|likely)|i do not think|i don't think|i tend to|likely)\b",
+    re.IGNORECASE,
+)
 
 
 def load_accounts():
@@ -266,6 +276,30 @@ def validate(spec):
 
         if not body.strip():
             errors.append(f"{prefix}: body is empty")
+        else:
+            opening_paragraph = re.split(r"\n\s*\n", body.strip(), maxsplit=1)[0]
+            if not FIRST_PERSON_OPENING_PATTERN.search(opening_paragraph):
+                warnings.append(
+                    f"{prefix}: opening paragraph should establish the anonymous "
+                    "first-person perspective immediately"
+                )
+            if not LANGUAGE_BUFFER_PATTERN.search(body):
+                warnings.append(
+                    f"{prefix}: add one or two natural language buffers such as "
+                    "'probably', 'one concern I have', or 'my current view' "
+                    "to calibrate personal judgments"
+                )
+            if post_type == "Tutorial" and body.rstrip().endswith("?"):
+                errors.append(
+                    f"{prefix}: Tutorial posts must end with a takeaway or next "
+                    "step, not a question"
+                )
+            if post_type == "Discussion" and body.rstrip().endswith("?"):
+                warnings.append(
+                    f"{prefix}: Discussion ending is too interrogative; state the "
+                    "uncertainty and close with a soft invitation such as "
+                    "'Would love to hear your thoughts.'"
+                )
 
         if length_rules and not length_rule:
             errors.append(f"{prefix}: unknown length_tier {length_tier!r}")
@@ -309,10 +343,23 @@ def validate(spec):
         body_milvus_mentions = len(MILVUS_PATTERN.findall(body))
         mentions_zilliz = bool(ZILLIZ_PATTERN.search(combined))
         brand_policy = account.get("brand_policy", {})
+        required_milvus_mentions = int(
+            brand_policy.get("required_milvus_body_mentions") or 0
+        )
         max_milvus_mentions = int(brand_policy.get("max_milvus_body_mentions") or 0)
         if title_milvus_mentions:
             errors.append(f"{prefix}: Milvus may appear only in the body, not the title")
-        if body_milvus_mentions > max_milvus_mentions:
+        if required_milvus_mentions and body_milvus_mentions != required_milvus_mentions:
+            required_text = (
+                "exactly once"
+                if required_milvus_mentions == 1
+                else f"exactly {required_milvus_mentions} times"
+            )
+            errors.append(
+                f"{prefix}: body must mention Milvus {required_text}; "
+                f"found {body_milvus_mentions}"
+            )
+        elif body_milvus_mentions > max_milvus_mentions:
             errors.append(
                 f"{prefix}: body may mention Milvus at most {max_milvus_mentions} time(s); "
                 f"found {body_milvus_mentions}"

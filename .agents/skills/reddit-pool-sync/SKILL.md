@@ -27,7 +27,8 @@ existing option. Do not use `Medium sync`, `Medium Daily`, or EN Content.
 
 Require `Category = Blog Post`, `Status = Published`, a non-empty official
 `/blog/` Publish URL, and a recoverable publish date. Deduplicate by canonical
-URL.
+URL. Sort eligible and new rows by publish date descending and report how many
+fall inside the configured latest-7-day priority window.
 
 ## Procedure
 
@@ -44,6 +45,8 @@ python3 scripts/sync_blog_pool_from_content_all_in_one.py --since-date 2026-01-0
 - Confirm `source_view_id` is `vewx5CDVdU`.
 - Confirm the source label contains `Category=Blog Post` and `Status=Published`.
 - Confirm dry-run writes zero rows.
+- Confirm `priority_window_days = 7`, and review `recent_eligible` and
+  `recent_new` before syncing.
 - Report new, already-present, not-published, missing-URL, non-official,
   old-date, and unknown-date counts.
 - Do not change screening fields on existing pool rows.

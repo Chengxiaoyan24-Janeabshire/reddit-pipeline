@@ -5,26 +5,41 @@
   ],
   "weekly_pack_size": 4,
   "open_question_policy": "optional",
+  "opening_perspective_policy": "Use a source-supported first-person setup in the opening paragraph. Do not delay the account perspective until later paragraphs or invent personal history.",
+  "language_buffer_policy": "Use occasional grammatical buffers such as 'probably', 'one concern I have', 'my current view', 'I suspect', or 'I would likely' for judgments and uncertainty. Do not hedge source-supported facts or every sentence.",
+  "post_type_closing_policy": {
+    "Tutorial": "End with a takeaway, verification step, or next action. Do not end with a question.",
+    "Discussion": "A reply invitation is optional. When used, keep it soft and conversational, such as 'Would love to hear your thoughts.', rather than ending with a sharp question.",
+    "default": "Do not force a question ending. Match the close to the Post Type."
+  },
+  "source_recency_policy": {
+    "priority_window_days": 7,
+    "sort_order": "publish_date_desc",
+    "fallback_to_older": true,
+    "notes": "Prefer suitable, ungenerated sources published within the last 7 days. If they cannot cover all four weekly slots, fill the remaining slots from older suitable sources in descending publish-date order."
+  },
   "account_policies": {
     "R1": {
       "identity_visibility": "anonymous",
       "disclosure": "",
-      "first_person_rule": "'I built' is allowed when source-supported, but never reveal a real identity, employer, contributor role, maintainer role, or affiliation.",
-      "brand_rule": "The title must not mention Milvus. The body may mention Milvus once when the technical background or data is source-supported. Never mention Zilliz.",
+      "first_person_rule": "Open with a source-supported first-person setup. 'I built' is allowed when source-supported, but never reveal a real identity, employer, contributor role, maintainer role, or affiliation.",
+      "brand_rule": "The title must not mention Milvus. The body must mention Milvus exactly once when the technical background or data is source-supported, with a non-empty milvus_mention_basis. Never mention Zilliz.",
+      "required_milvus_body_mentions": 1,
       "max_milvus_body_mentions": 1,
       "link_mode": "no_link",
       "default_link_policy": "no_link",
-      "notes": "R1 never includes outbound links. A source-supported Milvus body mention requires milvus_mention_basis."
+      "notes": "R1 never includes outbound links. Every body requires exactly one source-supported Milvus mention and a non-empty milvus_mention_basis."
     },
     "R2": {
       "identity_visibility": "anonymous",
       "disclosure": "",
-      "first_person_rule": "'I built' is allowed when source-supported, but never reveal a real identity, employer, contributor role, maintainer role, or affiliation.",
-      "brand_rule": "The title must not mention Milvus. The body may mention Milvus once when the technical background or data is source-supported. Never mention Zilliz.",
+      "first_person_rule": "Open with a source-supported first-person setup. 'I built' is allowed when source-supported, but never reveal a real identity, employer, contributor role, maintainer role, or affiliation.",
+      "brand_rule": "The title must not mention Milvus. The body must mention Milvus exactly once when the technical background or data is source-supported, with a non-empty milvus_mention_basis. Never mention Zilliz.",
+      "required_milvus_body_mentions": 1,
       "max_milvus_body_mentions": 1,
       "link_mode": "no_link",
       "default_link_policy": "no_link",
-      "notes": "R2 never includes outbound links."
+      "notes": "R2 never includes outbound links. Every body requires exactly one source-supported Milvus mention and a non-empty milvus_mention_basis."
     }
   },
   "weekly_slots": [

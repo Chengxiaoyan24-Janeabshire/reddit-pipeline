@@ -36,23 +36,36 @@ or factual claims.
 
 Create exactly R1 → `r/Rag`, R1 → `r/AI_Agents`, R2 →
 `r/vectordatabase`, and R2 → `r/LocalLLaMA`. Use `No fixed post type` for
-`r/vectordatabase`.
+`r/vectordatabase`. Prefer suitable ungenerated sources published within the
+latest 7 days. Use older suitable sources only for slots that recent sources
+cannot cover.
 
 ## Draft Rules
 
 - Keep R1/R2 anonymous and `disclosure` empty.
 - Allow `I built` only when the source supports the development background.
-- Do not mention Milvus in the title. Mention Milvus at most once in the body,
-  only when the technical background or data is source-supported. When used,
-  fill `milvus_mention_basis` with a short evidence note.
+- Do not mention Milvus in the title. Mention Milvus exactly once in every body,
+  using source-supported technical background or data, and fill
+  `milvus_mention_basis` with a short evidence note. If the source cannot support
+  that mention, replace the source instead of drafting an unsupported claim.
 - Never mention Zilliz.
 - Set every item to `link_policy = no_link`; omit or empty `approved_link` and
   never place a URL in title/body.
 - Preserve the account fingerprint; use screenshots only to adapt Post Type,
   opening structure, sectioning, and question shape.
+- Put a source-supported first-person setup in the opening paragraph so the
+  account perspective is present immediately rather than appearing several
+  paragraphs later. Do not invent personal history to achieve this.
+- Use a few natural language buffers to calibrate certainty, such as
+  `probably`, `one concern I have`, `my current view`, `I suspect`, or
+  `I would likely`. Keep them grammatical and sparse; do not hedge every
+  sentence or weaken source-supported facts.
 - Include concrete constraints and separate evidence from assumptions.
-- Keep an open community question when it fits naturally; a question ending is
-  optional and must not be forced.
+- End a `Tutorial` with the final takeaway, verification step, or next action;
+  do not add a community question at the end.
+- For a `Discussion`, an invitation to reply is optional. When used, keep it
+  soft and conversational, such as `Would love to hear your thoughts.`, rather
+  than ending on a sharp or interrogative question.
 - Use `short_post` for a genuine concise Discussion or Resource Request; retain
   `standard_post` for normal technical discussions and do not pad short posts.
 - Do not invent experience, customers, benchmarks, metrics, or results.
@@ -74,7 +87,7 @@ Create exactly R1 → `r/Rag`, R1 → `r/AI_Agents`, R2 →
       "body": "...",
       "disclosure": "",
       "link_policy": "no_link",
-      "milvus_mention_basis": "",
+      "milvus_mention_basis": "The source-supported reason for the single body mention.",
       "angle": "...",
       "length_tier": "standard_post"
     }

@@ -29,7 +29,9 @@ any one of these skills directly without triggering later stages.
 1. Use `$reddit-pool-sync` to sync eligible `Category = Blog Post` and
    `Status = Published` rows from Content All in One / `all content`
    (`vewx5CDVdU`).
-2. Use `$reddit-source-screen` to screen active ungenerated rows.
+2. Use `$reddit-source-screen` to screen active ungenerated rows, prioritizing
+   sources from the latest 7 days. Use older suitable rows only when recent
+   sources cannot cover all four fixed slots.
 3. Use `$reddit-pack-draft` to produce exactly four slots:
    - R1 → `r/Rag`
    - R1 → `r/AI_Agents`
@@ -45,6 +47,8 @@ validate, or preview.
 ## Shared Contract
 
 - Treat `data/weekly_post_rules.json` as the machine-readable source of truth.
+- Apply `source_recency_policy`: recent suitable sources come first, followed
+  by older suitable sources in descending publish-date order only as fallback.
 - Use only R1/R2 and their fixed subreddit lanes.
 - Preserve the stable account fingerprint from `data/user_fingerprints.json`.
   Use subreddit screenshots only as Post Type and structure overlays; never copy
@@ -52,13 +56,17 @@ validate, or preview.
 - Keep both accounts anonymous and `disclosure` empty. `I built` is allowed only
   when source-supported and must not reveal identity, employer, contributor or
   maintainer status, or affiliation.
-- Do not mention Milvus in a title. A body may mention Milvus once when the
-  technical background or data is source-supported; fill
-  `milvus_mention_basis`. Never mention Zilliz.
+- Do not mention Milvus in a title. Every body must mention Milvus exactly once
+  using source-supported technical background or data; fill
+  `milvus_mention_basis`. Replace a source that cannot support the required
+  mention. Never mention Zilliz.
 - R1 and R2 are always `no_link`; reject URLs and `approved_link`.
 - Do not invent development history, customers, benchmarks, metrics, or results.
-- Open community questions are optional. Keep one when it fits naturally and do
-  not force a question ending.
+- Put a source-supported first-person setup in the opening paragraph and use a
+  few grammatical language buffers for judgments or uncertainty.
+- Tutorials must not end with a question. Discussion reply invitations are
+  optional and should use a soft conversational close rather than a hard
+  interrogative ending.
 - Use `short_post` for genuine concise discussions or Resource Requests and
   keep `standard_post` for normal technical posts.
 - Do not generate warm-up activity.

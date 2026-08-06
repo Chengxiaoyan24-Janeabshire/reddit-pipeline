@@ -10,6 +10,46 @@
 4. 描述能力、行为和用户结果，不写成文件名清单。
 5. Change Log 与对应代码、规则或文档在同一批 push 中提交。
 
+## 2026-08-06 — Required Milvus body mention
+
+### Changed
+
+- 每篇 Reddit 草稿正文现在必须恰好出现一次有来源依据的 Milvus，并填写 `milvus_mention_basis`；正文零次或超过一次都会阻断验证和飞书写入。
+- 标题继续完全禁止 Milvus，所有生成内容继续禁止 Zilliz；无法支持一次 Milvus mention 的来源必须被替换，不能补写无依据的品牌内容。
+- 随仓库提供的四槽 validation sample 已同步新合同，README 中的标准校验命令可直接通过；当前 live Base 缺少专用 basis 字段时，依据继续保存在 pack JSON 中。
+
+### Added
+
+- 增加正文零次和两次 Milvus 都失败、正文恰好一次通过的回归测试。
+
+## 2026-08-06 — First-person openings and Post Type closings
+
+### Changed
+
+- Reddit 草稿现在在首段立即建立匿名第一人称视角，不再到后续段落才出现账号声音；第一人称仍必须有来源支持，不能补写个人经历。
+- 判断和不确定性会加入少量自然 language buffers，例如 `probably`、`one concern I have`、`my current view` 或 `I would likely`；来源支持的事实和指标仍保持直接表达。
+- `Tutorial` 以结论、验证步骤或下一步收尾，不再追加社区问题；`Discussion` 如需邀请互动，改用 `Would love to hear your thoughts.` 一类柔和表达，避免生硬的问句结尾。
+
+### Added
+
+- Draft validation 会拒绝以问题结尾的 `Tutorial`，并提示缺少首段第一人称、缺少自然 language buffer，或以强问句结尾的 `Discussion`。
+
+## 2026-08-04 — Recent-source priority for weekly packs
+
+### Changed
+
+- Weekly Reddit 选题现在优先使用最近 7 天内发布、技术适配且尚未生成的官方 Blog；如果近期来源不能覆盖四个固定槽位，才按发布日期从新到旧使用更早来源补齐。
+- Pool sync 与 screening 输出会按来源发布日期排序并标记近期优先候选，使 `--limit` 和人工选题都先处理最新内容。
+
+### Fixed
+
+- Feishu Review 写入现在会在创建文档前把来源发布日期转换为 Date 字段要求的毫秒时间戳，避免文档创建后因日期格式错误导致 Base 记录失败。
+- 失败恢复可以复用已经创建的 Content Doc，避免重试 weekly delivery 时产生重复文档。
+
+### Added
+
+- 新增最近 7 天优先规则和回归测试，防止 weekly workflow 重新退化为无日期顺序的候选选择。
+
 ## 2026-08-03 — Offline Reddit JSON Content parsing
 
 ### Added

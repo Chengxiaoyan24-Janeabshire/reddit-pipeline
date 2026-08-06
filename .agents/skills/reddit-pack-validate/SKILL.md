@@ -29,11 +29,16 @@ that option is retired.
 - Every item has a valid Post Type.
 - Disclosure is empty and no identity, employer, contributor/maintainer role,
   or affiliation is revealed.
-- The title contains no Milvus. The body contains Milvus zero or one time. A
-  single mention requires non-empty `milvus_mention_basis`.
+- The title contains no Milvus. The body contains Milvus exactly once, and that
+  mention requires non-empty `milvus_mention_basis`.
 - Zilliz never appears.
 - `link_policy` is `no_link`, `approved_link` is empty, and title/body contain no
   URL.
+- A Tutorial does not end with a question. A Discussion that ends with a hard
+  question receives a review warning; a soft invitation is allowed.
+- The opening paragraph establishes a source-supported first-person perspective,
+  and personal judgments use sparse natural language buffers. Missing either is
+  a review warning, not permission to invent experience or weaken factual claims.
 - Bodies are nonempty and unique, with a valid length tier and allowed code.
 - A question ending is optional and must not create an error or warning by
   itself.
