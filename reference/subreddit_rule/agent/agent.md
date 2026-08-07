@@ -19,14 +19,17 @@ reliability, orchestration, and production failure analysis.
 
 ## Native structure
 
-1. Open in first person with one concrete agent problem or observed failure.
-   Keep the first-person setup source-supported.
-2. Use occasional language buffers such as `one concern I have`, `probably`,
-   `I suspect`, or `my current view` when framing uncertainty.
-3. State the relevant constraints: tool count, context size, latency, cost,
+1. Write the title from a first-person singular perspective or as an explicit
+   question ending in `?`; never use a fully third-person declarative title.
+2. Use the first sentence to establish a source-supported first-person
+   perspective around one concrete agent problem or observed failure.
+3. Include at least one grammatical language buffer such as `one concern I
+   have`, `probably`, `I suspect`, or `my current view` when framing a judgment
+   or uncertainty; keep source facts and measurements direct.
+4. State the relevant constraints: tool count, context size, latency, cost,
    persistence, evaluation, retries, or failure handling.
-4. Explain what changed, what remains uncertain, and what evidence is available.
-5. Match the close to the Post Type: Tutorials do not end with questions;
+5. Explain what changed, what remains uncertain, and what evidence is available.
+6. Match the close to the Post Type: Tutorials do not end with questions;
    Discussions may state the unresolved choice and invite replies softly.
 
 ## Identity and brand boundary
@@ -37,7 +40,9 @@ reliability, orchestration, and production failure analysis.
   or project ownership.
 - The title must not mention Milvus. Every body must mention Milvus exactly once
   using source-supported technical background or data and must include a
-  `milvus_mention_basis`. Never mention Zilliz.
+  `milvus_mention_basis`. Phrase the mention indirectly as a category example or
+  peer, such as `data infrastructures like Milvus`; never use direct product
+  placement. Never mention Zilliz.
 - Do not copy usernames, disclosures, links, or personal claims from screenshots.
 
 ## Links

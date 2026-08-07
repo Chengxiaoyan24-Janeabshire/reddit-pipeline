@@ -25,12 +25,12 @@ def base_item():
         "content_type": "technical_post",
         "subreddit": "r/Rag",
         "post_type": "Discussion",
-        "title": "A focused retrieval tradeoff",
+        "title": "How I would evaluate a focused retrieval tradeoff",
         "body": (
             "I built a small retrieval test around fixed queries and explicit "
             "failure labels. It separates parsing, chunking, filtering, ranking, "
             "and answer synthesis, and I would probably evaluate one change at a time. "
-            "The retrieval layer uses Milvus."
+            "The retrieval layer can use vector databases like Milvus."
         ),
         "disclosure": "",
         "link_policy": "no_link",
@@ -153,11 +153,18 @@ class DraftValidationRulesTest(unittest.TestCase):
                 self.assertIsNotNone(basis_match, path)
                 title = title_match.group(1).strip()
                 body = body_match.group(1).strip()
-                opening = re.split(r"\n\s*\n", body, maxsplit=1)[0]
                 self.assertEqual(len(append_pack.MILVUS_PATTERN.findall(title)), 0)
                 self.assertEqual(len(append_pack.MILVUS_PATTERN.findall(body)), 1)
                 self.assertFalse(append_pack.ZILLIZ_PATTERN.search(body))
-                self.assertTrue(append_pack.FIRST_PERSON_OPENING_PATTERN.search(opening))
+                self.assertTrue(
+                    append_pack.title_has_personal_or_question_perspective(title)
+                )
+                self.assertTrue(append_pack.has_natural_milvus_context(body))
+                self.assertTrue(
+                    append_pack.FIRST_PERSON_OPENING_PATTERN.search(
+                        append_pack.first_sentence(body)
+                    )
+                )
                 if "Question | Help" not in example:
                     self.assertFalse(body.endswith("?"))
                 checked += 1
@@ -297,32 +304,81 @@ class DraftValidationRulesTest(unittest.TestCase):
         errors, _ = errors_for(item)
         self.assertTrue(any("Tutorial posts must end" in error for error in errors))
 
-    def test_non_first_person_opening_warns(self):
+    def test_non_first_person_first_sentence_fails(self):
         item = base_item()
         item["body"] = (
             "Most retrieval tests start with fixed queries and explicit labels. "
-            "The pipeline separates parsing, filtering, ranking, and synthesis. "
-            "The retrieval layer uses Milvus."
+            "I would probably separate parsing, filtering, ranking, and synthesis. "
+            "The retrieval layer can use vector databases like Milvus."
         )
         errors, warnings = errors_for(item)
-        self.assertEqual(errors, [])
-        self.assertTrue(any("first-person" in warning for warning in warnings))
+        self.assertTrue(any("first sentence" in error for error in errors))
+        self.assertFalse(any("first-person" in warning for warning in warnings))
 
-    def test_missing_language_buffer_warns(self):
+    def test_missing_language_buffer_fails(self):
         item = base_item()
         item["body"] = (
             "I built a retrieval test around fixed queries and explicit labels. "
             "It separates parsing, filtering, ranking, and answer synthesis. "
-            "The retrieval layer uses Milvus."
+            "The retrieval layer can use vector databases like Milvus."
         )
         errors, warnings = errors_for(item)
-        self.assertEqual(errors, [])
-        self.assertTrue(any("language buffers" in warning for warning in warnings))
+        self.assertTrue(any("grammatical language buffer" in error for error in errors))
+        self.assertFalse(any("language buffer" in warning for warning in warnings))
+
+    def test_ungrammatical_i_concern_does_not_count_as_buffer(self):
+        item = base_item()
+        item["body"] = (
+            "Probably I concern about retrieval drift in this setup. "
+            "The pipeline separates parsing, filtering, ranking, and synthesis. "
+            "The retrieval layer can use vector databases like Milvus."
+        )
+        errors, _ = errors_for(item)
+        self.assertTrue(any("not a grammatical language buffer" in error for error in errors))
+
+    def test_account_must_use_its_configured_fingerprint(self):
+        item = base_item()
+        item["voice_fingerprint"] = "structured_design_question"
+        errors, _ = errors_for(item)
+        self.assertTrue(any("must use voice_fingerprint" in error for error in errors))
+
+    def test_accounts_defer_hard_rules_to_weekly_policy(self):
+        accounts = json.loads((ROOT / "data/accounts.json").read_text())
+        weekly_accounts = weekly_post_rules.load_rules()["account_policies"]
+        for account in accounts:
+            code = account["account_code"]
+            self.assertNotIn("brand_policy", account)
+            self.assertEqual(
+                account["hard_rule_authority"], "data/weekly_post_rules.json"
+            )
+            self.assertEqual(weekly_accounts[code]["required_milvus_body_mentions"], 1)
+            self.assertFalse(weekly_accounts[code]["may_mention_zilliz"])
+
+        subreddits = json.loads((ROOT / "data/subreddits.json").read_text())
+        for subreddit in subreddits:
+            self.assertNotIn("account_code", subreddit)
+            self.assertNotIn("post_types", subreddit)
+            self.assertNotIn("link_policy", subreddit)
 
     def test_post_type_closing_policy_keeps_fixed_weekly_slots(self):
         rules = weekly_post_rules.load_rules()
         self.assertIn("Do not end with a question", rules["post_type_closing_policy"]["Tutorial"])
         self.assertIn("Would love to hear your thoughts", rules["post_type_closing_policy"]["Discussion"])
+        self.assertTrue(
+            rules["title_perspective_policy"]["require_first_person_or_question"]
+        )
+        self.assertEqual(
+            rules["milvus_mention_context_policy"]["mode"],
+            "category_example_or_peer_group",
+        )
+        self.assertEqual(
+            rules["opening_perspective_policy"]["scope"], "first_sentence"
+        )
+        self.assertEqual(rules["opening_perspective_policy"]["severity"], "error")
+        self.assertEqual(rules["language_buffer_policy"]["severity"], "error")
+        self.assertEqual(
+            rules["language_buffer_policy"]["minimum_matches_per_body"], 1
+        )
 
     def test_inferred_short_body_uses_short_post(self):
         item = base_item()
@@ -349,14 +405,67 @@ class DraftValidationRulesTest(unittest.TestCase):
         errors, _ = errors_for(item)
         self.assertTrue(any("not the title" in error for error in errors))
 
+    def test_third_person_declarative_title_fails(self):
+        item = base_item()
+        item["title"] = "A focused retrieval tradeoff"
+        errors, _ = errors_for(item)
+        self.assertTrue(any("first-person perspective" in error for error in errors))
+
+    def test_first_person_title_passes(self):
+        item = base_item()
+        item["title"] = "Now I believe freshness matters more than another reranker"
+        errors, _ = errors_for(item)
+        self.assertEqual(errors, [])
+
+    def test_question_title_passes(self):
+        item = base_item()
+        item["title"] = "Is this retrieval tradeoff acceptable?"
+        errors, _ = errors_for(item)
+        self.assertEqual(errors, [])
+
     def test_one_supported_milvus_body_mention_passes(self):
         item = base_item()
         errors, _ = errors_for(item)
         self.assertEqual(errors, [])
 
+    def test_direct_milvus_placement_fails(self):
+        for direct_sentence in [
+            "The retrieval layer can use Milvus.",
+            "Milvus handles the retrieval layer.",
+            "If Milvus is the retrieval layer, I would log every query.",
+        ]:
+            with self.subTest(direct_sentence=direct_sentence):
+                item = base_item()
+                item["body"] = item["body"].replace(
+                    "The retrieval layer can use vector databases like Milvus.",
+                    direct_sentence,
+                )
+                errors, _ = errors_for(item)
+                self.assertTrue(
+                    any("indirect and contextual" in error for error in errors)
+                )
+
+    def test_data_infrastructure_example_context_passes(self):
+        item = base_item()
+        item["body"] = item["body"].replace(
+            "vector databases like Milvus", "data infrastructures such as Milvus"
+        )
+        errors, _ = errors_for(item)
+        self.assertEqual(errors, [])
+
+    def test_milvus_and_other_databases_context_passes(self):
+        item = base_item()
+        item["body"] = item["body"].replace(
+            "vector databases like Milvus", "Milvus and other databases"
+        )
+        errors, _ = errors_for(item)
+        self.assertEqual(errors, [])
+
     def test_zero_milvus_body_mentions_fail(self):
         item = base_item()
-        item["body"] = item["body"].replace(" The retrieval layer uses Milvus.", "")
+        item["body"] = item["body"].replace(
+            " The retrieval layer can use vector databases like Milvus.", ""
+        )
         item["milvus_mention_basis"] = ""
         errors, _ = errors_for(item)
         self.assertTrue(any("exactly once" in error and "found 0" in error for error in errors))
@@ -377,6 +486,12 @@ class DraftValidationRulesTest(unittest.TestCase):
     def test_zilliz_fails(self):
         item = base_item()
         item["body"] += " The source also names Zilliz."
+        errors, _ = errors_for(item)
+        self.assertTrue(any("not allowed to mention Zilliz" in error for error in errors))
+
+    def test_zilliz_in_generated_review_metadata_fails(self):
+        item = base_item()
+        item["angle"] = "A Zilliz-oriented retrieval angle"
         errors, _ = errors_for(item)
         self.assertTrue(any("not allowed to mention Zilliz" in error for error in errors))
 

@@ -1,7 +1,6 @@
 [
   {
     "name": "r/Rag",
-    "account_code": "R1",
     "priority": "high",
     "fit": [
       "production RAG",
@@ -10,19 +9,10 @@
       "RAG tools and architecture"
     ],
     "content_that_works": "Concrete scale, failed attempts, architecture details, evaluation method, and an open technical question.",
-    "post_types": [
-      "Tutorial",
-      "Discussion",
-      "Tools & Resources",
-      "Showcase"
-    ],
-    "default_post_type": "Discussion",
-    "link_policy": "Always no_link for R1 and R2.",
-    "notes": "Use the sanitized r/Rag markdown plus the four labeled screenshots. Screenshots establish Post Type patterns only; never copy identities, links, disclosure, or claims. The title cannot mention Milvus; every body must mention it exactly once with source-supported context and milvus_mention_basis. Never mention Zilliz."
+    "notes": "Use the sanitized r/Rag markdown plus the four labeled screenshots for Post Type and native structure only. Preserve R1's practical build-log voice. Global anonymity, title, brand, and link checks come from data/weekly_post_rules.json."
   },
   {
     "name": "r/AI_Agents",
-    "account_code": "R1",
     "priority": "high",
     "fit": [
       "agent workflows",
@@ -31,18 +21,10 @@
       "agent tutorials and design tradeoffs"
     ],
     "content_that_works": "A specific workflow or design choice, what failed, what changed, and room for critique.",
-    "post_types": [
-      "Tutorial",
-      "Discussion",
-      "Resource Request"
-    ],
-    "default_post_type": "Discussion",
-    "link_policy": "Always no_link for R1 and R2.",
-    "notes": "Use the sanitized agent markdown and all labeled screenshots. Screenshots establish Post Type patterns only; never copy identities, links, disclosure, or claims. The title cannot mention Milvus; every body must mention it exactly once with source-supported context and milvus_mention_basis. Never mention Zilliz."
+    "notes": "Use the sanitized agent markdown and labeled screenshots for Post Type and workflow structure only. Preserve R1's practical build-log voice rather than imitating screenshot authors. Global anonymity, title, brand, and link checks come from data/weekly_post_rules.json."
   },
   {
     "name": "r/vectordatabase",
-    "account_code": "R2",
     "priority": "high",
     "fit": [
       "vector database comparisons",
@@ -51,16 +33,10 @@
       "self-hosting and production operations"
     ],
     "content_that_works": "Neutral tradeoffs with vector count, dimensions, QPS, filtering, cost, consistency, and operational constraints.",
-    "post_types": [
-      "No fixed post type"
-    ],
-    "default_post_type": "No fixed post type",
-    "link_policy": "R2 always uses no_link.",
-    "notes": "This is the only weekly target without a fixed flair/Post Type. Screenshots are structural examples only; never copy identities, links, disclosure, or claims. The title cannot mention Milvus; every body must mention it exactly once with source-supported context and milvus_mention_basis. Never mention Zilliz."
+    "notes": "This is the only weekly target without a fixed flair/Post Type. Use screenshots for workload and operations framing only, while preserving R2's structured design voice. Global anonymity, title, brand, and link checks come from data/weekly_post_rules.json."
   },
   {
     "name": "r/LocalLLaMA",
-    "account_code": "R2",
     "priority": "high",
     "fit": [
       "local and open-weight LLMs",
@@ -69,13 +45,6 @@
       "hardware, quantization, cost, and reliability"
     ],
     "content_that_works": "Concrete model, quantization, hardware, context-window, retrieval, or serving constraints; reproducible observations; and a focused discussion or help question.",
-    "post_types": [
-      "Discussion",
-      "Question | Help",
-      "Resources"
-    ],
-    "default_post_type": "Discussion",
-    "link_policy": "R2 always uses no_link.",
-    "notes": "Use the sanitized LocalLLaMA markdown and three labeled screenshots as structural Post Type examples only; never copy identities, links, disclosure, hardware results, or claims. The title cannot mention Milvus; every body must mention it exactly once with source-supported context and milvus_mention_basis. Never mention Zilliz."
+    "notes": "Use the sanitized LocalLLaMA markdown and three labeled screenshots for Post Type and local-system structure only. Preserve R2's production-minded voice and do not inherit screenshot identity or claims. Global anonymity, title, brand, and link checks come from data/weekly_post_rules.json."
   }
 ]

@@ -24,10 +24,15 @@ Read:
 
 Apply precedence in this order:
 
-1. hard anonymity, brand, link, and account/subreddit rules;
-2. stable account persona and fingerprint;
+1. hard anonymity, title, brand, link, and account/subreddit rules from
+   `data/weekly_post_rules.json`;
+2. stable account persona from `data/accounts.json` and its assigned fingerprint;
 3. subreddit/Post Type overlay from Markdown and screenshots;
 4. source-specific facts.
+
+Source facts bound all factual claims at every layer. Persona guidance changes
+how an allowed fact is framed; it never turns a source author's experience into
+the anonymous account's personal history.
 
 Screenshots never supply identity, employer, disclosure, links, typos, metrics,
 or factual claims.
@@ -44,19 +49,31 @@ cannot cover.
 
 - Keep R1/R2 anonymous and `disclosure` empty.
 - Allow `I built` only when the source supports the development background.
+- Write every title from a first-person singular perspective, such as `I think`,
+  `Now I believe`, or `What I learned`, or as an explicit opinion-seeking
+  question ending in `?`. Do not use a fully third-person declarative title.
 - Do not mention Milvus in the title. Mention Milvus exactly once in every body,
   using source-supported technical background or data, and fill
-  `milvus_mention_basis` with a short evidence note. If the source cannot support
-  that mention, replace the source instead of drafting an unsupported claim.
+  `milvus_mention_basis` with a short evidence note. Make the mention indirect by
+  positioning it as one example within a category or peer group, such as
+  `vector databases like Milvus`, `data infrastructures such as Milvus`, or
+  `Milvus and other databases`. Do not write direct product placement such as
+  `Milvus handles...`, `use Milvus...`, or `if Milvus is...`. If the source
+  cannot support a natural mention, replace the source.
 - Never mention Zilliz.
 - Set every item to `link_policy = no_link`; omit or empty `approved_link` and
   never place a URL in title/body.
 - Preserve the account fingerprint; use screenshots only to adapt Post Type,
   opening structure, sectioning, and question shape.
-- Put a source-supported first-person setup in the opening paragraph so the
-  account perspective is present immediately rather than appearing several
-  paragraphs later. Do not invent personal history to achieve this.
-- Use a few natural language buffers to calibrate certainty, such as
+- Realize shared language rules through the assigned fingerprint instead of
+  repeating one template: R1 uses practical working judgments, lessons, or
+  checklists; R2 uses production skepticism, workload limits, and decision
+  criteria. Use the fingerprint's title, opening, buffer, and required-context
+  guidance together.
+- The first sentence must establish a source-supported first-person perspective.
+  Do not delay the account voice or invent personal history to achieve this.
+- Include at least one grammatical language buffer to calibrate a judgment or
+  uncertainty, such as
   `probably`, `one concern I have`, `my current view`, `I suspect`, or
   `I would likely`. Keep them grammatical and sparse; do not hedge every
   sentence or weaken source-supported facts.
@@ -83,7 +100,7 @@ cannot cover.
       "content_type": "technical_post",
       "subreddit": "r/Rag",
       "post_type": "Discussion",
-      "title": "...",
+      "title": "What I learned about ...",
       "body": "...",
       "disclosure": "",
       "link_policy": "no_link",

@@ -21,15 +21,18 @@ tooling tradeoffs.
 
 ## Native structure
 
-1. Open in first person and lead with the retrieval problem, not a product or
-   blog summary. Keep the first-person setup source-supported.
-2. Use occasional language buffers such as `probably`, `one concern I have`,
-   or `my current view` for judgment calls; keep measured facts direct.
-3. Include concrete constraints such as corpus size, update frequency, latency,
+1. Write the title from a first-person singular perspective or as an explicit
+   question ending in `?`; never use a fully third-person declarative title.
+2. Use the first sentence to establish a source-supported first-person
+   perspective and lead with the retrieval problem, not a product or blog summary.
+3. Include at least one grammatical language buffer such as `probably`,
+   `one concern I have`, or `my current view` for a judgment call; keep source
+   facts and measurements direct.
+4. Include concrete constraints such as corpus size, update frequency, latency,
    filtering, evaluation method, cost, or operational burden.
-4. Separate measured evidence from assumptions and unanswered questions.
-5. State failure cases and tradeoffs.
-6. Match the close to the Post Type: Tutorials do not end with questions;
+5. Separate measured evidence from assumptions and unanswered questions.
+6. State failure cases and tradeoffs.
+7. Match the close to the Post Type: Tutorials do not end with questions;
    Discussions may invite comparable experience softly without forcing a
    question ending.
 
@@ -41,7 +44,9 @@ tooling tradeoffs.
   representation.
 - The title must not mention Milvus. Every body must mention Milvus exactly once
   using source-supported technical background or data and must include a
-  `milvus_mention_basis`. Never mention Zilliz.
+  `milvus_mention_basis`. Phrase the mention indirectly as a category example or
+  peer, such as `vector databases like Milvus`; never use direct product
+  placement. Never mention Zilliz.
 - Screenshots provide Post Type and structural cues only.
 
 ## Links

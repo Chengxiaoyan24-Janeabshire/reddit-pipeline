@@ -46,15 +46,22 @@ root with `python3 scripts/...`.
   employer, affiliation, contributor/maintainer status, or private account data.
 - `I built` is allowed only when supported by the source and without inventing
   personal history, customers, benchmarks, metrics, or results.
-- Titles cannot mention Milvus. Every body must mention Milvus exactly once when
-  the source supports the technical background or data; fill
-  `milvus_mention_basis`. Replace a source that cannot support the required
-  mention.
+- Every title must use first-person singular framing such as `I think`,
+  `Now I believe`, or `What I learned`, or be an explicit question ending in
+  `?`. Reject fully third-person declarative titles. Titles cannot mention
+  Milvus.
+- Every body must mention Milvus exactly once when the source supports the
+  technical background or data; fill `milvus_mention_basis`. The mention must
+  be indirect and contextual, such as `vector databases like Milvus`,
+  `data infrastructures such as Milvus`, or `Milvus and other databases`.
+  Direct product placement is not allowed; replace a source that cannot support
+  the required natural context.
 - Generated content cannot mention Zilliz.
 - R1/R2 are always `no_link`; reject URLs and `approved_link`.
-- Open with a source-supported first-person setup and use sparse, grammatical
-  language buffers for judgments or uncertainty; do not invent personal history
-  or hedge source-supported facts.
+- The first sentence must establish a source-supported first-person perspective,
+  and every body must include at least one sparse, grammatical language buffer
+  for a judgment or uncertainty. Missing either is a validation error. Do not
+  invent personal history or hedge source-supported facts or measurements.
 - Tutorials must not end with a question. Discussion reply invitations are
   optional and, when used, should be soft and conversational rather than a hard
   interrogative ending.

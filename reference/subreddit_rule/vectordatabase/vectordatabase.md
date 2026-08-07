@@ -13,16 +13,19 @@ community rules were checked; it is not a flair to imitate.
 
 ## Native structure
 
-1. Open in first person and state the system decision or failure clearly. Keep
-   the first-person setup source-supported.
-2. Use light buffers such as `my current view`, `probably`, `I suspect`, or
-   `I would likely` for recommendations; keep benchmark facts unhedged.
-3. Give the workload shape where supported: vector count, dimensions, QPS,
+1. Write the title from a first-person singular perspective or as an explicit
+   question ending in `?`; never use a fully third-person declarative title.
+2. Use the first sentence to establish a source-supported first-person
+   perspective and state the system decision or failure clearly.
+3. Include at least one grammatical buffer such as `my current view`,
+   `probably`, `I suspect`, or `I would likely` for a recommendation; keep
+   benchmark setup, source facts, and measurements unhedged.
+4. Give the workload shape where supported: vector count, dimensions, QPS,
    latency target, filtering, update rate, hardware, consistency, and budget.
-4. Explain the benchmark or comparison method, including limitations.
-5. Name operational costs such as compaction, index rebuilds, memory, storage,
+5. Explain the benchmark or comparison method, including limitations.
+6. Name operational costs such as compaction, index rebuilds, memory, storage,
    migrations, backups, and observability.
-6. When inviting replies, state the unresolved tradeoff and use a soft close
+7. When inviting replies, state the unresolved tradeoff and use a soft close
    such as `Would love to hear your thoughts.` rather than ending with a hard
    question.
 
@@ -34,7 +37,9 @@ community rules were checked; it is not a flair to imitate.
   customer identity, or project representation.
 - The title must not mention Milvus. Every body must mention Milvus exactly once
   using source-supported technical background or data and must include a
-  `milvus_mention_basis`. Never mention Zilliz.
+  `milvus_mention_basis`. Phrase the mention indirectly as a category example or
+  peer, such as `Milvus and other databases`; never use direct product placement.
+  Never mention Zilliz.
 - Do not copy usernames, disclosures, links, brand claims, or exact text from
   screenshots.
 

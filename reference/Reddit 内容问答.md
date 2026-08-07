@@ -17,11 +17,26 @@
 ## 正文可以写产品名吗？
 
 标题不能出现 Milvus。每篇正文必须恰好出现一次 Milvus，而且必须确实用于说明
-来源支持的开发背景或数据。任何位置都不能出现 Zilliz。
+来源支持的开发背景或数据。提及必须是自然的同类举例或并列，例如
+`vector databases like Milvus`、`data infrastructures such as Milvus` 或
+`Milvus and other databases`；不能把它直接写成推荐、主语或产品植入。任何位置
+都不能出现 Zilliz。
+
+## 标题应该怎么写？
+
+标题必须使用第一人称单数视角，例如 `I think`、`Now I believe` 或
+`What I learned`，或者写成以 `?` 结尾的明确疑问句。完全第三人称的陈述标题
+不能通过验证。
 
 ## 可以带链接吗？
 
 R1 和 R2 都不带链接。标题、正文和任何链接字段都不能出现 URL。
+
+## 第一句和 language buffer 是硬性要求吗？
+
+是。正文第一句必须建立有来源支持的第一人称视角，而且全文至少包含一个自然、
+合乎语法的 language buffer，用来修饰判断、建议或不确定性。缺少任一项都会
+阻断验证。不得用 buffer 模糊来源已经支持的事实、benchmark 设置或测量数据。
 
 ## 什么样的帖子更合适？
 

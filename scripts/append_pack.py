@@ -12,7 +12,7 @@ Reads JSON from stdin:
       "content_type": "technical_post",
       "subreddit": "r/vectordatabase",
       "suggested_day": "2026-07-01",
-      "title": "...",
+      "title": "What I learned about ...",
       "body": "...",
       "disclosure": "",
       "link_policy": "no_link",
@@ -76,11 +76,37 @@ FIRST_PERSON_OPENING_PATTERN = re.compile(
     r"\b(?:i|i'm|i’ve|i've|i'd|i’d|my)\b",
     re.IGNORECASE,
 )
-LANGUAGE_BUFFER_PATTERN = re.compile(
-    r"\b(?:probably|one concern i have|my current view|i suspect|"
-    r"i would (?:probably|likely)|i do not think|i don't think|i tend to|likely)\b",
+FIRST_PERSON_TITLE_PATTERN = re.compile(
+    r"\b(?:i|i'm|i’ve|i've|i'd|i’d|i’ll|i'll|my|me)\b",
     re.IGNORECASE,
 )
+LANGUAGE_BUFFER_PATTERN = re.compile(
+    r"\b(?:probably|one concern i have|my current view|i suspect|"
+    r"i would (?:probably|likely)|i do not think|i don't think|i tend to|"
+    r"i(?:'m| am) (?:concerned|not convinced)|it probably depends(?: on)?|likely)\b",
+    re.IGNORECASE,
+)
+UNGRAMMATICAL_LANGUAGE_BUFFER_PATTERN = re.compile(
+    r"\b(?:probably\s+)?i concern\b",
+    re.IGNORECASE,
+)
+MILVUS_PEER_CATEGORY = (
+    r"(?:vector\s+databases?|data\s+infrastructures?|database\s+systems?|"
+    r"data\s+platforms?|retrieval\s+(?:systems?|backends?|infrastructures?)|"
+    r"vector\s+stores?|storage\s+(?:systems?|engines?)|databases?)"
+)
+NATURAL_MILVUS_CONTEXT_PATTERNS = [
+    re.compile(
+        rf"\b{MILVUS_PEER_CATEGORY}\b\s*,?\s*"
+        rf"(?:such\s+as|like|including)\s+\bmilvus\b",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        rf"\bmilvus\b\s*,?\s*(?:and|or|alongside)\s+"
+        rf"(?:other\s+)?\b{MILVUS_PEER_CATEGORY}\b",
+        re.IGNORECASE,
+    ),
+]
 
 
 def load_accounts():
@@ -116,9 +142,34 @@ def normalize_body(text):
     return re.sub(r"\s+", " ", (text or "").strip().lower())
 
 
+def first_sentence(text):
+    stripped = (text or "").strip()
+    if not stripped:
+        return ""
+    match = re.search(r"[.!?](?:[\"'”’)]*)?(?=\s|$)", stripped)
+    if match:
+        return stripped[: match.end()]
+    return re.split(r"\n+", stripped, maxsplit=1)[0]
+
+
 def contains_any(text, phrases):
     lowered = (text or "").lower()
     return [p for p in phrases if p in lowered]
+
+
+def title_has_personal_or_question_perspective(title):
+    text = (title or "").strip()
+    return bool(
+        text
+        and (
+            FIRST_PERSON_TITLE_PATTERN.search(text)
+            or text.endswith(("?", "？"))
+        )
+    )
+
+
+def has_natural_milvus_context(text):
+    return any(pattern.search(text or "") for pattern in NATURAL_MILVUS_CONTEXT_PATTERNS)
 
 
 def word_count(text):
@@ -209,12 +260,19 @@ def validate(spec):
         disclosure = item.get("disclosure", "") or ""
         link_policy = item.get("link_policy", "no_link") or "no_link"
         milvus_mention_basis = item.get("milvus_mention_basis", "") or ""
-        voice_fingerprint = item.get("voice_fingerprint") or account.get("voice_fingerprint_id", "")
-        combined = "\n".join([title, body, disclosure, milvus_mention_basis])
+        expected_voice_fingerprint = account.get("voice_fingerprint_id", "")
+        voice_fingerprint = item.get("voice_fingerprint") or expected_voice_fingerprint
+        combined = "\n".join(
+            [title, body, disclosure, milvus_mention_basis, item.get("angle", "") or ""]
+        )
         length_tier = infer_length_tier(item)
         length_rule = length_rules.get(length_tier)
         fenced_code_blocks = code_blocks(body)
         account_policy = weekly_rules.get("account_policies", {}).get(code, {})
+        title_policy = weekly_rules.get("title_perspective_policy", {})
+        opening_policy = weekly_rules.get("opening_perspective_policy", {})
+        language_buffer_policy = weekly_rules.get("language_buffer_policy", {})
+        milvus_context_policy = weekly_rules.get("milvus_mention_context_policy", {})
 
         if code not in active_accounts:
             errors.append(f"{prefix}: weekly posting is restricted to active accounts R1 and R2")
@@ -268,8 +326,20 @@ def validate(spec):
                     f"choose one of {sorted(allowed_link_policies)}"
                 )
 
-        if voice_fingerprint and user_fingerprints and voice_fingerprint not in user_fingerprints:
-            warnings.append(f"{prefix}: unknown voice_fingerprint {voice_fingerprint!r}")
+        if expected_voice_fingerprint and voice_fingerprint != expected_voice_fingerprint:
+            errors.append(
+                f"{prefix}: {code} must use voice_fingerprint "
+                f"{expected_voice_fingerprint!r}; got {voice_fingerprint!r}"
+            )
+        if (
+            expected_voice_fingerprint
+            and user_fingerprints
+            and expected_voice_fingerprint not in user_fingerprints
+        ):
+            errors.append(
+                f"{prefix}: configured voice_fingerprint "
+                f"{expected_voice_fingerprint!r} is missing from data/user_fingerprints.json"
+            )
 
         if content_type == "long_post":
             errors.append(f"{prefix}: long_post belongs in length_tier, not content_type; use content_type=technical_post or postmortem with length_tier=long_post")
@@ -277,17 +347,35 @@ def validate(spec):
         if not body.strip():
             errors.append(f"{prefix}: body is empty")
         else:
-            opening_paragraph = re.split(r"\n\s*\n", body.strip(), maxsplit=1)[0]
-            if not FIRST_PERSON_OPENING_PATTERN.search(opening_paragraph):
-                warnings.append(
-                    f"{prefix}: opening paragraph should establish the anonymous "
-                    "first-person perspective immediately"
+            opening_sentence = first_sentence(body)
+            if not FIRST_PERSON_OPENING_PATTERN.search(opening_sentence):
+                target = (
+                    errors
+                    if opening_policy.get("severity", "error") == "error"
+                    else warnings
                 )
-            if not LANGUAGE_BUFFER_PATTERN.search(body):
-                warnings.append(
-                    f"{prefix}: add one or two natural language buffers such as "
+                target.append(
+                    f"{prefix}: the first sentence must establish the anonymous "
+                    "first-person perspective"
+                )
+            if UNGRAMMATICAL_LANGUAGE_BUFFER_PATTERN.search(body):
+                errors.append(
+                    f"{prefix}: 'I concern' is not a grammatical language buffer; "
+                    "use phrasing such as 'one concern I have', 'I am concerned', "
+                    "or 'I would probably'"
+                )
+            elif not LANGUAGE_BUFFER_PATTERN.search(body):
+                target = (
+                    errors
+                    if language_buffer_policy.get("severity", "error") == "error"
+                    else warnings
+                )
+                target.append(
+                    f"{prefix}: body must include at least one grammatical language "
+                    "buffer such as "
                     "'probably', 'one concern I have', or 'my current view' "
-                    "to calibrate personal judgments"
+                    "for a personal judgment; do not hedge source-supported facts "
+                    "or measurements"
                 )
             if post_type == "Tutorial" and body.rstrip().endswith("?"):
                 errors.append(
@@ -325,6 +413,14 @@ def validate(spec):
 
         if content_type in ACTIVE_POST_CONTENT_TYPES and not title.strip():
             errors.append(f"{prefix}: title is required for post content")
+        elif (
+            title_policy.get("require_first_person_or_question")
+            and not title_has_personal_or_question_perspective(title)
+        ):
+            errors.append(
+                f"{prefix}: title must use a first-person perspective such as "
+                "'I think'/'Now I believe', or be an explicit question ending in '?'"
+            )
 
         if has_url(title) or has_url(body):
             errors.append(f"{prefix}: R1/R2 drafts must not contain URLs in titles or body prose")
@@ -342,11 +438,12 @@ def validate(spec):
         title_milvus_mentions = len(MILVUS_PATTERN.findall(title))
         body_milvus_mentions = len(MILVUS_PATTERN.findall(body))
         mentions_zilliz = bool(ZILLIZ_PATTERN.search(combined))
-        brand_policy = account.get("brand_policy", {})
         required_milvus_mentions = int(
-            brand_policy.get("required_milvus_body_mentions") or 0
+            account_policy.get("required_milvus_body_mentions") or 0
         )
-        max_milvus_mentions = int(brand_policy.get("max_milvus_body_mentions") or 0)
+        max_milvus_mentions = int(
+            account_policy.get("max_milvus_body_mentions") or 0
+        )
         if title_milvus_mentions:
             errors.append(f"{prefix}: Milvus may appear only in the body, not the title")
         if required_milvus_mentions and body_milvus_mentions != required_milvus_mentions:
@@ -364,13 +461,24 @@ def validate(spec):
                 f"{prefix}: body may mention Milvus at most {max_milvus_mentions} time(s); "
                 f"found {body_milvus_mentions}"
             )
-        if body_milvus_mentions and not brand_policy.get("may_mention_milvus"):
+        if body_milvus_mentions and not account_policy.get("may_mention_milvus"):
             errors.append(f"{prefix}: {code} is not allowed to mention Milvus")
         if body_milvus_mentions and not milvus_mention_basis.strip():
             errors.append(
                 f"{prefix}: a Milvus body mention requires milvus_mention_basis describing the source-supported context"
             )
-        if mentions_zilliz and not brand_policy.get("may_mention_zilliz"):
+        if (
+            body_milvus_mentions
+            and milvus_context_policy.get("mode") == "category_example_or_peer_group"
+            and not has_natural_milvus_context(body)
+        ):
+            errors.append(
+                f"{prefix}: the Milvus mention must be indirect and contextual, "
+                "for example 'vector databases like Milvus', "
+                "'data infrastructures such as Milvus', or "
+                "'Milvus and other databases'; direct product placement is not allowed"
+            )
+        if mentions_zilliz and not account_policy.get("may_mention_zilliz"):
             errors.append(f"{prefix}: {code} is not allowed to mention Zilliz")
         if ANONYMITY_VIOLATION_PATTERN.search(combined):
             errors.append(

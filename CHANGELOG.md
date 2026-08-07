@@ -10,6 +10,31 @@
 4. 描述能力、行为和用户结果，不写成文件名清单。
 5. Change Log 与对应代码、规则或文档在同一批 push 中提交。
 
+## 2026-08-07 — Fingerprint authority and language integration
+
+### Changed
+
+- Hard pass/fail policy now has one machine-readable authority, while account fingerprints focus on distinct voice realization: R1 uses practical working judgments and implementation lessons; R2 uses production skepticism, workload limits, and decision criteria.
+- First-person openings, language buffers, and the required technical category example now have account-specific placement guidance, reducing repetitive title/opening templates and standalone product-name sentences.
+- The first sentence must now establish first-person perspective, and every body must contain at least one grammatical language buffer tied to a judgment or uncertainty. Missing either blocks validation; buffers cannot soften source facts, benchmark setup, or measurements.
+
+### Fixed
+
+- Validation now rejects assigning one account the other account's known fingerprint instead of accepting any recognized fingerprint ID.
+- The prohibited-brand check now also covers generated review metadata such as `angle`, not only title, body, disclosure, and mention basis.
+- Opening and language-buffer checks now fail closed instead of producing advisory warnings, including when first person appears only after the first sentence.
+
+## 2026-08-07 — First-person or question titles and indirect Milvus context
+
+### Changed
+
+- Reddit 标题现在必须使用第一人称单数视角，例如 `I think`、`Now I believe` 或 `What I learned`，或者写成以 `?` 结尾的明确疑问句；完全第三人称的陈述标题会阻断验证。
+- 每篇正文仍必须恰好出现一次有来源依据的 Milvus，但必须放在同类技术举例或并列语境中，例如 `vector databases like Milvus`、`data infrastructures such as Milvus` 或 `Milvus and other databases`；直接产品植入会阻断验证。
+
+### Added
+
+- 增加标题视角、自然 Milvus 上下文、直接植入拒绝和合法同类并列写法的回归测试。
+
 ## 2026-08-06 — Required Milvus body mention
 
 ### Changed

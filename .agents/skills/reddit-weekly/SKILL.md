@@ -53,17 +53,26 @@ validate, or preview.
 - Preserve the stable account fingerprint from `data/user_fingerprints.json`.
   Use subreddit screenshots only as Post Type and structure overlays; never copy
   their usernames, identity, employer, disclosure, links, typos, or claims.
+- Treat the fingerprint as voice realization, not a second hard-rule file: R1
+  should sound like a practical working build log, while R2 should sound like a
+  production design decision grounded in workload and operational criteria.
 - Keep both accounts anonymous and `disclosure` empty. `I built` is allowed only
   when source-supported and must not reveal identity, employer, contributor or
   maintainer status, or affiliation.
+- Every title uses first-person singular framing or is an explicit question
+  ending in `?`; fully third-person declarative titles are rejected.
 - Do not mention Milvus in a title. Every body must mention Milvus exactly once
   using source-supported technical background or data; fill
-  `milvus_mention_basis`. Replace a source that cannot support the required
-  mention. Never mention Zilliz.
+  `milvus_mention_basis`. Phrase it indirectly as a category example or peer,
+  such as `vector databases like Milvus`, `data infrastructures such as Milvus`,
+  or `Milvus and other databases`. Reject direct product placement and replace a
+  source that cannot support the natural context. Never mention Zilliz.
 - R1 and R2 are always `no_link`; reject URLs and `approved_link`.
 - Do not invent development history, customers, benchmarks, metrics, or results.
-- Put a source-supported first-person setup in the opening paragraph and use a
-  few grammatical language buffers for judgments or uncertainty.
+- The first sentence must establish a source-supported first-person perspective.
+  Every body must include at least one grammatical language buffer for a
+  judgment or uncertainty; never use buffers to hedge source-supported facts or
+  measurements. Missing either fails validation.
 - Tutorials must not end with a question. Discussion reply invitations are
   optional and should use a soft conversational close rather than a hard
   interrogative ending.

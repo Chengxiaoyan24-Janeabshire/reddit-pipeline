@@ -5,9 +5,10 @@
 > - 只生成供人工审核和手动发布的 Reddit 草稿，不登录、不发帖、不回复、不点赞、不投票、不养号。
 > - 每周固定四个槽位：R1 → `r/Rag`、`r/AI_Agents`；R2 → `r/vectordatabase`、`r/LocalLLaMA`。
 > - R1/R2 绝对匿名，Disclosure 为空；`I built` 可以保留，但必须有来源支持且不能暴露身份或 affiliation。
-> - 标题不能出现 Milvus；每篇正文必须恰好出现一次有来源依据的 Milvus，并填写 `milvus_mention_basis`；任何生成内容不能出现 Zilliz。
+> - 标题必须使用第一人称单数视角，或写成以 `?` 结尾的明确疑问句；不能使用完全第三人称的陈述标题，且标题不能出现 Milvus。
+> - 每篇正文必须恰好出现一次有来源依据的 Milvus，并填写 `milvus_mention_basis`；提及必须放在同类技术举例或并列语境中，例如 `vector databases like Milvus`，不能直接植入；任何生成内容不能出现 Zilliz。
 > - R1/R2 全部 `no_link`，标题、正文和链接字段都不能有 URL。
-> - 首段立即使用有来源支持的第一人称视角，并少量加入自然 language buffers；Tutorial 不以问题结尾，Discussion 如邀请互动则使用柔和表达。
+> - 第一句必须建立有来源支持的第一人称视角；每篇正文至少使用一个自然、合乎语法的 language buffer，且只能修饰判断或不确定性。缺少任一项都会阻断验证。Tutorial 不以问题结尾，Discussion 如邀请互动则使用柔和表达。
 > - 保留 `short_post`、`standard_post`、`long_post`、`code_long_post` 四个长度档位。
 > - 本周选题优先使用最近 7 天发布、技术适配且尚未生成的 Blog；不足四槽时才按发布日期从新到旧使用更早来源。
 > - 已发布帖子只解析人工粘贴到飞书的完整 Reddit JSON；不会由脚本访问 Reddit。Reddit 不公开精确 downvote，表中只保存明确标注的估算值。
@@ -75,7 +76,7 @@ Content All in One / All content / all content
 | Pool sync | Content All in One `all content` view、cutoff date | `Category = Blog Post`、`Status = Published`、官方 `/blog/` URL、发布日期 ≥ `2026-01-01`、canonical URL 去重；发布日期倒序并标记最近 7 天 | Dry run 只返回计数和候选；live sync 只新增 `Reddit Blog Pool` rows |
 | Source screen | Pending pool row 或单个 URL；抓取到的正文；topic/account rules | 最近 7 天优先、技术密度、campaign/press 风险、R1/R2 topic score、固定 lane、Post Type | 筛选状态、分数、理由、Topic、Account、Subreddit、Post Type、`no_link` |
 | Draft | 已筛选来源事实；账号、指纹、长度、weekly、subreddit 与截图规则 | 先应用硬规则，再应用稳定指纹，再叠加 Post Type/截图结构，最后写来源事实 | 只返回最终 Pack JSON，不返回推理或私密账号信息 |
-| Validate | 单个 pack 或 pack 列表 | 四槽、账号/社区、Post Type、匿名、Milvus/Zilliz、URL、长度、代码、重复正文 | 只读 JSON；开放问题有无都不报错或警告 |
+| Validate | 单个 pack 或 pack 列表 | 四槽、账号/社区、Post Type、标题视角、匿名、Milvus 自然提及、禁用品牌词、URL、长度、代码、重复正文 | 只读 JSON；硬规则失败会阻断写入 |
 | Feishu review | 已通过 validation 的 pack | 再校验、构造无链接 Content Doc、映射 review metadata | Dry run 只预览；live write 创建 Docs/rows 并增加 pool 生成计数 |
 | Manual publish | 人工批准的草稿 | 人工决定是否发布 | 人工维护 `Status`、`Publish URL`、`Publish Date`、`Publisher` |
 | JSON content parse | `Status = Published` 的 review row 及人工粘贴的 `Reddit JSON Content` | 离线校验 JSON、解析帖子状态、评论内容、舆情和 Milvus 信号；不请求 Reddit，不读取 Reddit author 字段 | 空内容行列为等待；默认只预览并生成绑定快照；经授权时只按该快照更新 Feishu |
@@ -103,7 +104,7 @@ Content All in One / All content / all content
       "content_type": "technical_post",
       "subreddit": "r/Rag",
       "post_type": "Discussion",
-      "title": "...",
+      "title": "What I learned about ...",
       "body": "...",
       "disclosure": "",
       "link_policy": "no_link",
@@ -122,18 +123,32 @@ Content All in One / All content / all content
 
 | JSON | 使用阶段 | 决定什么 | 权限边界 |
 |---|---|---|---|
-| `data/weekly_post_rules.json` | Screen、Draft、Validate | R1/R2、四个固定槽位、最近 7 天来源优先、Post Types、匿名、品牌、链接、开放问题策略 | 机器可读硬规则，优先级最高 |
-| `data/accounts.json` | Screen、Draft、Validate、Write | 账号角色、允许社区、默认 fingerprint、品牌边界 | 定义稳定 persona，不能扩大 weekly lane |
+| `data/weekly_post_rules.json` | Screen、Draft、Validate | R1/R2、四个固定槽位、最近 7 天来源优先、Post Types、标题视角、匿名、品牌自然提及、链接和收尾策略 | 机器可读硬规则，优先级最高 |
+| `data/accounts.json` | Screen、Draft、Validate、Write | 账号角色、默认 fingerprint 和简短 persona 摘要 | 不复制 hard rules，也不能扩大 weekly lane |
 | `data/account_topic_rules.json` | Screen | topic/keyword score 和 R1/R2 分配倾向 | 只排名，不创建新的 subreddit 权限 |
-| `data/user_fingerprints.json` | Draft、Validate | 长期稳定语气、格式和截图可叠加范围 | 胜过截图中的身份、拼写、链接和个人主张 |
-| `data/subreddits.json` | Draft guidance、Feishu schema | 社区适配、Post Type 与 native 结构摘要 | 不能覆盖 weekly hard rules |
+| `data/user_fingerprints.json` | Draft、Validate | 长期稳定语气、标题/首段/缓冲语的账号化实现和截图可叠加范围 | 只决定“怎样说”，不重复或覆盖 hard rules |
+| `data/subreddits.json` | Draft guidance、Feishu schema | 社区 fit 与 native 结构摘要；Post Type 不在这里重复 | 不能覆盖 weekly hard rules |
 | `data/content_length_rules.json` | Draft、Validate、Feishu schema | 四种长度/代码范围 | `short_post` 不替代保留的长档位 |
 | `data/topic_bank.json` | Screen、Review tags | topic taxonomy 与 advisory community fit | 必须与账号固定 lane 取交集 |
 | `config/feishu-fields.json` | Write | 本地字段到 Feishu 字段名映射 | 不是编辑规则 |
 | `config/feishu-tables.json` | Sync、Screen、Write | 当前 Base/table/view IDs | 不是编辑规则，不存 credentials |
 | `samples/weekly_pack.example.json` | Validation sample | 合法四槽输入示例 | 不是规则来源 |
 
-规则优先级：`AGENTS.md / latest user direction` → `weekly_post_rules.json` → stable account/persona JSON → subreddit Markdown/screenshots → source-specific facts。截图只能影响 Post Type、开头结构、段落密度、bullets 和提问形状。
+规则优先级：`AGENTS.md / latest user direction` → `weekly_post_rules.json` → stable account/persona JSON → subreddit Markdown/screenshots。来源事实不是可被低优先级覆盖的风格层；所有经历、数据、结果和技术主张都必须受来源约束。截图只能影响 Post Type、开头结构、段落密度、bullets 和提问形状。
+
+### 5.1 语言要求怎样融入 fingerprint
+
+硬规则只判断草稿能否通过；fingerprint 决定通过后的内容分别像 R1 还是 R2；subreddit overlay 决定 Post Type 和结构；来源决定能说哪些事实。
+
+| 语言维度 | R1 `personal_build_log` | R2 `structured_design_question` |
+|---|---|---|
+| 标题 | 用当前实践判断或经验归纳，例如 `I'm starting to think...`、`What I learned...`、`I keep coming back to...` | 用生产怀疑或决策门槛，例如 `I'm not convinced...`、`I would only...`、`What would make me...` |
+| 第一句 | 从“我现在怎样看、担心或处理这个问题”进入具体实现，不把来源摘要伪装成个人经历 | 先说当前系统判断，再马上给 workload、成本、可靠性或运维约束 |
+| Language buffer | `one concern I have`、`my current view`、`I would probably`、`I tend to` | `I suspect`、`I'm not convinced`、`I would likely`、`it probably depends on` |
+| 必需技术举例 | 把 `vector databases like Milvus` 一类语境放进 checklist、retrieval decision 或可观察的系统边界 | 把同类举例放进 execution path、benchmark method、migration 或 operations comparison |
+| Discussion 收尾 | 延续 build-log 语气，柔和邀请补充案例或遗漏条件 | 先写清未解决的判断标准，再决定是否加低压力邀请 |
+
+每篇正文至少需要一个合乎语法的 Language buffer；第一句缺少第一人称或全文缺少 buffer 都是 error。Buffer 只修饰判断、建议和不确定性，不修饰来源已经支持的测试设置、测量值或事实。Milvus 句子也不是固定模板：它必须承担所在段落的技术功能，不能单独加一句只为满足计数。
 
 ## 6. 已解决的规则冲突
 
@@ -141,7 +156,8 @@ Content All in One / All content / all content
 |---|---|
 | 旧资料中的 5–6 个账号、warm-up、回复、点赞或发帖自动化 | 只保留 R1/R2 四槽内容生成；所有 Reddit 操作由人工完成 |
 | 稳定“指纹/人设”与 subreddit 截图作者风格不同 | 稳定 fingerprint 是 persona；截图只是 Post Type/结构 overlay，不复制身份、雇主、链接、错别字、metrics 或经历 |
-| 旧规则要求完全不提 Milvus，其他例子又偏产品宣传 | 标题不提；每篇正文恰好一次且需要 source-supported basis；绝不提 Zilliz |
+| 旧规则要求完全不提 Milvus，其他例子又偏产品宣传 | 标题不提；每篇正文恰好一次且需要 source-supported basis，并以同类数据库/数据基础设施举例或并列的方式自然出现，禁止直接植入；绝不提 Zilliz |
+| 旧标题使用完全第三人称陈述 | 每个标题必须使用第一人称单数视角，或写成以 `?` 结尾的明确疑问句 |
 | 旧 R1 manual-approved link 与示例中的 inline URL | R1/R2 统一 `no_link`，URL 和 `approved_link` 都拒绝 |
 | 旧同步链指向 Medium 或 calendar，并接受非 Published | 只从 All Content 的固定 view 同步 `Blog Post + Published` |
 | 旧规则强制以开放问题结尾 | Tutorial 不以问题结尾；Discussion 的互动邀请可选，使用柔和表达而非生硬问句 |

@@ -9,12 +9,18 @@ examples have been replaced by the current drafting boundary below.
 - `I built` is allowed only when source-supported and without identity, employer,
   contributor/maintainer role, affiliation, customer identity, or project
   representation.
+- Write each title from a first-person singular perspective or as an explicit
+  question ending in `?`; do not use a fully third-person declarative title.
 - Do not mention Milvus in the title. Every body must mention Milvus exactly
   once using source-supported technical background or data; record the basis in
-  `milvus_mention_basis`. Never mention Zilliz.
+  `milvus_mention_basis`. Phrase the mention indirectly as a category example or
+  peer, such as `vector databases like Milvus` or `Milvus and other databases`.
+  Never use direct product placement. Never mention Zilliz.
 - R1 and R2 never include outbound links.
-- Open with a source-supported first-person setup and use sparse language
-  buffers for judgments or uncertainty.
+- The first sentence must establish a source-supported first-person perspective.
+  Every body must include at least one grammatical language buffer for a
+  judgment or uncertainty. Missing either fails validation; buffers must not
+  hedge source-supported facts, benchmark setup, or measurements.
 - Keep the adaptation focused on the engineering problem and constraints.
   Tutorials do not end with questions; Discussions use a soft reply invitation
   when useful rather than a hard interrogative ending.
@@ -31,8 +37,8 @@ How would you index substring filters without making writes too expensive?
 My current view is that vector search can be fast while keyword or substring
 filters quietly dominate the query path. A scan-based `LIKE '%...%'` condition is
 simple, but it becomes hard to justify once the dataset and concurrent query count
-grow. In this design, Milvus handles the vector search while the substring path is
-measured separately.
+grow. In this design, vector databases like Milvus handle the vector search while
+the substring path is measured separately.
 
 An n-gram inverted index can narrow the candidate set before evaluating the full
 pattern. The tradeoff is index size, write amplification, and sensitivity to the
@@ -57,7 +63,8 @@ Does separating GPU index construction from CPU query serving hold up operationa
 One concern I have is that graph-style ANN indexes can be expensive to build, while
 keeping GPUs online for bursty query serving can be difficult to justify. One design
 is to use GPU parallelism during construction, persist the resulting graph in a
-CPU-friendly format, and serve Milvus queries from CPU replicas.
+CPU-friendly format, and serve queries from CPU replicas for vector databases such
+as Milvus.
 
 The architecture shifts cost toward build time, but it introduces compatibility,
 artifact distribution, rebuild, and rollback questions. It may also behave
