@@ -1,14 +1,12 @@
 # Reddit Resources
 
-Resources are non-authoritative visual or generated files. They support drafting
-and review but never define policy.
+Resource 是非权威的视觉或生成文件。它们支持起草和审核，但绝不定义策略。
 
-- `slots/`: sanitized subreddit screenshots used only for Post Type and native
-  structure overlays.
-- `pdfs/`: generated copies of the Markdown guidance for distribution.
+- `slots/`：仅用于 Post Type 和原生结构 overlay 的脱敏 Subreddit 截图。
+- `pdfs/`：用于分发的 Markdown guidance 生成副本。
 
-Editable rules live in `guidance/reddit/`. Dynamic weekly, sync, account, topic,
-and slot choices live in `reference/`.
+可编辑规则位于 `guidance/reddit/`。动态的周、同步、账号、话题和槽位选择位于
+`reference/`。
 
-Rebuild PDFs with `python3 scripts/rebuild_reddit_resources.py` after editing the
-corresponding Markdown under `guidance/reddit/`.
+编辑 `guidance/reddit/` 下对应的 Markdown 后，运行
+`python3 scripts/rebuild_reddit_resources.py` 重建 PDF。

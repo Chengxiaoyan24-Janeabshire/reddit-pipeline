@@ -1,101 +1,96 @@
 # Reddit Weekly Pipeline
 
-This project produces policy-compliant Reddit drafts for human review and manual
-publishing, then monitors already-published posts through visible
-Chrome/Browser page state. It never performs Reddit account activity.
+本项目生成符合策略要求的 Reddit 草稿，供人工审核和手动发布；随后通过可见的
+Chrome/Browser 页面状态监测已发布的帖子。项目不会执行任何 Reddit 账号操作。
 
-## Workflow
+## 工作流
 
 ```text
 Content All in One / All content / all content
-  -> pool sync
-  -> source screening and R1/R2 assignment
-  -> four-slot drafting
-  -> validation
-  -> Feishu review delivery
-  -> human review and manual Reddit publishing
-  -> visible-page browser monitoring for posts up to 14 days old
+  -> pool 同步
+  -> 来源筛选与 R1/R2 分配
+  -> 四个槽位起草
+  -> 校验
+  -> 飞书审核交付
+  -> 人工审核并手动发布到 Reddit
+  -> 对最近 14 天内已发布帖子做可见页面监测
 ```
 
-The current pack size, active accounts, and account/subreddit slots are loaded
-from `guidance/reddit/workflow/weekly.json`; they are intentionally not duplicated in
-this README.
+当前 pack 数量、活跃账号以及账号/Subreddit 槽位都从
+`guidance/reddit/workflow/weekly.json` 读取，刻意不在本 README 中重复。
 
-## Progressive resource layout
+## 渐进式资源布局
 
-| Layer | Responsibility |
+| 层级 | 职责 |
 |---|---|
-| `guidance/reddit/workflow/` | Machine JSON plus generated MD review for quantity, assignment, recency, and sync |
-| `guidance/reddit/editorial/` | Machine JSON plus generated MD review for global editorial and length rules |
-| `reference/accounts/` | Machine JSON plus generated MD review for angle, routing, and fingerprints |
-| `reference/slots/` | Machine JSON plus generated MD review for each Subreddit slot and registry |
-| `guidance/reddit/*.md` | Human-authored operating guidance, FAQ, and examples |
-| `resource/reddit/` | Non-authoritative screenshots and generated PDFs |
-| `.agents/skills/` | Stable stage routing, commands, outputs, and write gates |
-| `scripts/` | Runtime commands and shared implementation modules |
+| `guidance/reddit/workflow/` | 数量、分配、时效和同步的机器 JSON 及生成的 MD 审核页 |
+| `guidance/reddit/editorial/` | 全局编辑与长度规则的机器 JSON 及生成的 MD 审核页 |
+| `reference/accounts/` | 受众角度、路由和指纹的机器 JSON 及生成的 MD 审核页 |
+| `reference/slots/` | 每个 Subreddit 槽位及注册表的机器 JSON 和生成的 MD 审核页 |
+| `guidance/reddit/*.md` | 人工编写的运营边界、FAQ 和范例 |
+| `resource/reddit/` | 非权威截图和生成的 PDF |
+| `.agents/skills/` | 稳定的阶段路由、命令、输出和写入门禁 |
+| `scripts/` | 运行时命令和共享实现模块 |
 
-Supporting directories remain separate:
+辅助目录保持独立：
 
-- `config/`: Feishu table IDs, field mappings, and credential template;
-- `samples/`: valid input examples, not policy;
-- `tests/`: regression coverage;
-- `packs/` and `tmp/`: ignored outputs and temporary files.
+- `config/`：飞书表 ID、字段映射和凭据模板；
+- `samples/`：有效输入示例，不代表策略；
+- `tests/`：回归覆盖；
+- `packs/` 和 `tmp/`：被忽略的输出和临时文件。
 
-`guidance/`, `reference/`, and `resource/` are all active content layers and may
-change regularly. `.agents/skills/` contains the comparatively stable stage
-calling logic and changes only when workflow stages, commands, outputs, or write
-gates change. This is a maintenance boundary, not a content-rule priority.
+`guidance/`、`reference/` 和 `resource/` 都是活跃内容层，可能经常变化。
+`.agents/skills/` 保存相对稳定的阶段调用逻辑，只有工作流阶段、命令、输出或
+写入门禁变化时才需要修改。这是维护边界，不是内容规则优先级。
 
-When content rules interact, apply `Guidance > Subreddit > Audience angle`:
-global Disclosure and language requirements first; subreddit subrules, valid
-Category/Post Type, and native style second; preferred technical angles and
-account fingerprints third. Higher levels always win, while source facts
-constrain every level.
+当内容规则互相作用时，按 `Guidance > Subreddit > Audience angle` 处理：
+先满足全局 Disclosure 和语言要求；再满足 Subreddit 的 subrule、有效的
+Category/Post Type 和原生风格；最后才是偏好的技术角度和账号指纹。上层始终
+优先，同时来源事实约束每一层。
 
-## Rule file formats
+## 规则文件格式
 
-Rule configuration has two synchronized surfaces:
+规则配置有两个需要同步的表面：
 
-- **JSON** is the bottom machine contract read by AI workflow stages and Python
-  validators.
-- **Markdown** is the top review surface intended for human inspection.
+- **JSON** 是 AI 工作流阶段和 Python 校验器读取的底层机器合同。
+- **Markdown** 是供人工检查的上层审核表面。
 
-The Markdown views are generated, not independently edited. After a JSON rule
-change, run `python3 scripts/render_rule_docs.py`; use `--check` to fail when a
-review page is stale. Start with [Editorial rules](guidance/reddit/editorial/RULES.md),
-[Workflow rules](guidance/reddit/workflow/RULES.md),
-[Account rules](reference/accounts/RULES.md),
-[Topic rules](reference/TOPIC_RULES.md), or
-[Subreddit registry](reference/slots/RULES.md).
+Markdown 审核页由生成得到，不能独立编辑。JSON 规则变更后运行
+`python3 scripts/render_rule_docs.py`；用 `--check` 在审核页过期时失败。
+从 [Editorial rules](guidance/reddit/editorial/RULES.md)、
+[Workflow rules](guidance/reddit/workflow/RULES.md)、
+[Account rules](reference/accounts/RULES.md)、
+[Topic rules](reference/TOPIC_RULES.md) 或
+[Subreddit registry](reference/slots/RULES.md) 开始查看。
 
-Read [reference/README.md](reference/README.md),
-[guidance/reddit/README.md](guidance/reddit/README.md),
-[resource/reddit/README.md](resource/reddit/README.md), and
-[scripts/README.md](scripts/README.md) only when that layer is needed.
+仅在需要某一层时读取 [reference/README.md](reference/README.md)、
+[guidance/reddit/README.md](guidance/reddit/README.md)、
+[resource/reddit/README.md](resource/reddit/README.md) 和
+[scripts/README.md](scripts/README.md)。
 
 ## Skills
 
-| Skill | Result |
+| Skill | 结果 |
 |---|---|
-| `reddit-weekly` | Complete four-slot workflow |
-| `reddit-pool-sync` | Source-pool preview or authorized sync |
-| `reddit-source-screen` | Source suitability and lane assignment |
-| `reddit-pack-draft` | Draft JSON without writes |
-| `reddit-pack-validate` | Read-only validation |
-| `reddit-pack-write` | Feishu review preview or authorized write |
-| `reddit-browser-monitor` | Visible metrics and comment-signal preview or authorized write |
+| `reddit-weekly` | 完整的四槽位工作流 |
+| `reddit-pool-sync` | 来源池预览或授权同步 |
+| `reddit-source-screen` | 来源适配度和 lane 分配 |
+| `reddit-pack-draft` | 只生成草稿 JSON，不写入 |
+| `reddit-pack-validate` | 只读校验 |
+| `reddit-pack-write` | 飞书审核预览或授权写入 |
+| `reddit-browser-monitor` | 可见指标和评论信号预览或授权写入 |
 
-Each Skill loads only the current workflow guidance, relevant editorial guidance,
-selected account, selected slot, and optional visual resources it needs. Runtime
-validation merges `guidance/reddit/workflow/weekly.json` with
-`guidance/reddit/editorial/editorial_policy.json` and fails closed if the three-level
-instruction contract is reordered or reassigned.
+每个 Skill 只读取当前工作流 guidance、相关 editorial guidance、选定账号、
+选定槽位和可选视觉资源。运行时校验会合并
+`guidance/reddit/workflow/weekly.json` 与
+`guidance/reddit/editorial/editorial_policy.json`，一旦三层指令合同被重排或
+重新分配就会 fail closed。
 
-## Source contract
+## 来源合同
 
-`guidance/reddit/workflow/source_sync.json` owns the current source IDs, category,
-status, URL boundary, minimum date, and excluded sources. Source recency and
-older-source fallback behavior live in `guidance/reddit/workflow/weekly.json`.
+`guidance/reddit/workflow/source_sync.json` 保存当前来源 ID、类别、状态、
+URL 边界、最小日期和排除来源。来源时效和旧来源回退行为位于
+`guidance/reddit/workflow/weekly.json`。
 
 ## Draft JSON
 
@@ -123,10 +118,10 @@ older-source fallback behavior live in `guidance/reddit/workflow/weekly.json`.
 }
 ```
 
-`source_url` is internal review metadata. Generated content follows the current
-link and brand guidance in `guidance/reddit/`.
+`source_url` 是内部审核元数据。生成的内容遵循 `guidance/reddit/` 中当前的
+链接和品牌 guidance。
 
-## Setup and verification
+## 安装与校验
 
 ```bash
 bash scripts/setup.sh
@@ -135,30 +130,29 @@ python3 scripts/render_rule_docs.py --check
 python3 scripts/append_pack_to_feishu.py --validate-only --weekly < samples/weekly_pack.example.json
 ```
 
-## Common previews
+## 常用预览
 
 ```bash
-# Source sync
+# 来源同步
 python3 scripts/sync_blog_pool_from_content_all_in_one.py --dry-run
 
-# Screening
+# 筛选
 python3 scripts/screen_feishu_pool.py --dry-run
 
-# One-source screening without writes
+# 单个来源筛选，不写入
 python3 scripts/screen_and_assign.py --url "https://milvus.io/blog/example" --title "Example" --no-fetch
 
-# Validation and delivery preview
+# 校验和交付预览
 python3 scripts/append_pack_to_feishu.py --validate-only --weekly < samples/weekly_pack.example.json
 python3 scripts/append_pack_to_feishu.py --weekly --dry-run < samples/weekly_pack.example.json
 
-# Published-post monitoring targets
+# 已发布帖子监测目标
 python3 scripts/reddit_browser_monitor.py --list-targets
 ```
 
-Feishu live writes require explicit approval. Reddit publishing and engagement
-always remain manual.
+飞书真实写入需要明确授权。Reddit 发布和互动始终由人工完成。
 
-## Change Log
+## 变更日志
 
-Update `CHANGELOG.md` with each GitHub push that changes behavior, rules, or
-user workflow. Entries describe outcomes rather than listing modified files.
+每次推送涉及行为、规则或用户工作流变化时更新 `CHANGELOG.md`。条目描述结果，
+而不是罗列修改过的文件。
