@@ -1,0 +1,49 @@
+{
+  "subreddit": "r/AIMemory",
+  "scope": [
+    "agent memory architecture",
+    "long-term, working, episodic, and semantic memory",
+    "memory graphs, retrieval, and consolidation",
+    "forgetting and correction",
+    "shared multi-agent memory, provenance, and governance",
+    "evaluation and production failure analysis"
+  ],
+  "post_type_guidance": {
+    "Show & Tell": "Use for a source-supported memory project, implementation, experiment, or system demonstration. Explain what was built, how it was evaluated, what changed, and which limitations remain. Do not copy repository links or claim benchmark ownership unless the source supports it.",
+    "Resource": "Use for a practical field guide, framework, toolkit, repository, or reference set for agent memory. Explain its coverage, intended audience, and selection criteria so the post remains useful without an outbound link.",
+    "Discussion": "Use for a memory architecture tradeoff, benchmark interpretation, serialization choice, recall failure, or design implication with evidence and room for disagreement. Invite replies softly when useful.",
+    "Open Question": "Use for a focused unresolved question about memory authority, conflicts, provenance, scope, consent, correction, forgetting, or trust. Provide a concrete scenario before listing the decisions that need input."
+  },
+  "screenshot_overlay_policy": {
+    "stable_persona": "R2 keeps the same production-minded account fingerprint in every Post Type.",
+    "allowed_use": "Screenshots may influence AIMemory structure only.",
+    "never_transfer": [
+      "usernames, personal circumstances, or identity claims",
+      "repository links, product endorsements, or calls for stars and contributions",
+      "unsupported benchmark scores, comparisons, or first-person results",
+      "wording, disclosures, corrections, or claims from the example author"
+    ]
+  },
+  "native_structure": [
+    "Open with one concrete memory behavior, failure, experiment, or governance problem rather than a general claim that agents need memory.",
+    "Name the relevant memory state and boundaries: writer, reader, scope, provenance, timestamp, confidence, authority, retention, correction, or revocation.",
+    "Separate stored state, candidate retrieval, admission or conflict handling, ranking, and the final context that can influence an agent.",
+    "For Show & Tell, describe the implementation and evaluation method before reporting source-supported findings or limitations.",
+    "For Resource, organize what the resource covers and who it helps; keep the post complete without a link.",
+    "For Discussion, state the design implication and unresolved tradeoff, then use a soft invitation such as 'Would love to hear your thoughts.' if useful.",
+    "For Open Question, make the scenario answerable and group related questions into compact bullets rather than asking for broad opinions."
+  ],
+  "inherited_contract": {
+    "guidance": "guidance/reddit/editorial/editorial_policy.json",
+    "account_code": "R2",
+    "account_reference": "reference/accounts/",
+    "resource_role": "Screenshots provide Post Type and structural cues only; they never replace the account persona or authorize copied links, metrics, or identity details."
+  },
+  "avoid": [
+    "treating memory as only vector retrieval without state, authority, or lifecycle constraints",
+    "unsupported benchmark claims or invented first-person implementations",
+    "generic 'agents need long-term memory' summaries without a concrete failure, decision, method, or evaluation boundary",
+    "promotional repository summaries, copied links, or calls for engagement",
+    "broad governance questions without a specific multi-agent or user-memory scenario"
+  ]
+}

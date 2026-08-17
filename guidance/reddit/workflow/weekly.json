@@ -1,0 +1,400 @@
+{
+  "active_accounts": [
+    "R1",
+    "R2"
+  ],
+  "weekly_pack_size": 4,
+  "source_recency_policy": {
+    "priority_window_days": 7,
+    "sort_order": "publish_date_desc",
+    "fallback_to_older": true,
+    "notes": "Prefer suitable, ungenerated sources published within the last 7 days. If they cannot cover all four weekly slots, fill the remaining slots from older suitable sources in descending publish-date order."
+  },
+  "weekly_slots": [
+    {
+      "account_code": "R1",
+      "subreddit": "r/Rag",
+      "lane": "rag",
+      "rule_json": "reference/slots/rag/rag.json",
+      "review_markdown": "reference/slots/rag/rag.md",
+      "reference_screenshots": [
+        "resource/reddit/slots/rag/tutorial.png",
+        "resource/reddit/slots/rag/discussion.png",
+        "resource/reddit/slots/rag/tools.png",
+        "resource/reddit/slots/rag/showcase.png"
+      ],
+      "post_types": [
+        "Tutorial",
+        "Discussion",
+        "Tools & Resources",
+        "Showcase"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Tutorial": {
+          "topic_fit": [
+            "step-by-step RAG implementation",
+            "chunking or retrieval workflow",
+            "evaluation or debugging method"
+          ],
+          "signals": [
+            "tutorial",
+            "how to",
+            "guide",
+            "step by step",
+            "walkthrough",
+            "implementation"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Discussion": {
+          "topic_fit": [
+            "RAG tradeoff",
+            "production failure",
+            "pgvector vs dedicated vector store",
+            "hybrid-search decision"
+          ],
+          "signals": [
+            "tradeoff",
+            "trade-off",
+            "comparison",
+            "versus",
+            "vs",
+            "production",
+            "failure",
+            "question"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Tools & Resources": {
+          "topic_fit": [
+            "RAG tool selection",
+            "framework or resource comparison",
+            "practical tool list"
+          ],
+          "signals": [
+            "tool",
+            "tools",
+            "resource",
+            "resources",
+            "library",
+            "framework",
+            "list"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Showcase": {
+          "topic_fit": [
+            "source-supported RAG project",
+            "retrieval experiment",
+            "architecture demonstration"
+          ],
+          "signals": [
+            "built",
+            "project",
+            "demo",
+            "showcase",
+            "experiment"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    },
+    {
+      "account_code": "R1",
+      "subreddit": "r/AI_Agents",
+      "lane": "ai_agents",
+      "rule_json": "reference/slots/ai_agents/ai_agents.json",
+      "review_markdown": "reference/slots/ai_agents/ai_agents.md",
+      "reference_screenshots": [
+        "resource/reddit/slots/ai_agents/tutorial.png",
+        "resource/reddit/slots/ai_agents/discussion.png",
+        "resource/reddit/slots/ai_agents/resource request.png"
+      ],
+      "post_types": [
+        "Tutorial",
+        "Discussion",
+        "Resource Request"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Tutorial": {
+          "topic_fit": [
+            "agent workflow implementation",
+            "tool-use design",
+            "memory or retrieval pattern"
+          ],
+          "signals": [
+            "tutorial",
+            "how to",
+            "workflow",
+            "implementation",
+            "design",
+            "step by step"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Discussion": {
+          "topic_fit": [
+            "agent reliability tradeoff",
+            "memory design",
+            "production agent behavior",
+            "tool-use failure"
+          ],
+          "signals": [
+            "tradeoff",
+            "worth",
+            "production",
+            "failure",
+            "reliability",
+            "question",
+            "comparison"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Resource Request": {
+          "topic_fit": [
+            "genuine request for agent learning resources",
+            "request for frameworks or evaluation references"
+          ],
+          "signals": [
+            "resource request",
+            "recommend",
+            "recommendation",
+            "course",
+            "training",
+            "certification",
+            "learning path"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    },
+    {
+      "account_code": "R2",
+      "subreddit": "r/AIMemory",
+      "lane": "ai_memory",
+      "rule_json": "reference/slots/ai_memory/ai_memory.json",
+      "review_markdown": "reference/slots/ai_memory/ai_memory.md",
+      "reference_screenshots": [
+        "resource/reddit/slots/ai_memory/show_and_tell.png",
+        "resource/reddit/slots/ai_memory/resource.png",
+        "resource/reddit/slots/ai_memory/discussion.png",
+        "resource/reddit/slots/ai_memory/open_question.png"
+      ],
+      "post_types": [
+        "Show & Tell",
+        "Resource",
+        "Discussion",
+        "Open Question"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Show & Tell": {
+          "topic_fit": [
+            "source-supported agent-memory project",
+            "memory implementation or experiment",
+            "memory-system demonstration with evaluation"
+          ],
+          "signals": [
+            "show and tell",
+            "built",
+            "implemented",
+            "project",
+            "prototype",
+            "demo",
+            "experiment"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Resource": {
+          "topic_fit": [
+            "agent-memory field guide or framework",
+            "memory governance or evaluation reference",
+            "source-supported toolkit or repository overview"
+          ],
+          "signals": [
+            "resource",
+            "field guide",
+            "framework",
+            "toolkit",
+            "repository",
+            "reference",
+            "open source"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Discussion": {
+          "topic_fit": [
+            "agent-memory architecture tradeoff",
+            "memory retrieval or serialization benchmark",
+            "recall, consolidation, or memory-graph design implication"
+          ],
+          "signals": [
+            "discussion",
+            "tradeoff",
+            "trade-off",
+            "benchmark",
+            "comparison",
+            "serialization",
+            "multi-hop",
+            "recall",
+            "impact"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Open Question": {
+          "topic_fit": [
+            "conflicting or stale memories across agents",
+            "memory authority, provenance, consent, correction, or revocation",
+            "shared-memory governance or trust question"
+          ],
+          "signals": [
+            "open question",
+            "what happens",
+            "how should",
+            "which source",
+            "conflict",
+            "authoritative",
+            "approve",
+            "revoke",
+            "trust"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    },
+    {
+      "account_code": "R2",
+      "subreddit": "r/LocalLLaMA",
+      "lane": "local_llama",
+      "rule_json": "reference/slots/local_llama/local_llama.json",
+      "review_markdown": "reference/slots/local_llama/local_llama.md",
+      "reference_screenshots": [
+        "resource/reddit/slots/local_llama/discussion.png",
+        "resource/reddit/slots/local_llama/help.png",
+        "resource/reddit/slots/local_llama/resources.png"
+      ],
+      "post_types": [
+        "Discussion",
+        "Question | Help",
+        "Resources"
+      ],
+      "default_post_type": "Discussion",
+      "post_type_rules": {
+        "Discussion": {
+          "topic_fit": [
+            "local model or quantization tradeoff",
+            "self-hosted inference design discussion",
+            "local RAG architecture or evaluation"
+          ],
+          "signals": [
+            "tradeoff",
+            "trade-off",
+            "cost",
+            "comparison",
+            "versus",
+            "vs",
+            "discussion",
+            "debate"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Question | Help": {
+          "topic_fit": [
+            "focused troubleshooting request",
+            "hardware or model-selection question",
+            "local RAG failure with concrete context"
+          ],
+          "signals": [
+            "help",
+            "question",
+            "issue",
+            "problem",
+            "error",
+            "not working",
+            "recommend",
+            "advice"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        },
+        "Resources": {
+          "topic_fit": [
+            "curated local LLM tools or references",
+            "model, runtime, or RAG resource comparison",
+            "practical source-supported resource list"
+          ],
+          "signals": [
+            "resource",
+            "resources",
+            "tool",
+            "tools",
+            "list",
+            "guide",
+            "collection",
+            "framework"
+          ],
+          "allowed_link_policies": [
+            "no_link"
+          ],
+          "default_link_policy": "no_link"
+        }
+      }
+    }
+  ],
+  "r2_short_question_policy": {
+    "enabled": true,
+    "account_code": "R2",
+    "weekly_count": 1,
+    "length_tier": "short_post",
+    "question_post_types": {
+      "r/AIMemory": "Open Question",
+      "r/LocalLLaMA": "Question | Help"
+    },
+    "topic_scope": [
+      "Milvus usage",
+      "Milvus product features",
+      "Milvus competitive comparisons"
+    ],
+    "notes": "Every weekly pack must contain exactly one R2 short question-type post. Choose the question Post Type configured for the selected R2 subreddit and keep it short. The question must stay source-backed and may cover Milvus usage, product features, or competitive comparisons."
+  }
+}

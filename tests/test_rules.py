@@ -3,7 +3,7 @@ import json
 import re
 import sys
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -15,6 +15,8 @@ if str(SCRIPTS) not in sys.path:
 
 import append_pack
 import append_pack_to_feishu
+import render_rule_docs
+import resource_paths
 import sync_blog_pool_from_content_all_in_one as pool_sync
 import weekly_post_rules
 
@@ -47,16 +49,20 @@ def errors_for(item):
 
 
 class PoolSyncRulesTest(unittest.TestCase):
-    def test_only_published_blog_post_rows_sync(self):
+    def test_only_rows_matching_configured_source_contract_sync(self):
         published_ms = int(
             datetime(2026, 7, 1, tzinfo=timezone.utc).timestamp() * 1000
         )
+        valid_category = pool_sync.REQUIRED_CATEGORY
+        valid_status = pool_sync.REQUIRED_STATUS
+        official_host = pool_sync.SOURCE_RULES["official_hosts"][0]
+        path_prefix = pool_sync.REQUIRED_PATH_PREFIX
         records = []
         for record_id, category, status, slug in [
-            ("rec-published", "Blog Post", "Published", "published"),
-            ("rec-posted", "Blog Post", "Posted", "posted"),
-            ("rec-planned", "Blog Post", "Planned", "planned"),
-            ("rec-other", "Case Study", "Published", "other"),
+            ("rec-published", valid_category, valid_status, "published"),
+            ("rec-posted", valid_category, "Other Status", "posted"),
+            ("rec-planned", valid_category, "Future Status", "planned"),
+            ("rec-other", "Other Category", valid_status, "other"),
         ]:
             records.append(
                 {
@@ -64,7 +70,7 @@ class PoolSyncRulesTest(unittest.TestCase):
                     "fields": {
                         "Category": category,
                         "Status": status,
-                        "Publish URL": f"https://milvus.io/blog/{slug}",
+                        "Publish URL": f"https://{official_host}/{path_prefix}/{slug}",
                         "Publish Date": published_ms,
                         "Title & Topic": slug,
                     },
@@ -81,7 +87,7 @@ class PoolSyncRulesTest(unittest.TestCase):
                 "table",
                 "view",
                 catalog={},
-                since=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                since=pool_sync.parse_since(pool_sync.DEFAULT_SINCE),
             )
 
         candidates, unknown, before, non_blog, missing_url, not_published = result
@@ -91,15 +97,17 @@ class PoolSyncRulesTest(unittest.TestCase):
         self.assertEqual((before, non_blog, missing_url), (0, 0, 0))
 
     def test_source_candidates_are_sorted_newest_first(self):
+        official_host = pool_sync.SOURCE_RULES["official_hosts"][0]
+        path_prefix = pool_sync.REQUIRED_PATH_PREFIX
         records = []
         for record_id, day in [("rec-older", 20), ("rec-newer", 30)]:
             records.append(
                 {
                     "record_id": record_id,
                     "fields": {
-                        "Category": "Blog Post",
-                        "Status": "Published",
-                        "Publish URL": f"https://milvus.io/blog/{record_id}",
+                        "Category": pool_sync.REQUIRED_CATEGORY,
+                        "Status": pool_sync.REQUIRED_STATUS,
+                        "Publish URL": f"https://{official_host}/{path_prefix}/{record_id}",
                         "Publish Date": int(
                             datetime(2026, 7, day, tzinfo=timezone.utc).timestamp() * 1000
                         ),
@@ -130,8 +138,8 @@ class PoolSyncRulesTest(unittest.TestCase):
 class DraftValidationRulesTest(unittest.TestCase):
     def test_checked_in_reference_examples_follow_current_contract(self):
         paths = [
-            ROOT / "reference/Milvus blog for repurpose.md",
-            ROOT / "reference/Reddit 内容建议及范例.md",
+            ROOT / "guidance/reddit/Milvus blog for repurpose.md",
+            ROOT / "guidance/reddit/Reddit 内容建议及范例.md",
         ]
         checked = 0
         for path in paths:
@@ -203,15 +211,16 @@ class DraftValidationRulesTest(unittest.TestCase):
             "https://example.feishu.cn/docx/doc-token",
         )
 
-    def test_weekly_sources_prioritize_last_seven_days_with_fallback(self):
+    def test_weekly_sources_use_configured_priority_window_with_fallback(self):
         rules = weekly_post_rules.load_rules()
         policy = rules["source_recency_policy"]
-        self.assertEqual(policy["priority_window_days"], 7)
+        priority_days = policy["priority_window_days"]
+        self.assertGreater(priority_days, 0)
         self.assertTrue(policy["fallback_to_older"])
 
         as_of = datetime(2026, 8, 4, 12, tzinfo=timezone.utc)
-        recent = datetime(2026, 7, 30, tzinfo=timezone.utc)
-        older = datetime(2026, 7, 20, tzinfo=timezone.utc)
+        recent = as_of - timedelta(days=max(0, priority_days - 1))
+        older = as_of - timedelta(days=priority_days + 1)
         self.assertTrue(weekly_post_rules.is_recent_source(recent, as_of, rules))
         self.assertFalse(weekly_post_rules.is_recent_source(older, as_of, rules))
         self.assertLess(
@@ -219,57 +228,104 @@ class DraftValidationRulesTest(unittest.TestCase):
             weekly_post_rules.source_priority_key(older, as_of, rules),
         )
 
-    def test_weekly_slots_use_localllama_instead_of_dataengineering(self):
-        slots = {
-            (slot["account_code"], slot["subreddit"])
-            for slot in weekly_post_rules.load_rules()["weekly_slots"]
-        }
-        self.assertEqual(
-            slots,
-            {
-                ("R1", "r/Rag"),
-                ("R1", "r/AI_Agents"),
-                ("R2", "r/vectordatabase"),
-                ("R2", "r/LocalLLaMA"),
-            },
+    def test_weekly_slots_match_configured_pack_and_active_accounts(self):
+        rules = weekly_post_rules.load_rules()
+        slots = rules["weekly_slots"]
+        pairs = {(slot["account_code"], slot["subreddit"]) for slot in slots}
+        self.assertEqual(len(slots), rules["weekly_pack_size"])
+        self.assertEqual(len(pairs), len(slots))
+        self.assertTrue(
+            {slot["account_code"] for slot in slots}.issubset(
+                set(rules["active_accounts"])
+            )
         )
-        self.assertNotIn(("R2", "r/dataengineering"), slots)
-
-    def test_localllama_post_types_match_reference_overlays(self):
-        slot = weekly_post_rules.slot_for("r/LocalLLaMA")
-        self.assertEqual(
-            slot["post_types"],
-            ["Discussion", "Question | Help", "Resources"],
-        )
-        self.assertEqual(
-            weekly_post_rules.recommend_post_type(
-                "r/LocalLLaMA",
-                "I need help debugging a local model issue that is not working.",
-            ),
-            "Question | Help",
-        )
+        for slot in slots:
+            self.assertIn(slot["default_post_type"], slot["post_types"])
+            self.assertEqual(
+                weekly_post_rules.recommend_post_type(slot["subreddit"], "", rules),
+                slot["default_post_type"],
+            )
 
     def test_weekly_slot_reference_files_exist(self):
         for slot in weekly_post_rules.load_rules()["weekly_slots"]:
-            reference_markdown = ROOT / slot["reference_markdown"]
-            self.assertTrue(reference_markdown.is_file(), reference_markdown)
+            rule_json = ROOT / slot["rule_json"]
+            review_markdown = ROOT / slot["review_markdown"]
+            self.assertTrue(rule_json.is_file(), rule_json)
+            self.assertTrue(review_markdown.is_file(), review_markdown)
+            slot_rule = json.loads(rule_json.read_text())
+            self.assertEqual(slot_rule["subreddit"], slot["subreddit"])
+            self.assertEqual(
+                set(slot_rule["post_type_guidance"]), set(slot["post_types"])
+            )
             for screenshot in slot.get("reference_screenshots", []):
                 screenshot_path = ROOT / screenshot
                 self.assertTrue(screenshot_path.is_file(), screenshot_path)
 
-    def test_weekly_validation_rejects_retired_dataengineering_slot(self):
-        expected_specs = [
-            {"items": [{"account_code": code, "subreddit": subreddit}]}
-            for code, subreddit in [
-                ("R1", "r/Rag"),
-                ("R1", "r/AI_Agents"),
-                ("R2", "r/vectordatabase"),
-                ("R2", "r/LocalLLaMA"),
-            ]
+    def _r2_weekly_specs(self):
+        rules = weekly_post_rules.load_rules()
+        slots = rules["weekly_slots"]
+        specs = [
+            {"items": [{"account_code": slot["account_code"], "subreddit": slot["subreddit"]}]}
+            for slot in slots
         ]
+        question_sub = "r/LocalLLaMA"
+        for spec in specs:
+            item = spec["items"][0]
+            if item["account_code"] == "R2" and item["subreddit"] == question_sub:
+                item["post_type"] = weekly_post_rules.r2_question_post_type_for(question_sub, rules)
+                item["length_tier"] = "short_post"
+                item["title"] = "How do you test this Milvus retrieval tradeoff?"
+        return specs
+
+    def test_weekly_validation_requires_one_r2_short_question(self):
+        specs = self._r2_weekly_specs()
+        self.assertEqual(append_pack_to_feishu.validate_weekly_specs(specs), [])
+
+        # Remove the question Post Type: the pack now has zero R2 question posts.
+        for spec in specs:
+            item = spec["items"][0]
+            if item["account_code"] == "R2" and item["subreddit"] == "r/LocalLLaMA":
+                item.pop("post_type")
+        errors = append_pack_to_feishu.validate_weekly_specs(specs)
+        self.assertTrue(any("exactly one R2 short question post" in e for e in errors))
+
+    def test_weekly_r2_question_must_be_short_post_and_question_title(self):
+        specs = self._r2_weekly_specs()
+        for spec in specs:
+            item = spec["items"][0]
+            if item["account_code"] == "R2" and item["subreddit"] == "r/LocalLLaMA":
+                item["length_tier"] = "standard_post"
+                item["title"] = "A third-person declarative title"
+        errors = append_pack_to_feishu.validate_weekly_specs(specs)
+        self.assertTrue(any("length_tier 'short_post'" in e for e in errors))
+        self.assertTrue(any("explicit question title" in e for e in errors))
+
+    def test_weekly_validation_rejects_unconfigured_slot(self):
+        rules = weekly_post_rules.load_rules()
+        slots = rules["weekly_slots"]
+        expected_specs = [
+            {
+                "items": [
+                    {
+                        "account_code": slot["account_code"],
+                        "subreddit": slot["subreddit"],
+                    }
+                ]
+            }
+            for slot in slots
+        ]
+        # Mark exactly one R2 slot as the required weekly short question post.
+        r2_question_subreddit = "r/LocalLLaMA"
+        for spec in expected_specs:
+            item = spec["items"][0]
+            if item["account_code"] == "R2" and item["subreddit"] == r2_question_subreddit:
+                item["post_type"] = weekly_post_rules.r2_question_post_type_for(
+                    r2_question_subreddit, rules
+                )
+                item["length_tier"] = "short_post"
         self.assertEqual(append_pack_to_feishu.validate_weekly_specs(expected_specs), [])
 
-        expected_specs[-1]["items"][0]["subreddit"] = "r/dataengineering"
+        expected_specs[-1]["items"][0]["subreddit"] = "r/__unexpected__"
         errors = append_pack_to_feishu.validate_weekly_specs(expected_specs)
         self.assertTrue(any("missing slots" in error for error in errors))
         self.assertTrue(any("unexpected slots" in error for error in errors))
@@ -326,6 +382,21 @@ class DraftValidationRulesTest(unittest.TestCase):
         self.assertTrue(any("grammatical language buffer" in error for error in errors))
         self.assertFalse(any("language buffer" in warning for warning in warnings))
 
+    def test_buffer_requirement_follows_guidance_minimum(self):
+        item = base_item()
+        item["body"] = (
+            "I built a retrieval test around fixed queries and explicit labels. "
+            "It separates parsing, filtering, ranking, and answer synthesis. "
+            "The retrieval layer can use vector databases like Milvus."
+        )
+        rules = copy.deepcopy(weekly_post_rules.load_rules())
+        rules["language_buffer_policy"]["minimum_matches_per_body"] = 0
+        with mock.patch.object(
+            append_pack.weekly_post_rules, "load_rules", return_value=rules
+        ):
+            errors, _ = errors_for(item)
+        self.assertFalse(any("grammatical language buffer" in error for error in errors))
+
     def test_ungrammatical_i_concern_does_not_count_as_buffer(self):
         item = base_item()
         item["body"] = (
@@ -342,25 +413,26 @@ class DraftValidationRulesTest(unittest.TestCase):
         errors, _ = errors_for(item)
         self.assertTrue(any("must use voice_fingerprint" in error for error in errors))
 
-    def test_accounts_defer_hard_rules_to_weekly_policy(self):
-        accounts = json.loads((ROOT / "data/accounts.json").read_text())
+    def test_accounts_defer_hard_rules_to_editorial_guidance(self):
+        accounts = json.loads(resource_paths.ACCOUNTS.read_text())
         weekly_accounts = weekly_post_rules.load_rules()["account_policies"]
         for account in accounts:
             code = account["account_code"]
             self.assertNotIn("brand_policy", account)
             self.assertEqual(
-                account["hard_rule_authority"], "data/weekly_post_rules.json"
+                account["hard_rule_authority"],
+                "guidance/reddit/editorial/editorial_policy.json",
             )
             self.assertEqual(weekly_accounts[code]["required_milvus_body_mentions"], 1)
             self.assertFalse(weekly_accounts[code]["may_mention_zilliz"])
 
-        subreddits = json.loads((ROOT / "data/subreddits.json").read_text())
+        subreddits = json.loads(resource_paths.SUBREDDITS.read_text())
         for subreddit in subreddits:
             self.assertNotIn("account_code", subreddit)
             self.assertNotIn("post_types", subreddit)
             self.assertNotIn("link_policy", subreddit)
 
-    def test_post_type_closing_policy_keeps_fixed_weekly_slots(self):
+    def test_editorial_guidance_merges_with_weekly_workflow(self):
         rules = weekly_post_rules.load_rules()
         self.assertIn("Do not end with a question", rules["post_type_closing_policy"]["Tutorial"])
         self.assertIn("Would love to hear your thoughts", rules["post_type_closing_policy"]["Discussion"])
@@ -380,6 +452,41 @@ class DraftValidationRulesTest(unittest.TestCase):
             rules["language_buffer_policy"]["minimum_matches_per_body"], 1
         )
 
+    def test_instruction_precedence_matches_three_level_contract(self):
+        precedence = weekly_post_rules.load_rules()["instruction_precedence"]
+        self.assertEqual(precedence["conflict_resolution"], "higher_level_wins")
+        self.assertEqual(precedence["unresolvable_conflict"], "reject")
+        self.assertEqual(
+            [level["id"] for level in precedence["levels"]],
+            ["guidance", "subreddit", "audience_angle"],
+        )
+        self.assertEqual(
+            precedence["levels"][0]["controls"],
+            ["disclosure", "first_person_language", "language_buffer"],
+        )
+        self.assertEqual(
+            precedence["levels"][1]["controls"],
+            [
+                "subreddit_subrules",
+                "post_category",
+                "post_type",
+                "native_structure",
+                "native_style",
+            ],
+        )
+        self.assertEqual(
+            precedence["levels"][2]["controls"],
+            ["preferred_technical_angle", "topic_fit", "voice_fingerprint"],
+        )
+
+    def test_instruction_precedence_fails_closed_when_reordered(self):
+        rules = copy.deepcopy(weekly_post_rules.load_rules())
+        rules["instruction_precedence"]["levels"][1:] = reversed(
+            rules["instruction_precedence"]["levels"][1:]
+        )
+        with self.assertRaisesRegex(ValueError, "instruction_precedence level order"):
+            weekly_post_rules.validate_contract(rules)
+
     def test_inferred_short_body_uses_short_post(self):
         item = base_item()
         item.pop("length_tier")
@@ -388,12 +495,110 @@ class DraftValidationRulesTest(unittest.TestCase):
     def test_all_four_length_tiers_exist(self):
         tiers = {
             row["tier"]
-            for row in json.loads((ROOT / "data/content_length_rules.json").read_text())
+            for row in json.loads(resource_paths.CONTENT_LENGTH_RULES.read_text())
         }
         self.assertEqual(
             tiers,
             {"short_post", "standard_post", "long_post", "code_long_post"},
         )
+
+    def test_progressive_resource_layout_is_complete(self):
+        self.assertFalse((ROOT / "data").exists())
+        self.assertFalse((ROOT / "asset").exists())
+        self.assertFalse((resource_paths.REFERENCE_ROOT / "workflow").exists())
+        self.assertTrue(resource_paths.RESOURCE_ROOT.is_dir())
+        self.assertTrue(resource_paths.RESOURCE_SLOT_ROOT.is_dir())
+        self.assertTrue(resource_paths.EDITORIAL_ROOT.is_dir())
+        self.assertTrue(resource_paths.WORKFLOW_ROOT.is_dir())
+        self.assertEqual(
+            resource_paths.EDITORIAL_ROOT,
+            resource_paths.GUIDANCE_ROOT / "editorial",
+        )
+        self.assertEqual(
+            resource_paths.WORKFLOW_ROOT,
+            resource_paths.GUIDANCE_ROOT / "workflow",
+        )
+        for path in [
+            resource_paths.WEEKLY_WORKFLOW,
+            resource_paths.SOURCE_SYNC_RULES,
+            resource_paths.EDITORIAL_POLICY,
+            resource_paths.CONTENT_LENGTH_RULES,
+            resource_paths.ACCOUNTS,
+            resource_paths.ACCOUNT_TOPIC_RULES,
+            resource_paths.USER_FINGERPRINTS,
+            resource_paths.TOPIC_BANK,
+            resource_paths.SUBREDDITS,
+        ]:
+            self.assertTrue(path.is_file(), path)
+
+        for name in [
+            "Reddit 运营要求",
+            "Reddit 内容问答",
+            "Reddit 内容建议及范例",
+            "Milvus blog for repurpose",
+        ]:
+            self.assertTrue((resource_paths.GUIDANCE_ROOT / f"{name}.md").is_file())
+            self.assertTrue(
+                (resource_paths.RESOURCE_PDF_ROOT / f"{name}.pdf").is_file()
+            )
+
+        workflow = json.loads(resource_paths.WEEKLY_WORKFLOW.read_text())
+        guidance = json.loads(resource_paths.EDITORIAL_POLICY.read_text())
+        self.assertFalse(set(workflow).intersection(guidance))
+        self.assertEqual(set(weekly_post_rules.load_rules()), set(workflow) | set(guidance))
+
+        rules = weekly_post_rules.load_rules()
+        for slot in rules["weekly_slots"]:
+            self.assertTrue(slot["rule_json"].startswith("reference/slots/"))
+            self.assertTrue(slot["rule_json"].endswith(".json"))
+            slot_rule = ROOT / slot["rule_json"]
+            self.assertTrue(slot_rule.is_file())
+            slot_contract = json.loads(slot_rule.read_text())
+            self.assertEqual(
+                slot_contract["inherited_contract"]["guidance"],
+                "guidance/reddit/editorial/editorial_policy.json",
+            )
+            self.assertTrue(slot["review_markdown"].startswith("reference/slots/"))
+            self.assertTrue(slot["review_markdown"].endswith(".md"))
+            slot_markdown = ROOT / slot["review_markdown"]
+            self.assertTrue(slot_markdown.is_file())
+            slot_text = slot_markdown.read_text()
+            self.assertIn("Human review view generated", slot_text)
+            self.assertIn(f"Machine source: `{slot['rule_json']}`", slot_text)
+            for screenshot in slot["reference_screenshots"]:
+                self.assertTrue(screenshot.startswith("resource/reddit/slots/"))
+                self.assertTrue((ROOT / screenshot).is_file())
+
+    def test_rule_json_has_current_human_markdown_review(self):
+        documents = render_rule_docs.expected_documents()
+        self.assertEqual(render_rule_docs.check_documents(documents), [])
+
+        documented_json = {
+            source_path
+            for _, _, source_paths in render_rule_docs.DOCUMENT_SPECS
+            for source_path in source_paths
+        }
+        rule_json = set((ROOT / "guidance").rglob("*.json")) | set(
+            (ROOT / "reference").rglob("*.json")
+        )
+        self.assertEqual(documented_json, rule_json)
+
+        for output_path, expected in documents.items():
+            self.assertTrue(output_path.is_file(), output_path)
+            self.assertEqual(output_path.read_text(), expected)
+            self.assertIn("Human review view generated", expected)
+
+    def test_merged_contract_fails_closed_on_reference_mismatch(self):
+        rules = copy.deepcopy(weekly_post_rules.load_rules())
+        rules["weekly_pack_size"] += 1
+        with self.assertRaisesRegex(ValueError, "weekly_pack_size"):
+            weekly_post_rules.validate_contract(rules)
+
+    def test_slot_machine_rule_must_match_workflow_post_types(self):
+        rules = copy.deepcopy(weekly_post_rules.load_rules())
+        rules["weekly_slots"][0]["post_types"].append("Unexpected Type")
+        with self.assertRaisesRegex(ValueError, "rule_json Post Types"):
+            weekly_post_rules.validate_contract(rules)
 
     def test_i_built_does_not_break_anonymity(self):
         errors, _ = errors_for(base_item())
@@ -483,6 +688,32 @@ class DraftValidationRulesTest(unittest.TestCase):
         errors, _ = errors_for(item)
         self.assertTrue(any("exactly once" in error and "found 2" in error for error in errors))
 
+    def test_non_question_post_rejects_named_database_competitor(self):
+        item = base_item()
+        item["subreddit"] = "r/Rag"
+        item["post_type"] = "Discussion"
+        item["body"] += " I compared it with Pinecone and Qdrant on the same query set."
+        errors, _ = errors_for(item)
+        self.assertTrue(any("named database brand" in e for e in errors))
+
+    def test_question_post_allows_named_database_competitor(self):
+        item = base_item()
+        item["account_code"] = "R2"
+        item["subreddit"] = "r/LocalLLaMA"
+        item["post_type"] = "Question | Help"
+        item["title"] = "How do you compare Milvus against Pinecone for local RAG?"
+        item["voice_fingerprint"] = "structured_design_question"
+        item["length_tier"] = "short_post"
+        item["body"] = (
+            "I am trying to decide between self-hosted retrieval options for local RAG. "
+            "My current view is that latency and memory fit matter more than a single "
+            "benchmark number. When the retrieval layer is a vector database like Milvus, "
+            "how do you weigh it against Pinecone for a single-node workload?"
+        )
+        item["milvus_mention_basis"] = "The source names Milvus as the local retrieval layer."
+        errors, _ = errors_for(item)
+        self.assertFalse(any("named database brand" in e for e in errors))
+
     def test_zilliz_fails(self):
         item = base_item()
         item["body"] += " The source also names Zilliz."
@@ -499,9 +730,38 @@ class DraftValidationRulesTest(unittest.TestCase):
         item = base_item()
         item["body"] += " See https://example.com for details."
         errors, _ = errors_for(item)
-        self.assertTrue(any("must not contain URLs" in error for error in errors))
+        self.assertTrue(any("does not allow URLs" in error for error in errors))
 
-    def test_non_no_link_policy_fails(self):
+    def test_link_behavior_follows_guidance_mode(self):
+        item = base_item()
+        item["link_policy"] = "inline_link"
+        item["body"] += " See https://example.com for the configured reference."
+        rules = copy.deepcopy(weekly_post_rules.load_rules())
+        rules["link_policy_modes"]["inline_link"] = {
+            "allow_inline_urls": True,
+            "allow_approved_link": False,
+            "require_approved_link": False,
+        }
+        rules["account_policies"]["R1"]["link_mode"] = "inline_link"
+        rules["account_policies"]["R1"]["default_link_policy"] = "inline_link"
+        with mock.patch.object(
+            append_pack.weekly_post_rules, "load_rules", return_value=rules
+        ):
+            errors, _ = errors_for(item)
+        self.assertFalse(any("URL" in error for error in errors))
+
+    def test_milvus_title_behavior_follows_guidance(self):
+        item = base_item()
+        item["title"] = "What I learned about Milvus retrieval tradeoffs"
+        rules = copy.deepcopy(weekly_post_rules.load_rules())
+        rules["milvus_mention_context_policy"]["allow_in_title"] = True
+        with mock.patch.object(
+            append_pack.weekly_post_rules, "load_rules", return_value=rules
+        ):
+            errors, _ = errors_for(item)
+        self.assertFalse(any("only in the body" in error for error in errors))
+
+    def test_unconfigured_link_policy_fails(self):
         item = base_item()
         item["link_policy"] = "manual_approved_link"
         errors, _ = errors_for(item)

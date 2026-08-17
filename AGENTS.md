@@ -2,127 +2,138 @@
 
 ## Purpose
 
-Generate a fixed four-slot weekly Reddit content pack from recent official blog
-ideas, then parse Reddit JSON that a human has pasted into Feishu for published
-post review. The pipeline creates drafts and review metadata; it never performs
-Reddit account activity or fetches Reddit JSON itself.
+Generate the currently configured weekly Reddit draft pack from recent official blog
+ideas, deliver approved drafts to Feishu review, and monitor recently published
+posts through visible Chrome/Browser page state. The project never performs
+Reddit account activity or uses Reddit JSON/API responses.
+
+## Progressive disclosure
+
+Load only the context required by the active stage, in this order:
+
+1. the latest user direction and this file;
+2. the selected Skill under `.agents/skills/`;
+3. current workflow values from `guidance/reddit/workflow/`;
+4. shared editorial policy from `guidance/reddit/editorial/` when the stage edits or
+   validates content;
+5. only the selected subreddit rule JSON under `reference/slots/`;
+6. only the selected account and audience rows under `reference/accounts/` and
+   `reference/topic_bank.json`;
+7. visual evidence from `resource/reddit/` only when screenshots are needed;
+8. source-specific facts.
+
+Workflow guidance controls weekly quantity, active accounts, slot assignment,
+recency, and sync source. These execution values are not an editorial override.
+Resources never define rules. Source facts bound all claims.
+
+## Machine rules and review views
+
+- JSON files under `guidance/` and `reference/` are the authoritative machine
+  contracts used by scripts and AI workflow stages.
+- Generated `RULES.md` and `TOPIC_RULES.md` files are human-readable review
+  views. Load them when the user asks to inspect rules; do not use them as a
+  second runtime authority.
+- Never maintain JSON and MD independently. Change the JSON, then run
+  `python3 scripts/render_rule_docs.py`.
+- Run `python3 scripts/render_rule_docs.py --check` before handoff. A stale or
+  missing MD review view is a validation failure.
+
+## Editorial instruction precedence
+
+For screening, drafting, rewriting, and validation, resolve editorial choices
+in this exact order:
+
+1. **Guidance**: satisfy disclosure first, then the required first-person `I`
+   framing and grammatical language Buffer. All other global anonymity, brand,
+   link, title, opening, and safety rules remain mandatory here.
+2. **Subreddit**: obey the selected community's subrules, select only a valid
+   configured Post Category/Post Type, then apply common native post structures
+   and writing style.
+3. **Audience angle**: choose the preferred technical angle, topic realization,
+   and account fingerprint only from the options left by the first two levels.
+   Vector-database and retrieval interests are examples of this layer.
+
+Higher levels always win. If a Subreddit choice conflicts with Guidance, reject
+or replace the Subreddit choice. If an audience angle or fingerprint conflicts
+with either higher level, choose another angle; it cannot relax the higher
+rule. If no compliant lower-level choice remains, reject the source or draft.
+Source facts are a non-negotiable factual boundary at every level and can never
+be invented to satisfy an angle.
+
+## Layer stability
+
+Do not rank `guidance/`, `reference/`, and `resource/` by expected modification
+frequency; all three are working content layers and may change often. Keep the
+base calling logic under `.agents/skills/` stable unless the workflow stages,
+commands, outputs, or write gates actually change. This maintenance guidance
+does not alter the editorial instruction precedence above.
 
 ## Skills
 
-Use the repo-scoped `$reddit-weekly` Skill for the complete workflow. Use a
-stage Skill when the user wants only one step:
+Use `$reddit-weekly` for the complete workflow. Use one stage Skill when the
+user requests only that stage:
 
-- `$reddit-pool-sync`: preview or sync eligible source rows only;
-- `$reddit-source-screen`: screen and assign sources only;
-- `$reddit-pack-draft`: produce draft JSON only;
-- `$reddit-pack-validate`: validate only, with no writes;
-- `$reddit-pack-write`: preview or write validated drafts to Feishu review.
-- `$reddit-json-content-parse`: parse pasted `Reddit JSON Content`, then preview
-  or update published-post metrics, status, comment summaries,
-  public-opinion alerts, and Milvus signals.
+- `$reddit-pool-sync`: preview or sync eligible official Blog rows;
+- `$reddit-source-screen`: screen and assign sources;
+- `$reddit-pack-draft`: generate draft JSON only;
+- `$reddit-pack-validate`: validate without writes;
+- `$reddit-pack-write`: preview or write validated drafts to Feishu review;
+- `$reddit-browser-monitor`: inspect visible published-post state and preview or
+  write monitoring fields.
 
-All seven Skills live under `.agents/skills/`. Run their scripts from the project
-root with `python3 scripts/...`.
-
-## Source and weekly contract
-
-- Sync only from Content All in One / `All content` / `all content`
-  (`TXy3bCKznaz89fseyo3cPMShnyb` / `tblsyUaNiyPnhrFI` / `vewx5CDVdU`).
-- Require `Category = Blog Post`, `Status = Published`, an official `/blog/`
-  URL, a recoverable publish date, and a date on or after `2026-01-01`.
-- Prefer suitable, ungenerated sources published within the latest 7 days.
-  If they cannot cover all four weekly slots, fill the remaining slots from
-  older suitable sources in descending publish-date order.
-- Do not use Medium Sync, Medium Daily, EN Content, or the retired calendar
-  view.
-- Generate exactly four weekly slots: R1 → `r/Rag`, R1 → `r/AI_Agents`, R2 →
-  `r/vectordatabase`, and R2 → `r/LocalLLaMA`.
-- Use `No fixed post type` for `r/vectordatabase`; every other item must use a
-  configured subreddit Post Type.
-
-## Editorial and safety rules
-
-- R1/R2 are anonymous, use empty disclosure, and never reveal identity,
-  employer, affiliation, contributor/maintainer status, or private account data.
-- `I built` is allowed only when supported by the source and without inventing
-  personal history, customers, benchmarks, metrics, or results.
-- Every title must use first-person singular framing such as `I think`,
-  `Now I believe`, or `What I learned`, or be an explicit question ending in
-  `?`. Reject fully third-person declarative titles. Titles cannot mention
-  Milvus.
-- Every body must mention Milvus exactly once when the source supports the
-  technical background or data; fill `milvus_mention_basis`. The mention must
-  be indirect and contextual, such as `vector databases like Milvus`,
-  `data infrastructures such as Milvus`, or `Milvus and other databases`.
-  Direct product placement is not allowed; replace a source that cannot support
-  the required natural context.
-- Generated content cannot mention Zilliz.
-- R1/R2 are always `no_link`; reject URLs and `approved_link`.
-- The first sentence must establish a source-supported first-person perspective,
-  and every body must include at least one sparse, grammatical language buffer
-  for a judgment or uncertainty. Missing either is a validation error. Do not
-  invent personal history or hedge source-supported facts or measurements.
-- Tutorials must not end with a question. Discussion reply invitations are
-  optional and, when used, should be soft and conversational rather than a hard
-  interrogative ending.
-- Keep all four length tiers: `short_post`, `standard_post`, `long_post`, and
-  `code_long_post`. Use `short_post` only for genuinely concise content.
-- Screenshots provide Post Type and structural overlays only. Never copy their
-  identity, employer, disclosure, links, typos, metrics, or claims.
-- Never automate Reddit login, posting, comments, replies, voting, likes,
-  warm-up activity, or coordinated engagement.
+All seven Skills live under `.agents/skills/`. Run runtime commands from the
+project root with `python3 scripts/...`.
 
 ## Sources of truth
 
-- `data/weekly_post_rules.json`: active accounts, fixed slots, Post Types,
-  anonymity, brand, question, and link policy.
-- `data/accounts.json` and `data/user_fingerprints.json`: stable personas and
-  voice boundaries.
-- `data/account_topic_rules.json` and `data/topic_bank.json`: screening and
-  advisory topic matching; they cannot create new account/subreddit permission.
-- `data/content_length_rules.json`: the four length and code tiers.
-- `reference/subreddit_rule/`: sanitized community guidance and screenshots.
-- `reference/*.md`: editable Reference content; corresponding PDFs are generated
-  deliverables.
-- `scripts/reddit_json_content.py`: pasted Reddit JSON parsing, status,
-  approximate downvotes, comment triage, and Feishu parsing field contract.
+- `guidance/reddit/workflow/weekly.json`: weekly quantity, active accounts, source
+  recency, slot assignment, and Post Types;
+- `guidance/reddit/workflow/source_sync.json`: current sync source and eligibility
+  contract;
+- `reference/accounts/`: account persona, topic routing, and fingerprints;
+- `reference/slots/`: four machine-readable slot rules and generated Markdown
+  reviews, plus the community registry;
+- `reference/topic_bank.json`: shared screening taxonomy;
+- `guidance/reddit/editorial/editorial_policy.json`: global editorial and safety checks;
+- `guidance/reddit/editorial/content_length_rules.json`: length and code tiers;
+- `guidance/reddit/editorial/RULES.md`: generated human review of Editorial JSON;
+- `guidance/reddit/workflow/RULES.md`: generated human review of Workflow JSON;
+- `reference/accounts/RULES.md`: generated human review of account JSON;
+- `reference/TOPIC_RULES.md`: generated human review of topic-bank JSON;
+- `reference/slots/RULES.md`: generated human review of slot-registry JSON;
+- `resource/reddit/`: non-authoritative screenshots and generated PDFs;
+- `config/`: Feishu IDs and field mappings without credentials;
+- `scripts/resource_paths.py`: authoritative local resource path map.
 
-Draft delivery outputs contain only final draft content and structured review
-fields. JSON-content parsing dry-runs may include sanitized comment samples without
-Reddit author usernames or links so a human can review the summary; Feishu
-receives only the summary, metrics, status, alerts, and signals. Do not write
-reasoning, scratch notes, credentials, or private account details into output.
+## Safety and write gates
 
-## Feishu workflow
+- Never automate Reddit login, posting, comments, replies, voting, likes,
+  warm-up activity, messages, follows, reports, or coordinated engagement.
+- Never use Reddit `.json` URLs, APIs, network-response bodies, cookies, local
+  storage, or session files.
+- Preview every Feishu mutation first. Perform the matching live sync,
+  screening, delivery, or monitoring write only after explicit user approval.
+- Browser monitoring uses only visible page state and never overwrites
+  `Impression (7 days)` or publication `Status`.
+- Output only final drafts and structured review fields. Never persist reasoning,
+  raw comments, Reddit usernames, comment links, credentials, or private account
+  data.
 
-Preview writes before executing them:
+## Standard previews
 
 ```bash
-python3 scripts/sync_blog_pool_from_content_all_in_one.py --since-date 2026-01-01 --dry-run
+python3 scripts/sync_blog_pool_from_content_all_in_one.py --dry-run
 python3 scripts/screen_feishu_pool.py --dry-run
 python3 scripts/append_pack_to_feishu.py --validate-only --weekly < packs.json
 python3 scripts/append_pack_to_feishu.py --weekly --dry-run < packs.json
-python3 scripts/parse_reddit_json_content.py --from-feishu --snapshot-out packs/reddit-json-content-preview.json
+python3 scripts/reddit_browser_monitor.py --list-targets
+python3 scripts/render_rule_docs.py --check
 ```
-
-Live writes are allowed only when the user explicitly requests the matching
-sync, screening, delivery, or JSON-content parsing step. Reddit publishing remains manual
-and is tracked in `Reddit Persona Pipeline` with `Status`, `Publish URL`,
-`Publish Date`, and `Publisher`.
-
-Published-post parsing reads only the complete JSON text a human pasted into
-`Reddit JSON Content`. It never opens Reddit, generates a URL, or performs
-Reddit account activity. Never overwrite `Reddit JSON` or `Reddit JSON Content`.
-Reddit does not expose exact public downvotes; store only the explicitly labeled
-`Downvotes (Estimated)` value. Set `Status = Cancel` only when valid pasted JSON
-proves the post is removed or deleted; do not cancel on locks, archives, deleted
-authors, empty content, or invalid JSON. Every live parse write must use the
-exact dry-run snapshot and must fail closed if the Feishu target set, JSON
-content hash, or field plan changed after preview.
 
 ## Change Log
 
 Update `CHANGELOG.md` in every GitHub push that changes behavior, rules, or user
-workflow. Use a `YYYY-MM-DD — short topic` heading and only the applicable
-`Added`, `Changed`, `Fixed`, `Removed`, or `Security` sections. Describe user or
-runtime outcomes, not a file-by-file activity log.
+workflow. The entire Change Log must use Simplified Chinese. Use a
+`YYYY-MM-DD — 中文主题` heading and only the applicable `新增`、`变更`、`修复`、
+`移除` or `安全` sections. Describe user or runtime outcomes rather than a file
+activity log.

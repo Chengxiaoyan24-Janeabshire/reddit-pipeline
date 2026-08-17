@@ -1,0 +1,50 @@
+[
+  {
+    "name": "r/Rag",
+    "priority": "high",
+    "fit": [
+      "production RAG",
+      "document parsing and chunking",
+      "retrieval quality",
+      "RAG tools and architecture"
+    ],
+    "content_that_works": "Concrete scale, failed attempts, architecture details, evaluation method, and an open technical question.",
+    "notes": "Use reference/slots/rag/rag.json for Post Type and native structure only. Preserve R1's practical build-log voice. Global anonymity, title, brand, and link checks come from guidance/reddit/editorial/editorial_policy.json."
+  },
+  {
+    "name": "r/AI_Agents",
+    "priority": "high",
+    "fit": [
+      "agent workflows",
+      "tool use",
+      "agent memory",
+      "agent tutorials and design tradeoffs"
+    ],
+    "content_that_works": "A specific workflow or design choice, what failed, what changed, and room for critique.",
+    "notes": "Use reference/slots/ai_agents/ai_agents.json for Post Type and workflow structure only. Preserve R1's practical build-log voice rather than imitating screenshot authors. Global anonymity, title, brand, and link checks come from guidance/reddit/editorial/editorial_policy.json."
+  },
+  {
+    "name": "r/AIMemory",
+    "priority": "high",
+    "fit": [
+      "agent memory architecture and lifecycle",
+      "long-term, episodic, semantic, and working memory",
+      "memory retrieval, consolidation, correction, and forgetting",
+      "shared multi-agent memory, governance, and evaluation"
+    ],
+    "content_that_works": "A concrete memory behavior, implementation, benchmark method, governance boundary, or conflict scenario with explicit state, provenance, recall, authority, and lifecycle constraints.",
+    "notes": "Use reference/slots/ai_memory/ai_memory.json for Post Type and agent-memory structure only. Preserve R2's structured design voice rather than imitating screenshot authors. Global anonymity, title, brand, and link checks come from guidance/reddit/editorial/editorial_policy.json."
+  },
+  {
+    "name": "r/LocalLLaMA",
+    "priority": "high",
+    "fit": [
+      "local and open-weight LLMs",
+      "self-hosted inference",
+      "local RAG and tooling",
+      "hardware, quantization, cost, and reliability"
+    ],
+    "content_that_works": "Concrete model, quantization, hardware, context-window, retrieval, or serving constraints; reproducible observations; and a focused discussion or help question.",
+    "notes": "Use reference/slots/local_llama/local_llama.json for Post Type and local-system structure only. Preserve R2's production-minded voice and do not inherit screenshot identity or claims. Global checks come from guidance/reddit/editorial/editorial_policy.json."
+  }
+]

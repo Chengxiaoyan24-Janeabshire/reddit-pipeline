@@ -13,8 +13,9 @@ Run commands from the project root.
 
 ## Input Contract
 
-Require a pack already accepted by `$reddit-pack-validate`. R1/R2 are both
-no-link, so never use `--allow-links` and never deliver an `approved_link`.
+Require a pack accepted by `$reddit-pack-validate` under the current workflow
+and guidance. Do not override current link, disclosure, brand, or metadata
+policy during delivery.
 
 ## Procedure
 
@@ -25,22 +26,20 @@ python3 scripts/append_pack_to_feishu.py --validate-only --weekly < packs.json
 python3 scripts/append_pack_to_feishu.py --weekly --dry-run < packs.json
 ```
 
-Write only after both succeed and the user authorized delivery:
+Write only after both succeed and the user explicitly authorizes delivery:
 
 ```bash
 python3 scripts/append_pack_to_feishu.py --weekly < packs.json
 ```
 
 Omit `--weekly` for an approved partial pack. Stop after `--dry-run` when the
-user asked only for preview.
+user requested only a preview.
 
 ## Output Contract
 
-Create one URL-free Content Doc per draft, write structured review metadata to
-`Reddit Persona Pipeline`, and increment referenced pool counts. Store
-`milvus_mention_basis` in review metadata when the live Base has the configured
-field; otherwise keep it in the validated pack JSON and skip the absent field.
-Do not append links.
+Create the current configured review document and structured Persona Pipeline
+metadata, then update referenced pool counters where supported. Preserve the
+validated content and skip optional fields that do not exist in the live Base.
 
 ## Safety Boundary
 

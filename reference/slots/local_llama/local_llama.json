@@ -1,0 +1,46 @@
+{
+  "subreddit": "r/LocalLLaMA",
+  "scope": [
+    "local and open-weight language models",
+    "self-hosted inference",
+    "quantization and hardware fit",
+    "local RAG",
+    "model evaluation",
+    "practical runtimes and tools"
+  ],
+  "post_type_guidance": {
+    "Discussion": "Use for a focused tradeoff or design discussion about local models, inference, quantization, RAG, evaluation, or operating constraints.",
+    "Question | Help": "Use for a concrete troubleshooting or selection question with the relevant model, runtime, hardware, data, and observed failure context.",
+    "Resources": "Use for a source-supported set of tools, models, methods, or references that remains useful without an outbound link."
+  },
+  "screenshot_overlay_policy": {
+    "stable_persona": "R2 keeps the same production-minded account fingerprint in every Post Type.",
+    "allowed_use": "Screenshots may influence the local structure only.",
+    "never_transfer": [
+      "usernames, personal circumstances, or identity claims",
+      "tool endorsements, links, prices, subscription claims, or list-size metrics",
+      "unsupported model, hardware, quality, latency, or throughput results",
+      "wording, typos, or claims from the example author"
+    ]
+  },
+  "native_structure": [
+    "State the local-model, inference, or RAG problem directly.",
+    "Include source-supported constraints such as model size, quantization, context length, RAM/VRAM, CPU/GPU, retrieval corpus, latency, or privacy.",
+    "Explain what was tried or compared and separate observations from assumptions.",
+    "For Question | Help, make the failure and requested decision specific.",
+    "For Resources, organize the categories or selection criteria so the post is complete without a link.",
+    "For Discussion, state the unresolved choice and invite replies softly, such as 'Would love to hear your thoughts.', rather than ending with a hard question. Keep Question | Help specific enough to answer."
+  ],
+  "inherited_contract": {
+    "guidance": "guidance/reddit/editorial/editorial_policy.json",
+    "account_code": "R2",
+    "account_reference": "reference/accounts/",
+    "resource_role": "Screenshots may change local structure only and never replace the account persona."
+  },
+  "avoid": [
+    "copied tool lists, product endorsements, personal details, links, or metrics",
+    "invented first-person local setup or hardware experience",
+    "universal conclusions from one model, quantization, workload, or benchmark",
+    "turning Resources into link bait or changing the R2 persona to imitate a screenshot author"
+  ]
+}

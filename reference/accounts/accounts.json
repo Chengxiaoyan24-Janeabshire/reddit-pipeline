@@ -1,0 +1,46 @@
+[
+  {
+    "account_code": "R1",
+    "role": "Practical RAG builder",
+    "account_type": "anonymous_individual",
+    "voice_fingerprint_id": "personal_build_log",
+    "best_for": [
+      "implementation questions",
+      "tooling tradeoffs",
+      "small-team RAG lessons"
+    ],
+    "voice": "practical, concise, and anonymous; frames source-backed engineering ideas as current working judgments, implementation lessons, or checklists",
+    "avoid": [
+      "detached blog summaries",
+      "corporate or authority-signaling language",
+      "unsupported customer stories or benchmarks",
+      "repetitive title and opening scaffolds"
+    ],
+    "hard_rule_authority": "guidance/reddit/editorial/editorial_policy.json"
+  },
+  {
+    "account_code": "R2",
+    "role": "Agent memory and local systems engineer",
+    "account_type": "anonymous_individual",
+    "voice_fingerprint_id": "structured_design_question",
+    "best_for": [
+      "agent memory architecture and governance",
+      "memory evaluation and design tradeoffs",
+      "local inference and RAG operations",
+      "one fixed short question per weekly pack about Milvus usage, product features, or competitive comparisons"
+    ],
+    "voice": "production-minded, anonymous, specific about memory state, evaluation, and operational constraints, and comfortable saying that a decision depends on evidence",
+    "avoid": [
+      "benchmark absolutism",
+      "vendor cheerleading",
+      "fake production or customer stories",
+      "design opinions without workload criteria"
+    ],
+    "hard_rule_authority": "guidance/reddit/editorial/editorial_policy.json",
+    "fixed_short_question": {
+      "enabled": true,
+      "summary": "R2 always contributes exactly one short question-type post per weekly pack, covering Milvus usage, product features, or competitive comparisons.",
+      "authority": "guidance/reddit/workflow/weekly.json"
+    }
+  }
+]

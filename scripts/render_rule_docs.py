@@ -1,0 +1,248 @@
+#!/usr/bin/env python3
+"""Render human-review Markdown views from machine-readable Reddit rule JSON."""
+import argparse
+import hashlib
+import json
+import re
+import sys
+
+import resource_paths
+
+
+DOCUMENT_SPECS = (
+    (
+        resource_paths.EDITORIAL_ROOT / "RULES.md",
+        "Editorial Guidance Rules",
+        (
+            resource_paths.EDITORIAL_POLICY,
+            resource_paths.CONTENT_LENGTH_RULES,
+        ),
+    ),
+    (
+        resource_paths.WORKFLOW_ROOT / "RULES.md",
+        "Workflow Guidance Rules",
+        (
+            resource_paths.WEEKLY_WORKFLOW,
+            resource_paths.SOURCE_SYNC_RULES,
+        ),
+    ),
+    (
+        resource_paths.ACCOUNT_ROOT / "RULES.md",
+        "Account and Audience Rules",
+        (
+            resource_paths.ACCOUNTS,
+            resource_paths.ACCOUNT_TOPIC_RULES,
+            resource_paths.USER_FINGERPRINTS,
+        ),
+    ),
+    (
+        resource_paths.REFERENCE_ROOT / "TOPIC_RULES.md",
+        "Topic and Audience-Angle Rules",
+        (resource_paths.TOPIC_BANK,),
+    ),
+    (
+        resource_paths.SLOT_ROOT / "RULES.md",
+        "Subreddit Slot Registry",
+        (resource_paths.SUBREDDITS,),
+    ),
+    (
+        resource_paths.SLOT_ROOT / "rag" / "rag.md",
+        "r/Rag Slot Rules",
+        (resource_paths.SLOT_ROOT / "rag" / "rag.json",),
+    ),
+    (
+        resource_paths.SLOT_ROOT / "ai_agents" / "ai_agents.md",
+        "r/AI_Agents Slot Rules",
+        (resource_paths.SLOT_ROOT / "ai_agents" / "ai_agents.json",),
+    ),
+    (
+        resource_paths.SLOT_ROOT / "ai_memory" / "ai_memory.md",
+        "r/AIMemory Slot Rules",
+        (resource_paths.SLOT_ROOT / "ai_memory" / "ai_memory.json",),
+    ),
+    (
+        resource_paths.SLOT_ROOT / "local_llama" / "local_llama.md",
+        "r/LocalLLaMA Slot Rules",
+        (resource_paths.SLOT_ROOT / "local_llama" / "local_llama.json",),
+    ),
+)
+
+IDENTITY_KEYS = (
+    "subreddit",
+    "fingerprint_id",
+    "topic",
+    "tier",
+    "account_code",
+    "id",
+    "lane",
+    "mode",
+    "name",
+)
+
+ACRONYMS = {
+    "ai": "AI",
+    "api": "API",
+    "cpu": "CPU",
+    "gpu": "GPU",
+    "id": "ID",
+    "ids": "IDs",
+    "json": "JSON",
+    "llm": "LLM",
+    "md": "MD",
+    "rag": "RAG",
+    "ram": "RAM",
+    "url": "URL",
+    "urls": "URLs",
+    "vram": "VRAM",
+}
+
+
+def pretty_label(value):
+    words = str(value).replace("_", " ").strip().split()
+    return " ".join(ACRONYMS.get(word.lower(), word.title()) for word in words)
+
+
+def escape_text(value):
+    return str(value).replace("\n", "<br>")
+
+
+def scalar_text(value):
+    if value is None:
+        return "*(none)*"
+    if value == "":
+        return "*(empty)*"
+    if isinstance(value, bool):
+        return "Yes" if value else "No"
+    text = escape_text(value)
+    if re.fullmatch(r"[A-Za-z0-9_./:+|&-]+", text):
+        return f"`{text}`"
+    return text
+
+
+def section(title, level):
+    if level <= 6:
+        return [f"{'#' * level} {title}", ""]
+    return [f"**{title}**", ""]
+
+
+def item_title(item, index):
+    if isinstance(item, dict):
+        for key in IDENTITY_KEYS:
+            if key in item and item[key] not in (None, ""):
+                return escape_text(item[key])
+    return f"Item {index}"
+
+
+def render_value(value, level):
+    lines = []
+    if isinstance(value, dict):
+        scalar_items = []
+        complex_items = []
+        for key, child in value.items():
+            target = complex_items if isinstance(child, (dict, list)) else scalar_items
+            target.append((key, child))
+        for key, child in scalar_items:
+            lines.append(f"- **{pretty_label(key)}:** {scalar_text(child)}")
+        if scalar_items:
+            lines.append("")
+        for key, child in complex_items:
+            label = key if str(key).startswith("r/") else pretty_label(key)
+            lines.extend(section(label, level))
+            lines.extend(render_value(child, level + 1))
+        return lines
+
+    if isinstance(value, list):
+        if not value:
+            return ["*(none)*", ""]
+        if all(not isinstance(item, (dict, list)) for item in value):
+            for item in value:
+                lines.append(f"- {scalar_text(item)}")
+            lines.append("")
+            return lines
+        for index, item in enumerate(value, start=1):
+            lines.extend(section(item_title(item, index), level))
+            lines.extend(render_value(item, level + 1))
+        return lines
+
+    return [scalar_text(value), ""]
+
+
+def source_digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def render_document(title, source_paths):
+    relative_sources = [path.relative_to(resource_paths.ROOT) for path in source_paths]
+    lines = [
+        f"# {title}",
+        "",
+        "> Human review view generated from the machine JSON listed below.",
+        "> Do not edit this file directly. Ask the AI to change the JSON rule and",
+        "> run `python3 scripts/render_rule_docs.py` so runtime and review views",
+        "> remain identical.",
+        "",
+        "## Machine sources",
+        "",
+    ]
+    for path in relative_sources:
+        lines.append(f"- `{path}`")
+    lines.append("")
+    for path in source_paths:
+        relative_path = path.relative_to(resource_paths.ROOT)
+        lines.append(f"<!-- source-sha256 {relative_path}: {source_digest(path)} -->")
+    lines.append("")
+
+    for path in source_paths:
+        relative_path = path.relative_to(resource_paths.ROOT)
+        lines.extend([f"## {path.name}", "", f"Machine source: `{relative_path}`", ""])
+        lines.extend(render_value(json.loads(path.read_text()), 3))
+
+    while lines and not lines[-1]:
+        lines.pop()
+    return "\n".join(lines) + "\n"
+
+
+def expected_documents():
+    return {
+        output_path: render_document(title, source_paths)
+        for output_path, title, source_paths in DOCUMENT_SPECS
+    }
+
+
+def check_documents(documents):
+    stale = []
+    for output_path, expected in documents.items():
+        if not output_path.is_file() or output_path.read_text() != expected:
+            stale.append(output_path.relative_to(resource_paths.ROOT))
+    return stale
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Render or check human-readable Markdown views of rule JSON."
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="fail when a generated Markdown review view is missing or stale",
+    )
+    args = parser.parse_args()
+    documents = expected_documents()
+
+    if args.check:
+        stale = check_documents(documents)
+        if stale:
+            for path in stale:
+                print(f"stale rule review: {path}", file=sys.stderr)
+            return 1
+        print(f"Rule review views are current ({len(documents)} files).")
+        return 0
+
+    for output_path, content in documents.items():
+        output_path.write_text(content)
+        print(f"Rendered {output_path.relative_to(resource_paths.ROOT)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

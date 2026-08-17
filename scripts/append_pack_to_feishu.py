@@ -9,6 +9,7 @@ from datetime import date, datetime, timezone
 import append_pack
 import feishu_client
 import feishu_docs
+import resource_paths
 import weekly_post_rules
 
 DATE_ID_RE = re.compile(r"^RD-\d{4}-\d{2}-\d{2}-")
@@ -104,7 +105,7 @@ def normalize_screening_status(value):
 
 
 def load_topic_names():
-    topics_path = append_pack.ROOT / "data" / "topic_bank.json"
+    topics_path = resource_paths.TOPIC_BANK
     if not topics_path.exists():
         return []
     return [t.get("topic", "") for t in json.loads(topics_path.read_text()) if t.get("topic")]
@@ -157,6 +158,7 @@ def screening_account_tags(screening, items):
 
 def build_drafts(spec, start_seq, topic_names):
     accounts = append_pack.load_accounts()
+    length_rules = append_pack.load_length_rules()
     today = date.today().isoformat()
     drafts = []
     for offset, item in enumerate(spec["items"]):
@@ -166,6 +168,7 @@ def build_drafts(spec, start_seq, topic_names):
         body = item.get("body", "") or item.get("post", "") or ""
         title = item.get("title", "") or ""
         length_tier = append_pack.infer_length_tier(item)
+        length_rule = length_rules.get(length_tier, {})
         code_language = append_pack.infer_code_language(item)
         subreddit = item.get("subreddit", "")
         default_voice = account.get("voice_fingerprint_id", "")
@@ -185,12 +188,16 @@ def build_drafts(spec, start_seq, topic_names):
             "body": body,
             "milvus_mention_basis": item.get("milvus_mention_basis", ""),
             "disclosure": item.get("disclosure", ""),
-            "link_policy": item.get("link_policy", "no_link"),
+            "link_policy": item.get("link_policy")
+            or weekly_post_rules.recommend_link_policy(
+                code, subreddit, item.get("post_type", "")
+            ),
+            "approved_link": item.get("approved_link", ""),
             "angle": item.get("angle", ""),
             "voice_fingerprint": item.get("voice_fingerprint", "") or default_voice,
             "length_tier": length_tier,
             "code_language": code_language,
-            "code_allowed": length_tier == "code_long_post",
+            "code_allowed": bool(length_rule.get("code_allowed")),
             "topic_tags": uniq(topic_tags),
             "char_count": len(body),
             "content_doc_url": item.get("content_doc_url", ""),
@@ -199,7 +206,10 @@ def build_drafts(spec, start_seq, topic_names):
 
 
 def build_content_markdown(draft):
-    return draft["body"].strip() + "\n"
+    parts = [draft["body"].strip()]
+    if draft.get("approved_link"):
+        parts.append(draft["approved_link"].strip())
+    return "\n\n".join(part for part in parts if part) + "\n"
 
 
 def as_url_field(url):
@@ -283,9 +293,10 @@ def normalize_payload(payload):
 
 
 def validate_weekly_specs(specs):
+    rules = weekly_post_rules.load_rules()
     expected = {
         (slot["account_code"], slot["subreddit"])
-        for slot in weekly_post_rules.load_rules().get("weekly_slots", [])
+        for slot in rules.get("weekly_slots", [])
     }
     actual = [
         (item.get("account_code", ""), item.get("subreddit", ""))
@@ -304,13 +315,44 @@ def validate_weekly_specs(specs):
         errors.append(f"weekly run is missing slots: {missing}")
     if unexpected:
         errors.append(f"weekly run has unexpected slots: {unexpected}")
+
+    r2_policy = weekly_post_rules.r2_short_question_policy(rules)
+    if r2_policy.get("enabled"):
+        r2_question_posts = []
+        for spec in specs:
+            for item in spec.get("items", []):
+                if item.get("account_code") == "R2" and weekly_post_rules.is_r2_question_post(
+                    item.get("subreddit", ""), item.get("post_type", ""), rules
+                ):
+                    r2_question_posts.append(item)
+        if len(r2_question_posts) != 1:
+            errors.append(
+                "weekly run must contain exactly one R2 short question post; "
+                f"found {len(r2_question_posts)}"
+            )
+        for item in r2_question_posts:
+            if item.get("length_tier") not in (None, "", "short_post"):
+                errors.append(
+                    f"R2 short question post for {item.get('subreddit')!r} must use "
+                    "length_tier 'short_post'"
+                )
+            title = (item.get("title") or "").strip()
+            if title and not title.endswith(("?", "？")):
+                errors.append(
+                    f"R2 short question post for {item.get('subreddit')!r} must use "
+                    "an explicit question title ending in '?'"
+                )
     return errors
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--validate-only", action="store_true")
-    ap.add_argument("--weekly", action="store_true", help="require exactly the four configured R1/R2 weekly slots")
+    ap.add_argument(
+        "--weekly",
+        action="store_true",
+        help="require the configured weekly pack size and unique slots",
+    )
     ap.add_argument("--dry-run", action="store_true", help="preview records without creating docs or writing Feishu rows")
     ap.add_argument("--no-doc", action="store_true", help="skip Feishu Doc creation and write body inline")
     ap.add_argument("--inline-content", action="store_true", help="also write Body into the table")

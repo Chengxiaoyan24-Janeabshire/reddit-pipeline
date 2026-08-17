@@ -1,0 +1,81 @@
+[
+  {
+    "account_code": "R1",
+    "technical_lane": "hands-on RAG builder",
+    "keyword_signals": [
+      "rag",
+      "retrieval",
+      "chatbot",
+      "local",
+      "self-hosted",
+      "quick and dirty",
+      "prototype",
+      "pgvector",
+      "vector store",
+      "semantic search",
+      "langchain",
+      "llamaindex",
+      "agent",
+      "agents"
+    ],
+    "preferred_topics": [
+      "local and self-hosted RAG",
+      "retrieval-store selection for RAG",
+      "hybrid search for RAG"
+    ],
+    "preferred_subreddits": ["r/Rag", "r/AI_Agents"],
+    "assignment_reason": "Preserve the practical RAG-builder persona: implementation questions, small-team defaults, and tooling tradeoffs. Choose a matching Post Type without changing the topic voice."
+  },
+  {
+    "account_code": "R2",
+    "technical_lane": "agent memory, local inference, and production ops",
+    "keyword_signals": [
+      "kubernetes",
+      "k8s",
+      "scaling",
+      "production",
+      "cost",
+      "agent memory",
+      "long-term memory",
+      "working memory",
+      "episodic memory",
+      "semantic memory",
+      "memory graph",
+      "shared memory",
+      "multi-agent",
+      "memory conflict",
+      "provenance",
+      "authority",
+      "governance",
+      "consolidation",
+      "forgetting",
+      "revocation",
+      "recall",
+      "pipeline",
+      "sync",
+      "latency",
+      "throughput",
+      "benchmark",
+      "local llm",
+      "local model",
+      "self-hosted",
+      "llama",
+      "ollama",
+      "llama.cpp",
+      "quantization",
+      "inference",
+      "vram",
+      "gpu"
+    ],
+    "preferred_topics": [
+      "conflicting memories across agents",
+      "agent memory governance and revocation",
+      "memory graph serialization and multi-hop recall",
+      "agent memory benchmark quality",
+      "local and self-hosted RAG",
+      "local model serving and hardware fit"
+    ],
+    "preferred_subreddits": ["r/AIMemory", "r/LocalLLaMA"],
+    "assignment_reason": "Preserve the production-minded systems persona: memory state and governance, local inference, benchmark quality, scale, and operational caveats. Choose a matching Post Type without changing the topic voice."
+  }
+]

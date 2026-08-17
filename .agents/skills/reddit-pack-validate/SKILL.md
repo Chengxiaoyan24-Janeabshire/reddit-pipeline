@@ -1,61 +1,67 @@
 ---
 name: reddit-pack-validate
 description: >
-  Validate Reddit draft JSON for fixed weekly slots, R1/R2 boundaries, Post
-  Types, stable fingerprints, anonymity, Milvus/Zilliz policy, no-link policy,
-  length, duplicates, and optional discussion endings. Use for "$reddit-pack-validate",
-  "检查 Reddit pack", or any review that must not write Feishu.
+  Validate Reddit draft JSON against the current workflow, global guidance,
+  account fingerprints, slot/Post Type overlays, length rules, and duplicate
+  checks. Use for "$reddit-pack-validate", "检查 Reddit pack", or any review that
+  must not write Feishu.
 ---
 
 # Reddit Pack Validate
 
 Run commands from the project root.
 
+## Required Context
+
+Validation combines:
+
+- `guidance/reddit/workflow/weekly.json`;
+- `guidance/reddit/editorial/editorial_policy.json`;
+- `guidance/reddit/editorial/content_length_rules.json`;
+- the selected `reference/slots/` JSON;
+- the selected account and topic rows under `reference/accounts/` and
+  `reference/topic_bank.json`.
+
+Do not duplicate their current values in this Skill.
+
+Validate against JSON. Use generated Markdown review views only when the user
+asks to inspect the rules, never as a separate validation authority.
+
 ## Procedure
 
-Weekly pack:
+Configured weekly pack:
 
 ```bash
 python3 scripts/append_pack_to_feishu.py --validate-only --weekly < packs.json
 ```
 
-For a single-source partial pack, omit `--weekly`. Never use `--allow-links`;
-that option is retired.
+For a genuine partial pack, omit `--weekly`.
 
 ## Required Checks
 
-- Weekly mode contains exactly four unique configured slots.
-- Only R1/R2 and their fixed subreddits appear.
-- Each account uses its configured `voice_fingerprint`; a known fingerprint from
-  the other account is still invalid.
-- Every item has a valid Post Type.
-- Disclosure is empty and no identity, employer, contributor/maintainer role,
-  or affiliation is revealed.
-- The title contains no Milvus and either uses a first-person singular
-  perspective or is an explicit question ending in `?`; fully third-person
-  declarative titles fail validation.
-- The body contains Milvus exactly once, requires non-empty
-  `milvus_mention_basis`, and phrases the mention indirectly as a category
-  example or peer-group member. Direct product placement fails validation.
-- Zilliz never appears.
-- `link_policy` is `no_link`, `approved_link` is empty, and title/body contain no
-  URL.
-- A Tutorial does not end with a question. A Discussion that ends with a hard
-  question receives a review warning; a soft invitation is allowed.
-- The first sentence establishes a source-supported first-person perspective,
-  and every body contains at least one grammatical language buffer attached to
-  a judgment or uncertainty. Missing either fails validation. Buffers must not
-  weaken source-supported facts, benchmark setup, or measurements.
-- Bodies are nonempty and unique, with a valid length tier and allowed code.
-- Review warnings for Post Type mismatch or unusual length; do not discard
-  warnings silently.
+- Enforce Guidance first: Disclosure, first-person `I`, grammatical language
+  Buffer, anonymity, brand mentions, links, title, opening, closing, length/code
+  tiers, and prohibited content.
+- Enforce the selected Subreddit second: community subrules, a valid configured
+  Post Category/Post Type, native structure, and style.
+- Enforce the audience layer third: topic/angle fit and the configured
+  account-to-fingerprint mapping. An audience angle can never excuse a Guidance
+  or Subreddit error.
+- Enforce the current pack size, active accounts, and unique slots as workflow
+  configuration outside the editorial precedence.
+- When `r2_short_question_policy` is enabled, require exactly one R2 short
+  question-type post per weekly pack, using the configured question Post Type,
+  `short_post` length, and an explicit question title.
+- Reject empty or duplicate bodies and invalid structured fields.
+- Report warnings for advisory Post Type, length, or ending mismatches.
+- Human review still checks source support and whether the prose realizes the
+  selected account fingerprint naturally.
 
-The machine validator can enforce the account-to-fingerprint mapping and shared
-language signals, but it cannot fully prove that prose sounds like R1 rather
-than R2. Human review must still compare the title, opening, language buffers,
-and required technical example against `data/user_fingerprints.json`.
+If the layers conflict, the higher layer wins. Reject the draft when no
+compliant lower-level alternative remains, and never invent source facts to
+make an angle pass.
 
 ## Safety Boundary
 
 Always use `--validate-only`. Never create Docs, write rows, update pool counts,
-append CSV output, or perform Reddit activity.
+or perform Reddit activity.

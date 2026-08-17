@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reddit Browser Monitor"
+  short_description: "Monitor published Reddit posts through Chrome"
+  default_prompt: "Use $reddit-browser-monitor to inspect published Reddit posts in Chrome, preview engagement and comment signals, and write approved results to Feishu."

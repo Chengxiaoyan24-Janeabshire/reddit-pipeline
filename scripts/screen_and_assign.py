@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Screen Reddit blog candidates for the fixed R1/R2 weekly lanes.
+"""Screen Reddit blog candidates for the configured weekly lanes.
 
 This mirrors the Medium pipeline's pre-screen + persona classification pattern,
 but adapted for Reddit:
   - reject/borderline weak marketing or thin posts;
-  - score technical fit against the active R1/R2 account lanes;
+  - score technical fit against the active account lanes;
   - select only the fitting account(s), without forcing both;
   - recommend fixed subreddit and post-type combinations.
 
@@ -19,10 +19,11 @@ import sys
 from pathlib import Path
 
 import weekly_post_rules
+import resource_paths
 
-ROOT = Path(__file__).resolve().parents[1]
-RULES = ROOT / "data" / "account_topic_rules.json"
-TOPICS = ROOT / "data" / "topic_bank.json"
+ROOT = resource_paths.ROOT
+RULES = resource_paths.ACCOUNT_TOPIC_RULES
+TOPICS = resource_paths.TOPIC_BANK
 FETCH = ROOT / "scripts" / "fetch_blog.py"
 VENV_PY = ROOT / ".venv" / "bin" / "python3"
 
@@ -287,16 +288,23 @@ def screen_row(row, account_rules, topics, top_n, no_fetch):
 
 
 def main():
+    weekly_rules = weekly_post_rules.load_rules()
+    active_accounts = set(weekly_rules.get("active_accounts", []))
+    default_top_n = max(1, len(active_accounts))
     ap = argparse.ArgumentParser()
     ap.add_argument("--url", required=True, help="screen one blog URL")
     ap.add_argument("--title", default="", help="title for --url")
-    ap.add_argument("--top-n", type=int, default=2, help="assign at most the fitting R1/R2 accounts; default 2")
+    ap.add_argument(
+        "--top-n",
+        type=int,
+        default=default_top_n,
+        help=f"assign at most the fitting active accounts; default {default_top_n}",
+    )
     ap.add_argument("--no-fetch", action="store_true", help="score only title/notes without fetching URL")
     args = ap.parse_args()
 
-    top_n = max(1, min(args.top_n, 2))
+    top_n = max(1, min(args.top_n, default_top_n))
     account_rules = json.loads(RULES.read_text())
-    active_accounts = set(weekly_post_rules.load_rules().get("active_accounts", []))
     account_rules = [
         rule for rule in account_rules
         if rule.get("account_code") in active_accounts

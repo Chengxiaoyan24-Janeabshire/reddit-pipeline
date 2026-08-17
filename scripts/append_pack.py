@@ -8,14 +8,14 @@ Reads JSON from stdin:
   "pool_blog_id": "optional",
   "items": [
     {
-      "account_code": "R1",
+      "account_code": "<configured account>",
       "content_type": "technical_post",
-      "subreddit": "r/vectordatabase",
+      "subreddit": "<configured subreddit>",
       "suggested_day": "2026-07-01",
       "title": "What I learned about ...",
       "body": "...",
       "disclosure": "",
-      "link_policy": "no_link",
+      "link_policy": "<guidance value>",
       "milvus_mention_basis": "The source-supported reason for the single body mention.",
       "angle": "..."
     }
@@ -25,14 +25,14 @@ Reads JSON from stdin:
 import json
 import re
 import sys
-from pathlib import Path
 
+import resource_paths
 import weekly_post_rules
 
-ROOT = Path(__file__).resolve().parents[1]
-ACCOUNTS = ROOT / "data" / "accounts.json"
-LENGTH_RULES = ROOT / "data" / "content_length_rules.json"
-USER_FINGERPRINTS = ROOT / "data" / "user_fingerprints.json"
+ROOT = resource_paths.ROOT
+ACCOUNTS = resource_paths.ACCOUNTS
+LENGTH_RULES = resource_paths.CONTENT_LENGTH_RULES
+USER_FINGERPRINTS = resource_paths.USER_FINGERPRINTS
 
 URL_PATTERN = re.compile(r"https?://[^\s)]+", re.IGNORECASE)
 CODE_FENCE_PATTERN = re.compile(r"```([a-zA-Z0-9_+-]*)")
@@ -47,7 +47,6 @@ ANONYMITY_VIOLATION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 ACTIVE_POST_CONTENT_TYPES = {"technical_post", "comparison_post", "postmortem"}
-ALLOWED_LINK_POLICIES = {"no_link"}
 
 MARKETING_PHRASES = [
     "check out milvus",
@@ -258,7 +257,9 @@ def validate(spec):
         title = item.get("title", "") or ""
         body = item.get("body", "") or item.get("post", "") or ""
         disclosure = item.get("disclosure", "") or ""
-        link_policy = item.get("link_policy", "no_link") or "no_link"
+        link_policy = item.get("link_policy") or weekly_post_rules.recommend_link_policy(
+            code, subreddit, post_type, weekly_rules
+        )
         milvus_mention_basis = item.get("milvus_mention_basis", "") or ""
         expected_voice_fingerprint = account.get("voice_fingerprint_id", "")
         voice_fingerprint = item.get("voice_fingerprint") or expected_voice_fingerprint
@@ -275,7 +276,10 @@ def validate(spec):
         milvus_context_policy = weekly_rules.get("milvus_mention_context_policy", {})
 
         if code not in active_accounts:
-            errors.append(f"{prefix}: weekly posting is restricted to active accounts R1 and R2")
+            errors.append(
+                f"{prefix}: account is not active for the current weekly workflow; "
+                f"choose one of {sorted(active_accounts)}"
+            )
 
         if content_type not in ACTIVE_POST_CONTENT_TYPES:
             errors.append(
@@ -307,14 +311,32 @@ def validate(spec):
                     f"{prefix}: topic/framing signals look closer to Post Type "
                     f"{recommended_post_type!r} than {post_type!r}; review the subreddit screenshots before publishing"
                 )
+        if (
+            code == "R2"
+            and weekly_post_rules.is_r2_question_post(subreddit, post_type, weekly_rules)
+        ):
+            if length_tier and length_tier != "short_post":
+                errors.append(
+                    f"{prefix}: R2 short question post for {subreddit!r} must use "
+                    "length_tier 'short_post'"
+                )
+            if title and not title.endswith(("?", "？")):
+                errors.append(
+                    f"{prefix}: R2 short question post for {subreddit!r} must use "
+                    "an explicit question title ending in '?'"
+                )
 
         if account_policy.get("identity_visibility") == "anonymous" and disclosure.strip():
             errors.append(
                 f"{prefix}: {code} is anonymous; disclosure must stay empty and the draft must not reveal identity, employer, or affiliation"
             )
 
-        if link_policy not in ALLOWED_LINK_POLICIES:
-            errors.append(f"{prefix}: unknown link_policy {link_policy!r}")
+        link_policy_modes = weekly_rules.get("link_policy_modes", {})
+        if link_policy not in link_policy_modes:
+            errors.append(
+                f"{prefix}: unknown link_policy {link_policy!r}; choose one of "
+                f"{sorted(link_policy_modes)}"
+            )
         else:
             allowed_link_policies = weekly_post_rules.allowed_link_policies(
                 code, subreddit, post_type, weekly_rules
@@ -338,24 +360,32 @@ def validate(spec):
         ):
             errors.append(
                 f"{prefix}: configured voice_fingerprint "
-                f"{expected_voice_fingerprint!r} is missing from data/user_fingerprints.json"
+                f"{expected_voice_fingerprint!r} is missing from "
+                "reference/accounts/user_fingerprints.json"
             )
 
-        if content_type == "long_post":
-            errors.append(f"{prefix}: long_post belongs in length_tier, not content_type; use content_type=technical_post or postmortem with length_tier=long_post")
+        if content_type in length_rules:
+            errors.append(
+                f"{prefix}: {content_type} belongs in length_tier, not "
+                "content_type; use a configured content type and set the tier "
+                "separately"
+            )
 
         if not body.strip():
             errors.append(f"{prefix}: body is empty")
         else:
             opening_sentence = first_sentence(body)
-            if not FIRST_PERSON_OPENING_PATTERN.search(opening_sentence):
+            if (
+                opening_policy.get("scope") == "first_sentence"
+                and not FIRST_PERSON_OPENING_PATTERN.search(opening_sentence)
+            ):
                 target = (
                     errors
                     if opening_policy.get("severity", "error") == "error"
                     else warnings
                 )
                 target.append(
-                    f"{prefix}: the first sentence must establish the anonymous "
+                    f"{prefix}: the first sentence must establish the configured "
                     "first-person perspective"
                 )
             if UNGRAMMATICAL_LANGUAGE_BUFFER_PATTERN.search(body):
@@ -364,15 +394,19 @@ def validate(spec):
                     "use phrasing such as 'one concern I have', 'I am concerned', "
                     "or 'I would probably'"
                 )
-            elif not LANGUAGE_BUFFER_PATTERN.search(body):
+            elif (
+                int(language_buffer_policy.get("minimum_matches_per_body") or 0)
+                > len(list(LANGUAGE_BUFFER_PATTERN.finditer(body)))
+            ):
                 target = (
                     errors
                     if language_buffer_policy.get("severity", "error") == "error"
                     else warnings
                 )
                 target.append(
-                    f"{prefix}: body must include at least one grammatical language "
-                    "buffer such as "
+                    f"{prefix}: body must include at least "
+                    f"{int(language_buffer_policy.get('minimum_matches_per_body') or 0)} "
+                    "grammatical language buffer match(es), such as "
                     "'probably', 'one concern I have', or 'my current view' "
                     "for a personal judgment; do not hedge source-supported facts "
                     "or measurements"
@@ -401,16 +435,20 @@ def validate(spec):
                 warnings.append(f"{prefix}: {length_tier} is long ({words} words, target {length_rule.get('target_words')})")
             max_code_blocks = int(length_rule.get("max_code_blocks") or 0)
             if fenced_code_blocks and not length_rule.get("code_allowed"):
-                errors.append(f"{prefix}: code blocks require length_tier=code_long_post")
+                code_tiers = sorted(
+                    tier
+                    for tier, rule in length_rules.items()
+                    if rule.get("code_allowed")
+                )
+                errors.append(
+                    f"{prefix}: code blocks require a code-enabled length tier; "
+                    f"choose one of {code_tiers}"
+                )
             if len(fenced_code_blocks) > max_code_blocks:
                 errors.append(f"{prefix}: too many code blocks for {length_tier} ({len(fenced_code_blocks)} > {max_code_blocks})")
             max_code_lines = int(length_rule.get("max_code_lines_total") or 0)
             if max_code_lines and code_line_count(body) > max_code_lines:
                 errors.append(f"{prefix}: code is too long for Reddit review ({code_line_count(body)} lines > {max_code_lines})")
-            good_subreddits = set(length_rule.get("good_subreddits", []))
-            if subreddit and good_subreddits and subreddit not in good_subreddits:
-                warnings.append(f"{prefix}: {length_tier} is unusual for {subreddit}")
-
         if content_type in ACTIVE_POST_CONTENT_TYPES and not title.strip():
             errors.append(f"{prefix}: title is required for post content")
         elif (
@@ -422,10 +460,21 @@ def validate(spec):
                 "'I think'/'Now I believe', or be an explicit question ending in '?'"
             )
 
-        if has_url(title) or has_url(body):
-            errors.append(f"{prefix}: R1/R2 drafts must not contain URLs in titles or body prose")
-        if (item.get("approved_link") or "").strip():
-            errors.append(f"{prefix}: approved_link is retired; R1 and R2 are both no-link")
+        link_mode = weekly_rules.get("link_policy_modes", {}).get(link_policy, {})
+        approved_link = (item.get("approved_link") or "").strip()
+        if not link_mode.get("allow_inline_urls") and (has_url(title) or has_url(body)):
+            errors.append(
+                f"{prefix}: link_policy {link_policy!r} does not allow URLs in "
+                "titles or body prose"
+            )
+        if approved_link and not link_mode.get("allow_approved_link"):
+            errors.append(
+                f"{prefix}: link_policy {link_policy!r} does not allow approved_link"
+            )
+        if link_mode.get("require_approved_link") and not approved_link:
+            errors.append(
+                f"{prefix}: link_policy {link_policy!r} requires approved_link"
+            )
 
         marketing = contains_any(combined, MARKETING_PHRASES)
         if marketing:
@@ -444,7 +493,7 @@ def validate(spec):
         max_milvus_mentions = int(
             account_policy.get("max_milvus_body_mentions") or 0
         )
-        if title_milvus_mentions:
+        if title_milvus_mentions and not milvus_context_policy.get("allow_in_title"):
             errors.append(f"{prefix}: Milvus may appear only in the body, not the title")
         if required_milvus_mentions and body_milvus_mentions != required_milvus_mentions:
             required_text = (
@@ -463,7 +512,11 @@ def validate(spec):
             )
         if body_milvus_mentions and not account_policy.get("may_mention_milvus"):
             errors.append(f"{prefix}: {code} is not allowed to mention Milvus")
-        if body_milvus_mentions and not milvus_mention_basis.strip():
+        if (
+            body_milvus_mentions
+            and milvus_context_policy.get("require_basis")
+            and not milvus_mention_basis.strip()
+        ):
             errors.append(
                 f"{prefix}: a Milvus body mention requires milvus_mention_basis describing the source-supported context"
             )
@@ -480,7 +533,31 @@ def validate(spec):
             )
         if mentions_zilliz and not account_policy.get("may_mention_zilliz"):
             errors.append(f"{prefix}: {code} is not allowed to mention Zilliz")
-        if ANONYMITY_VIOLATION_PATTERN.search(combined):
+
+        brand_policy = weekly_rules.get("brand_mention_policy", {})
+        if brand_policy.get("allow_tech_stack_brand_names"):
+            database_brand_policy = brand_policy.get("database_brand_mentions", {})
+            allowed_named_database_post_types = set(
+                database_brand_policy.get("allow_in_post_types") or []
+            )
+            blocked_brands = [
+                name
+                for name in (database_brand_policy.get("blocked_named_brands") or [])
+                if name
+            ]
+            if post_type not in allowed_named_database_post_types:
+                for brand in blocked_brands:
+                    pattern = re.compile(rf"\b{re.escape(brand)}\b", re.IGNORECASE)
+                    if pattern.search(title) or pattern.search(body):
+                        errors.append(
+                            f"{prefix}: named database brand {brand!r} is only allowed in "
+                            f"question posts {sorted(allowed_named_database_post_types)}; "
+                            "in other posts refer to other databases as a peer group"
+                        )
+        if (
+            account_policy.get("identity_visibility") == "anonymous"
+            and ANONYMITY_VIOLATION_PATTERN.search(combined)
+        ):
             errors.append(
                 f"{prefix}: anonymous drafts must not reveal an employer, company, contributor/maintainer role, or affiliation"
             )

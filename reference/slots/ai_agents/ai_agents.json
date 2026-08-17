@@ -1,0 +1,33 @@
+{
+  "subreddit": "r/AI_Agents",
+  "scope": [
+    "agent workflows and tool use",
+    "memory and retrieval",
+    "evaluation and reliability",
+    "orchestration",
+    "production failure analysis"
+  ],
+  "post_type_guidance": {
+    "Tutorial": "Use for a reproducible workflow, implementation pattern, debugging method, or step-by-step design. End with the final takeaway, verification step, or next action; do not add a question at the end.",
+    "Discussion": "Use for a real architecture tradeoff, failure mode, reliability question, or production constraint with room for disagreement. If inviting replies, use a soft close such as 'Would love to hear your thoughts.' rather than a hard question.",
+    "Resource Request": "Use for a genuine request for learning material, frameworks, evaluation methods, or implementation references."
+  },
+  "native_structure": [
+    "Open around one concrete agent problem or observed failure.",
+    "State the relevant constraints: tool count, context size, latency, cost, persistence, evaluation, retries, or failure handling.",
+    "Explain what changed, what remains uncertain, and what evidence is available.",
+    "Match the close to the Post Type: Tutorials do not end with questions; Discussions may state the unresolved choice and invite replies softly."
+  ],
+  "inherited_contract": {
+    "guidance": "guidance/reddit/editorial/editorial_policy.json",
+    "account_code": "R1",
+    "account_reference": "reference/accounts/",
+    "resource_role": "Do not copy identity, disclosures, links, or claims from screenshots."
+  },
+  "avoid": [
+    "broad claims without implementation details or an open engineering question",
+    "unsupported benchmark claims or invented first-person results",
+    "vague 'AI agents are the future' framing",
+    "closed questions whose answer is already asserted by the post"
+  ]
+}

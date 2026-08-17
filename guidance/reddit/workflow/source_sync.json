@@ -1,0 +1,23 @@
+{
+  "source_name": "Content All in One / All content / all content",
+  "source_type_label": "Content All in One",
+  "source_app_token": "TXy3bCKznaz89fseyo3cPMShnyb",
+  "source_table_id": "tblsyUaNiyPnhrFI",
+  "source_view_id": "vewx5CDVdU",
+  "category": "Blog Post",
+  "status": "Published",
+  "minimum_publish_date": "2026-01-01",
+  "official_hosts": [
+    "zilliz.com",
+    "www.zilliz.com",
+    "milvus.io",
+    "www.milvus.io"
+  ],
+  "required_path_prefix": "blog",
+  "excluded_sources": [
+    "Medium sync",
+    "Medium Daily",
+    "EN Content",
+    "retired calendar view"
+  ]
+}

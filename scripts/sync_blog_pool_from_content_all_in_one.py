@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sync published 2026+ Blog Post rows from Content All in One / all content."""
+"""Sync rows that satisfy the configured Reddit source contract."""
 import argparse
 import json
 from datetime import datetime, timezone
@@ -7,13 +7,18 @@ from urllib.parse import urlparse
 
 import feishu_client
 import official_blog_catalog
+import resource_paths
 import weekly_post_rules
 
-DEFAULT_SINCE = "2026-01-01"
-DEFAULT_SOURCE_APP = "TXy3bCKznaz89fseyo3cPMShnyb"
-DEFAULT_SOURCE_TABLE = "tblsyUaNiyPnhrFI"
-DEFAULT_SOURCE_VIEW = "vewx5CDVdU"
-OFFICIAL_HOSTS = {"zilliz.com", "www.zilliz.com", "milvus.io", "www.milvus.io"}
+SOURCE_RULES = json.loads(resource_paths.SOURCE_SYNC_RULES.read_text())
+DEFAULT_SINCE = SOURCE_RULES["minimum_publish_date"]
+DEFAULT_SOURCE_APP = SOURCE_RULES["source_app_token"]
+DEFAULT_SOURCE_TABLE = SOURCE_RULES["source_table_id"]
+DEFAULT_SOURCE_VIEW = SOURCE_RULES["source_view_id"]
+REQUIRED_CATEGORY = SOURCE_RULES["category"]
+REQUIRED_STATUS = SOURCE_RULES["status"]
+OFFICIAL_HOSTS = set(SOURCE_RULES["official_hosts"])
+REQUIRED_PATH_PREFIX = SOURCE_RULES["required_path_prefix"]
 
 
 def require_all_content_source(app_token, table_id, view_id):
@@ -21,9 +26,9 @@ def require_all_content_source(app_token, table_id, view_id):
     required = (DEFAULT_SOURCE_APP, DEFAULT_SOURCE_TABLE, DEFAULT_SOURCE_VIEW)
     if configured != required:
         raise RuntimeError(
-            "Reddit pool sync must read Content All in One / All content "
-            f"{required}; configured source is {configured}. Medium sync, "
-            "Medium Daily, and other views are not allowed."
+            f"Reddit pool sync must read {SOURCE_RULES['source_name']} "
+            f"{required}; configured source is {configured}. Excluded sources: "
+            f"{', '.join(SOURCE_RULES.get('excluded_sources', []))}."
         )
 
 
@@ -56,7 +61,11 @@ def clean_title(value):
 def is_official_blog_url(url):
     parsed = urlparse(url)
     path_parts = [part for part in parsed.path.split("/") if part]
-    return parsed.netloc.lower() in OFFICIAL_HOSTS and bool(path_parts) and path_parts[0] == "blog"
+    return (
+        parsed.netloc.lower() in OFFICIAL_HOSTS
+        and bool(path_parts)
+        and path_parts[0] == REQUIRED_PATH_PREFIX
+    )
 
 
 def filter_existing_fields(fields, existing_field_names):
@@ -76,9 +85,12 @@ def source_candidates(app_token, table_id, view_id, catalog, since):
     skipped_not_published = 0
     for item in feishu_client.list_records(app_token, table_id, view_id=view_id):
         fields = item.get("fields", {})
-        if feishu_client.extract_text(fields.get("Category")) != "Blog Post":
+        if feishu_client.extract_text(fields.get("Category")) != REQUIRED_CATEGORY:
             continue
-        if feishu_client.extract_text(fields.get("Status")).strip().lower() != "published":
+        if (
+            feishu_client.extract_text(fields.get("Status")).strip().lower()
+            != REQUIRED_STATUS.lower()
+        ):
             skipped_not_published += 1
             continue
         url = feishu_client.extract_url(fields.get("Publish URL"))
@@ -163,7 +175,7 @@ def main():
         filter_existing_fields({
             "Blog URL": {"link": row["url"], "text": row["url"]},
             "Blog 标题": row["title"],
-            "Source Type": "Content All in One",
+            "Source Type": SOURCE_RULES["source_type_label"],
             "Source Record ID": row["record_id"],
             "Publish Date": row["publish_date"],
             "URL 状态": "Active",
@@ -176,7 +188,10 @@ def main():
         feishu_client.batch_create_records(target_app, target_table, records)
 
     print(json.dumps({
-        "source": "Content All in One / all content / Category=Blog Post / Status=Published",
+        "source": (
+            f"{SOURCE_RULES['source_name']} / Category={REQUIRED_CATEGORY} / "
+            f"Status={REQUIRED_STATUS}"
+        ),
         "source_app_token": source_app,
         "source_table_id": source_table,
         "source_view_id": source_view,

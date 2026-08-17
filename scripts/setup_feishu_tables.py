@@ -9,20 +9,21 @@ It writes public table ids to config/feishu-tables.json. Credentials are read by
 feishu_client.py and are not copied into that public table config.
 """
 import json
-from pathlib import Path
 
 import feishu_client
-import reddit_json_content
+import reddit_browser_monitor
+import resource_paths
+import weekly_post_rules
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = resource_paths.ROOT
 TABLE_CONFIG = ROOT / "config" / "feishu-tables.json"
 DEFAULT_APP_TOKEN = "MGwdb5fDga283QsoQb0cwWGFnYe"
-ACCOUNTS = ROOT / "data" / "accounts.json"
-SUBREDDITS = ROOT / "data" / "subreddits.json"
-TOPICS = ROOT / "data" / "topic_bank.json"
-LENGTH_RULES = ROOT / "data" / "content_length_rules.json"
-USER_FINGERPRINTS = ROOT / "data" / "user_fingerprints.json"
-WEEKLY_POST_RULES = ROOT / "data" / "weekly_post_rules.json"
+ACCOUNTS = resource_paths.ACCOUNTS
+SUBREDDITS = resource_paths.SUBREDDITS
+TOPICS = resource_paths.TOPIC_BANK
+LENGTH_RULES = resource_paths.CONTENT_LENGTH_RULES
+USER_FINGERPRINTS = resource_paths.USER_FINGERPRINTS
+SOURCE_SYNC_RULES = json.loads(resource_paths.SOURCE_SYNC_RULES.read_text())
 
 
 def single_select(options):
@@ -57,31 +58,38 @@ def api_field(field):
 
 
 def option_values():
+    weekly_rules = weekly_post_rules.load_rules()
     accounts = [a["account_code"] for a in load_json(ACCOUNTS, [])]
     subreddits = [s["name"] for s in load_json(SUBREDDITS, [])]
     subreddits = list(dict.fromkeys(subreddits))
     topics = [t["topic"] for t in load_json(TOPICS, [])]
-    length_tiers = [r["tier"] for r in load_json(LENGTH_RULES, [])]
+    length_rows = load_json(LENGTH_RULES, [])
+    length_tiers = [r["tier"] for r in length_rows]
     voice_fingerprints = [
         f["fingerprint_id"]
         for f in load_json(USER_FINGERPRINTS, [])
         if f.get("fingerprint_id")
     ]
-    code_languages = ["python", "sql", "bash", "go", "javascript", "typescript", "json", "yaml", "plaintext"]
-    weekly_rules = load_json(WEEKLY_POST_RULES, {})
+    code_languages = list(dict.fromkeys(
+        language
+        for row in length_rows
+        for language in row.get("preferred_code_languages", [])
+    ))
     post_types = list(dict.fromkeys(
         post_type
         for slot in weekly_rules.get("weekly_slots", [])
         for post_type in slot.get("post_types", [])
     ))
+    link_policies = list(weekly_rules.get("link_policy_modes", {}))
     return {
-        "accounts": accounts or ["R1", "R2"],
+        "accounts": accounts or weekly_rules.get("active_accounts", []),
         "subreddits": subreddits,
         "topics": topics,
-        "length_tiers": length_tiers or ["short_post", "standard_post", "long_post", "code_long_post"],
+        "length_tiers": length_tiers,
         "voice_fingerprints": voice_fingerprints,
         "code_languages": code_languages,
         "post_types": post_types,
+        "link_policies": link_policies,
     }
 
 
@@ -91,7 +99,7 @@ def build_schemas():
         "Reddit Blog Pool": [
         {"field_name": "Blog URL", "type": 15},
         {"field_name": "Blog 标题", "type": 1},
-        {"field_name": "Source Type", "type": 3, "property": single_select(["Content All in One", "Manual"])},
+        {"field_name": "Source Type", "type": 3, "property": single_select([SOURCE_SYNC_RULES["source_type_label"], "Manual"])},
         {"field_name": "Source Record ID", "type": 1},
         {"field_name": "Publish Date", "type": 5, "property": date_prop()},
         {"field_name": "上次筛选日期", "type": 5, "property": date_prop()},
@@ -105,7 +113,7 @@ def build_schemas():
         {"field_name": "推荐 Account Tags", "type": 4, "property": multi_select(opts["accounts"]), "_replace_options": True},
         {"field_name": "推荐 Subreddit Tags", "type": 4, "property": multi_select(opts["subreddits"])},
         {"field_name": "推荐 Post Type Tags", "type": 4, "property": multi_select(opts["post_types"])},
-        {"field_name": "推荐 Link Policy Tags", "type": 4, "property": multi_select(["no_link"]), "_replace_options": True},
+        {"field_name": "推荐 Link Policy Tags", "type": 4, "property": multi_select(opts["link_policies"]), "_replace_options": True},
         {"field_name": "匹配关键词", "type": 1},
         {"field_name": "备注", "type": 1},
     ],
@@ -120,7 +128,7 @@ def build_schemas():
         {"field_name": "Account Role", "type": 1},
         {"field_name": "Content Doc", "type": 15},
         {"field_name": "Post Type", "type": 3, "property": single_select(opts["post_types"])},
-        {"field_name": "Link Policy", "type": 3, "property": single_select(["no_link"]), "_replace_options": True},
+        {"field_name": "Link Policy", "type": 3, "property": single_select(opts["link_policies"]), "_replace_options": True},
         {"field_name": "Milvus Mention Basis", "type": 1},
         {"field_name": "Draft Topic Tags", "type": 4, "property": multi_select(opts["topics"])},
         {"field_name": "Angle", "type": 1},
@@ -132,7 +140,7 @@ def build_schemas():
         {"field_name": "Publish Date", "type": 5, "property": date_prop()},
         {"field_name": "Publisher", "type": 3, "property": single_select(["Jenny", "Lumina"])},
         {"field_name": "Reviewer Notes", "type": 1},
-    ] + reddit_json_content.json_workflow_field_defs(),
+    ] + reddit_browser_monitor.monitor_field_defs(),
     }
 
 CONFIG_KEYS = {
@@ -228,9 +236,15 @@ def main():
     existing = {t["name"]: t for t in feishu_client.list_tables(app_token)}
     out = {
         "reddit_bitable_app_token": app_token,
-        "source_content_app_token": table_ids.get("source_content_app_token", "TXy3bCKznaz89fseyo3cPMShnyb"),
-        "source_content_table_id": table_ids.get("source_content_table_id", "tblsyUaNiyPnhrFI"),
-        "source_content_view_id": table_ids.get("source_content_view_id", "vewx5CDVdU"),
+        "source_content_app_token": table_ids.get(
+            "source_content_app_token", SOURCE_SYNC_RULES["source_app_token"]
+        ),
+        "source_content_table_id": table_ids.get(
+            "source_content_table_id", SOURCE_SYNC_RULES["source_table_id"]
+        ),
+        "source_content_view_id": table_ids.get(
+            "source_content_view_id", SOURCE_SYNC_RULES["source_view_id"]
+        ),
     }
     created = []
     reused = []

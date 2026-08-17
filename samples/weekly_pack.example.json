@@ -44,22 +44,22 @@
     ]
   },
   {
-    "source_title": "Example vector database operations article",
-    "source_url": "https://example.com/vector-operations",
-    "pool_blog_id": "example-vector-001",
+    "source_title": "Example agent memory architecture article",
+    "source_url": "https://example.com/agent-memory-architecture",
+    "pool_blog_id": "example-memory-001",
     "items": [
       {
         "account_code": "R2",
         "content_type": "technical_post",
-        "subreddit": "r/vectordatabase",
-        "post_type": "No fixed post type",
+        "subreddit": "r/AIMemory",
+        "post_type": "Discussion",
         "suggested_day": "2026-07-22",
-        "title": "What usually dominates vector database cost after the first scale jump?",
-        "body": "My current view is that a filtered vector workload becomes much harder to price once the index can no longer stay comfortably in memory. The obvious inputs are vector count, dimensions, replicas, query rate, and update frequency, but filtering selectivity and compaction behavior can change the answer because the same nominal dataset may require very different candidate scans and maintenance work. I would probably model vector databases like Milvus as concrete deployments in the comparison and separate steady-state infrastructure cost from the engineering time required for index rebuilds, capacity changes, backups, and incident recovery. A comparison that reports only query latency can miss replica overhead, ingestion spikes, and the operational cost of keeping filters consistent with source data. The measurements I would keep are p50/p95/p99 latency, recall at a fixed candidate budget, write amplification, memory per million vectors, rebuild time, and operator hours per month. The unresolved part is which of those measurements predicts the first major cost jump early enough to change the design. Would love to hear your thoughts.",
+        "title": "Which memory should an agent trust when several versions conflict?",
+        "body": "My current view is that a shared memory layer becomes difficult to trust once several agents can write conflicting versions of the same user state. Recency alone is not enough: a preference from yesterday may be weaker than an explicit project rule from six months ago, while an inferred fact may deserve less authority than user-confirmed data. I would probably represent each memory with provenance, scope, timestamp, confidence, and a revocation state before deciding how it can influence future actions. Data infrastructures such as Milvus can retrieve candidate memories, but the decision path still needs an admission step that checks whether the memory belongs to this agent, task, or user context. A useful evaluation would include stale facts, contradictory facts, multi-agent writes, corrected facts, and requests to forget a specific item. The measurements I would keep are conflict-detection rate, correction propagation time, recall precision after revocation, and how often the system can explain why one memory outranked another. The unresolved criterion is whether authority should be encoded as a fixed policy or learned from outcomes. Would love to hear your thoughts.",
         "disclosure": "",
         "link_policy": "no_link",
-        "milvus_mention_basis": "The sample source uses Milvus as a concrete vector database deployment for the cost model.",
-        "angle": "vector database cost and production operations",
+        "milvus_mention_basis": "The sample source describes Milvus as one candidate-retrieval component inside an agent-memory architecture.",
+        "angle": "shared agent-memory conflict and authority tradeoff",
         "voice_fingerprint": "structured_design_question",
         "length_tier": "standard_post"
       }
@@ -77,13 +77,13 @@
         "post_type": "Question | Help",
         "suggested_day": "2026-07-24",
         "title": "How do you isolate retrieval failure from context pressure in local RAG?",
-        "body": "I would probably start a local RAG diagnosis by saving the retrieved chunk IDs, scores, filters, and exact prompt for a small set of failed questions. An answer can fail even when the relevant passage exists in the source: the retriever may have missed it, the chunk may be too broad, or the prompt may be packing enough surrounding text that the useful evidence gets diluted. When a vector database like Milvus is the retrieval layer, I would keep its search parameters and filter state fixed while inserting the known-good passage directly into the prompt. If the answer still fails, the likely variables move from indexing toward context length, prompt structure, quantization, or model capability. The harder case is when the answer improves only after removing other retrieved chunks, because that can look like a retrieval problem even when the correct evidence was present. A useful test matrix might compare top-k, chunk size, reranking, context budget, and the same known-good passage across two quantizations. What is the smallest diagnostic sequence you use before switching models or rebuilding the index?",
+        "body": "I am trying to isolate whether a local RAG miss comes from retrieval or from context pressure in the prompt. My current plan is to save the retrieved chunk IDs, scores, filters, and the exact prompt for a small set of failed questions, then insert the known-good passage directly into the prompt while keeping a vector database like Milvus as the retrieval layer. If the answer improves only after removing other retrieved chunks, I would probably treat that as context pressure rather than a pure retrieval miss. What is the smallest diagnostic sequence you use before switching models or rebuilding the index?",
         "disclosure": "",
         "link_policy": "no_link",
         "milvus_mention_basis": "The sample source names Milvus as the retrieval layer in its local RAG diagnostic sequence.",
-        "angle": "local RAG troubleshooting with retrieval and context isolation",
+        "angle": "local RAG short diagnostic question",
         "voice_fingerprint": "structured_design_question",
-        "length_tier": "standard_post"
+        "length_tier": "short_post"
       }
     ]
   }

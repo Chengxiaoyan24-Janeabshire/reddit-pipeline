@@ -1,4 +1,4 @@
 interface:
   display_name: "Reddit Weekly"
-  short_description: "Run the complete fixed R1/R2 Reddit workflow"
-  default_prompt: "Use $reddit-weekly to run the complete four-slot Reddit content workflow."
+  short_description: "Run the complete configured Reddit weekly workflow"
+  default_prompt: "Use $reddit-weekly to run the current Reddit content workflow."

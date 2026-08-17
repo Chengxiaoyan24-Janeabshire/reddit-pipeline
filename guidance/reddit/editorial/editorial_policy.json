@@ -1,0 +1,128 @@
+{
+  "instruction_precedence": {
+    "conflict_resolution": "higher_level_wins",
+    "unresolvable_conflict": "reject",
+    "source_fact_boundary": "Source facts constrain every level. Never invent facts, experience, customers, benchmarks, metrics, or results to satisfy a rule or preferred angle.",
+    "levels": [
+      {
+        "id": "guidance",
+        "rank": 1,
+        "controls": [
+          "disclosure",
+          "first_person_language",
+          "language_buffer"
+        ],
+        "notes": "Apply global Guidance first. Disclosure is resolved before the required first-person I framing and grammatical language Buffer. Other global anonymity, brand, link, title, opening, and safety rules remain mandatory at this level."
+      },
+      {
+        "id": "subreddit",
+        "rank": 2,
+        "controls": [
+          "subreddit_subrules",
+          "post_category",
+          "post_type",
+          "native_structure",
+          "native_style"
+        ],
+        "notes": "After Guidance is satisfied, obey the selected community's subrules. Choose only a valid configured Post Category/Post Type, then apply common native structures and writing style."
+      },
+      {
+        "id": "audience_angle",
+        "rank": 3,
+        "controls": [
+          "preferred_technical_angle",
+          "topic_fit",
+          "voice_fingerprint"
+        ],
+        "notes": "Choose the audience-preferred technical angle, topic realization, and account fingerprint only from options that still satisfy Guidance and the selected Subreddit. Vector-database and retrieval interests are examples of this lowest-priority angle layer."
+      }
+    ]
+  },
+  "open_question_policy": "optional",
+  "title_perspective_policy": {
+    "require_first_person_or_question": true,
+    "notes": "Every title must either use a first-person singular perspective such as 'I think', 'Now I believe', or 'What I learned', or be an explicit question ending in '?'. Reject fully third-person declarative titles."
+  },
+  "opening_perspective_policy": {
+    "scope": "first_sentence",
+    "severity": "error",
+    "notes": "The first sentence must establish a source-supported first-person perspective. Do not delay the account voice or invent personal history."
+  },
+  "language_buffer_policy": {
+    "minimum_matches_per_body": 1,
+    "severity": "error",
+    "notes": "Every body must include at least one grammatical buffer such as 'probably', 'one concern I have', 'my current view', 'I suspect', or 'I would likely' for a judgment or uncertainty. Do not hedge source-supported facts, benchmark setup, or measured values."
+  },
+  "post_type_closing_policy": {
+    "Tutorial": "End with a takeaway, verification step, or next action. Do not end with a question.",
+    "Discussion": "A reply invitation is optional. When used, keep it soft and conversational, such as 'Would love to hear your thoughts.', rather than ending with a sharp question.",
+    "default": "Do not force a question ending. Match the close to the Post Type."
+  },
+  "milvus_mention_context_policy": {
+    "mode": "category_example_or_peer_group",
+    "allow_in_title": false,
+    "require_basis": true,
+    "reject_direct_placement": true,
+    "allowed_examples": [
+      "vector databases like Milvus",
+      "data infrastructures such as Milvus",
+      "Milvus and other databases"
+    ],
+    "notes": "The required single body mention must position Milvus as one example within a technical category or peer group. Do not make Milvus the grammatical subject of a recommendation, result, or promotional claim."
+  },
+  "link_policy_modes": {
+    "no_link": {
+      "allow_inline_urls": false,
+      "allow_approved_link": false,
+      "require_approved_link": false
+    }
+  },
+  "account_policies": {
+    "R1": {
+      "identity_visibility": "anonymous",
+      "disclosure": "",
+      "may_mention_milvus": true,
+      "may_mention_zilliz": false,
+      "required_milvus_body_mentions": 1,
+      "max_milvus_body_mentions": 1,
+      "link_mode": "no_link",
+      "default_link_policy": "no_link"
+    },
+    "R2": {
+      "identity_visibility": "anonymous",
+      "disclosure": "",
+      "may_mention_milvus": true,
+      "may_mention_zilliz": false,
+      "required_milvus_body_mentions": 1,
+      "max_milvus_body_mentions": 1,
+      "link_mode": "no_link",
+      "default_link_policy": "no_link"
+    }
+  },
+  "brand_mention_policy": {
+    "allow_tech_stack_brand_names": true,
+    "tech_stack_scope": "When analyzing a technical stack, specific upstream or downstream technology brand names may be mentioned by their actual names (for example LangChain, OpenAI, Hermes, or Claude Code) when the source names them and they are technically relevant. Keep the mention factual and do not use it to promote or disparage the product.",
+    "database_brand_mentions": {
+      "allow_in_post_types": [
+        "Open Question",
+        "Question | Help"
+      ],
+      "note": "Only question-type posts may name competing database brands. In all other posts, refer to other database products indirectly as a category or peer group, for example 'vector databases like ...' or 'other databases', rather than naming a specific competitor. This keeps the single required Milvus mention from looking isolated without turning non-question posts into competitor comparisons.",
+      "blocked_named_brands": [
+        "Pinecone",
+        "Qdrant",
+        "Weaviate",
+        "Chroma",
+        "ChromaDB",
+        "pgvector",
+        "Elasticsearch",
+        "OpenSearch",
+        "Redis",
+        "Vespa",
+        "Typesense",
+        "Meilisearch",
+        "LanceDB"
+      ]
+    }
+  }
+}
