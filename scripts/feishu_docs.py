@@ -13,7 +13,7 @@ BLOCK_H3 = 5
 
 def sanitize_title(title, max_len=120):
     text = re.sub(r"\s+", " ", title or "Reddit Drafts").strip()
-    text = re.sub(r"[\\/:*?\"<>|#%{}]", "-", text)
+    text = re.sub(r"[\\/:*\"<>|#%{}]", "-", text)
     return text[:max_len].strip() or "Reddit Drafts"
 
 
@@ -159,6 +159,31 @@ def write_blocks(document_id, blocks):
         write_index += len(batch)
         if start + 50 < len(blocks):
             time.sleep(0.3)
+
+
+def replace_blocks(document_id, blocks):
+    """Replace all root children in an existing Feishu Doc."""
+    token = feishu_client.get_token()
+    root_url = (
+        f"{feishu_client.API_BASE}/docx/v1/documents/{document_id}"
+        f"/blocks/{document_id}"
+    )
+    root = feishu_client.http("GET", root_url, token=token)
+    if root.get("code") != 0:
+        raise RuntimeError(f"Failed to read Feishu doc root block: {root}")
+    children = (root.get("data", {}).get("block", {}).get("children") or [])
+    if children:
+        delete_url = root_url + "/children/batch_delete"
+        deleted = feishu_client.http(
+            "DELETE",
+            delete_url,
+            body={"start_index": 0, "end_index": len(children)},
+            token=token,
+        )
+        if deleted.get("code") != 0:
+            raise RuntimeError(f"Failed to clear Feishu doc blocks: {deleted}")
+    if blocks:
+        write_blocks(document_id, blocks)
 
 
 def grant_org_edit_access(document_id):

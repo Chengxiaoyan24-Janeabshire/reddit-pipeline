@@ -1,0 +1,16 @@
+{
+  "route_id": "james_luan",
+  "authority": "non_authoritative",
+  "shared_subreddit_visuals": "resource/reddit/slots/",
+  "allowed_use": "Use selected subreddit screenshots for Post Type and community-native cues. The exemplar documents may be inspected only as non-authoritative tone and paragraph-flow evidence; Guidance remains the runtime rule source.",
+  "style_exemplars": {
+    "r3_coherent_chapter_rewrite": "https://zilliverse.feishu.cn/docx/CtiodqZxroGItHxTYl0chXPSnY8",
+    "r3_article_summary_share": "https://zilliverse.feishu.cn/docx/ETsZdaLl4otPcRxQljdcweY0nSf"
+  },
+  "never_infer": [
+    "identity wording",
+    "disclosure requirements",
+    "brand rules",
+    "unsupported source claims"
+  ]
+}

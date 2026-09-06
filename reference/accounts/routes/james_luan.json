@@ -1,0 +1,37 @@
+{
+  "route_id": "james_luan",
+  "accounts": {
+    "R3": {
+      "allowed_modes": {
+        "r3_coherent_chapter_rewrite": {
+      "style": "sincere, rigorous, conversational technical explanation",
+      "realization": "Introduce James's identity, bridge naturally into one consecutive source section, and adapt that section faithfully. Continue with the next uncovered section as part2, part3, and so on until the entire article is covered.",
+      "title_character": "Use a concise technical thesis or tension that names the real infrastructure problem; avoid clickbait and forced first-person framing.",
+      "paragraph_rhythm": "Identity and technology context -> natural transition -> selected consecutive source section -> minimum context -> faithful technical implication."
+        },
+        "r3_article_summary_share": {
+          "style": "first-person reflective article recap with a natural source handoff",
+          "realization": "Introduce James briefly, explain what prompted the article, summarize the complete argument in its original logical order, then transition to the full write-up and place the original SyncPost URL on its own line before a short feedback invitation.",
+          "title_character": "State the article's central technical tension as a clear question or compact thesis; do not use a generic blog-summary title.",
+          "paragraph_rhythm": "Identity -> motivation -> origin/context -> major engineering shifts -> broader implication -> article bridge -> bare source URL -> feedback invitation."
+        }
+      }
+    }
+  },
+  "subreddit_reference": "reference/slots/",
+  "identity_facts": {
+    "james": "James Luan is CTO of Zilliz. Do not add education or career-history details to the standard identity introduction.",
+    "zilliz": "Zilliz is the company and builder behind Milvus and provides managed Milvus through Zilliz Cloud.",
+    "milvus": "Milvus is an open-source, high-performance, scalable vector database that stores, indexes, and searches embeddings so applications can retrieve semantically related unstructured data. Vector Lakebase expands this serving path into a lake-native foundation for discovery, analytics, governance, and continuous improvement over the same data."
+  },
+  "spintax_sentence_templates": {
+    "identity_opening": "{Hi, I’m James Luan, CTO at Zilliz, the team behind Milvus.|I’m James Luan, CTO at Zilliz, where our team builds Milvus.|Hi, James here — I’m the CTO of Zilliz, the company behind Milvus.}",
+    "article_motivation": "{I recently had a conversation about [TOPIC], and it made me look again at [CENTRAL QUESTION].|A recent discussion about [TOPIC] pushed me to revisit [CENTRAL QUESTION].|I’ve been thinking about [TOPIC], especially the question of [CENTRAL QUESTION].}",
+    "historical_turn": "{What stands out in hindsight is that [CATEGORY] did not begin with [POPULAR TRIGGER].|Looking back, [CATEGORY] started well before [POPULAR TRIGGER].|The part that is easy to miss is that [CATEGORY] predates [POPULAR TRIGGER].}",
+    "production_shift": "{Once [TECHNOLOGY] moved into production, the hard problems shifted from [EARLY CONCERN] to [PRODUCTION CONCERNS].|Production changed the question: [EARLY CONCERN] still mattered, but [PRODUCTION CONCERNS] became equally important.|At prototype scale, [EARLY CONCERN] dominates; in production, [PRODUCTION CONCERNS] become the real test.}",
+    "broader_implication": "{The role of [TECHNOLOGY] is also getting broader.|That points to a broader role for [TECHNOLOGY].|The bigger shift is that [TECHNOLOGY] is moving beyond [INITIAL USE CASE].}",
+    "article_bridge": "{I wrote up the full conversation here if you’re interested in [PROMISE]:|I put the full argument here for anyone exploring [PROMISE]:|I expanded on the complete reasoning here, including [PROMISE]:}",
+    "feedback_close": "{Love to hear your thoughts.|I’d be interested to hear how you see it.|Curious to hear what others are seeing in practice.}"
+  },
+  "notes": "Subreddit rules still control valid Post Type, native structure, and native style."
+}

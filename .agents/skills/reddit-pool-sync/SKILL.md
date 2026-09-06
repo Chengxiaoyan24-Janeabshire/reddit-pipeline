@@ -46,8 +46,12 @@ python3 scripts/sync_blog_pool_from_content_all_in_one.py
 - Confirm the configured Feishu source matches `source_sync.json`.
 - Require the configured category, status, official URL shape, and recoverable
   publish date.
+- Apply the same configured minimum publish date to James Luan and every other
+  author. Reject sources published before 2026-01-01, while retaining Published
+  status, official URL, known-date, and deduplication checks. Preserve `Source
+  Author` in the pool when that target field exists.
 - Deduplicate canonical URLs and keep the configured recency ordering.
 - Confirm dry-run writes zero rows.
-- Report eligible, recent, new, existing, rejected, missing-date, and written
-  counts using the current contract.
+- Report eligible, recent, new, existing, rejected, missing-date, written, and
+  always-sync-author counts using the current contract.
 - Do not change screening fields on existing pool rows.

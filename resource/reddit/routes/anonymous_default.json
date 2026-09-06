@@ -1,0 +1,12 @@
+{
+  "route_id": "anonymous_default",
+  "authority": "non_authoritative",
+  "shared_subreddit_visuals": "resource/reddit/slots/",
+  "allowed_use": "Use selected subreddit screenshots only for Post Type, native structure, and native style cues.",
+  "never_infer": [
+    "identity",
+    "links",
+    "disclosures",
+    "unsupported source claims"
+  ]
+}

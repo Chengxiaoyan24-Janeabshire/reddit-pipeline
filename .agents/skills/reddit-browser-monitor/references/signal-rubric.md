@@ -25,8 +25,11 @@
 - Monitor only rows whose `Publish Date` is today through 14 calendar days ago.
 - Process `within_7_days` targets first, ordered newest to oldest.
 - Process `days_8_to_14` targets second, ordered newest to oldest.
-- Do not open rows with missing/future publish dates or posts older than 14
-  calendar days. Report them as skipped with the script-provided reason.
+- Do not open rows with missing/future publish dates by default. Missing dates
+  may be included only when the user explicitly requests them with
+  `--include-undated`; future dates always remain skipped. Posts older than 14 days
+  remain skipped by default and may be opened only when the user explicitly
+  requests a historical backcheck using `--include-older`.
 
 ## Coverage
 

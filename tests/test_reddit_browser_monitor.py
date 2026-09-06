@@ -435,6 +435,8 @@ class RedditBrowserMonitorTest(unittest.TestCase):
         self.assertNotIn("Reddit JSON Content", fields)
         self.assertNotIn("Downvotes (Estimated)", fields)
         self.assertNotIn("Upvote Ratio", fields)
+        self.assertIn("Source Chapter", fields)
+        self.assertIn("partn", fields)
         self.assertTrue(
             {
                 "Upvotes",
@@ -450,7 +452,58 @@ class RedditBrowserMonitorTest(unittest.TestCase):
                 "Impression (7 days)",
                 "Reddit Monitor Status",
                 "Reddit Monitor Notes",
+                "爆款是否",
             }.issubset(fields)
+        )
+
+    def test_viral_status_uses_strict_thresholds_and_requires_all_metrics(self):
+        self.assertEqual(
+            reddit_browser_monitor.classify_viral_status(4004, 8, 17), "Yes"
+        )
+        self.assertEqual(
+            reddit_browser_monitor.classify_viral_status(3527, 5, 7), "Yes"
+        )
+        self.assertEqual(
+            reddit_browser_monitor.classify_viral_status(3000, 8, 17), "Yes"
+        )
+        self.assertEqual(
+            reddit_browser_monitor.classify_viral_status(3000, 5, 6), "No"
+        )
+        self.assertIsNone(
+            reddit_browser_monitor.classify_viral_status(None, 8, 17)
+        )
+
+    def test_viral_backfill_leaves_missing_impressions_unchanged(self):
+        rows = [
+            {
+                "record_id": "rec_yes",
+                "draft_id": "RD-YES",
+                "impressions_7_days": 4004,
+                "upvotes": 8,
+                "comments": 17,
+                "viral_status": "",
+            },
+            {
+                "record_id": "rec_wait",
+                "draft_id": "RD-WAIT",
+                "impressions_7_days": None,
+                "upvotes": 10,
+                "comments": 20,
+                "viral_status": "",
+            },
+        ]
+        self.assertEqual(
+            reddit_browser_monitor.build_viral_backfill(rows),
+            [
+                {
+                    "record_id": "rec_yes",
+                    "draft_id": "RD-YES",
+                    "impressions_7_days": 4004,
+                    "upvotes": 8,
+                    "comments": 17,
+                    "viral_status": "Yes",
+                }
+            ],
         )
 
     def test_signal_field_options_are_replaced_with_yes_and_none(self):

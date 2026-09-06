@@ -12,7 +12,7 @@
           "first_person_language",
           "language_buffer"
         ],
-        "notes": "Apply global Guidance first. Disclosure is resolved before the required first-person I framing and grammatical language Buffer. Other global anonymity, brand, link, title, opening, and safety rules remain mandatory at this level."
+        "notes": "For the normal anonymous route, apply global Guidance first. Configured disclosed-author routes are selected before this precedence chain and use their own validation contract while retaining source facts and safety."
       },
       {
         "id": "subreddit",
@@ -40,25 +40,111 @@
   },
   "open_question_policy": "optional",
   "title_perspective_policy": {
+    "scope": "anonymous_route_only",
     "require_first_person_or_question": true,
     "notes": "Every title must either use a first-person singular perspective such as 'I think', 'Now I believe', or 'What I learned', or be an explicit question ending in '?'. Reject fully third-person declarative titles."
   },
+  "title_hook_policy": {
+    "scope": "anonymous_route_only",
+    "severity": "error",
+    "minimum_signal_groups": 2,
+    "strong_single_signals": [
+      "the longer",
+      "the less",
+      "the more",
+      "more than",
+      "less than",
+      "rather than",
+      "instead of",
+      "wrong question",
+      "was the problem",
+      "was actually",
+      "turns out"
+    ],
+    "signal_groups": {
+      "contrast_or_reversal": [
+        "but",
+        "instead",
+        "rather than",
+        "more than",
+        "less than",
+        "wrong question",
+        "was the",
+        "turns out"
+      ],
+      "failure_or_diagnosis": [
+        "blamed",
+        "failed",
+        "failure",
+        "broke",
+        "broken",
+        "bad results",
+        "worse",
+        "miss",
+        "problem"
+      ],
+      "time_or_cost": [
+        "hour",
+        "hours",
+        "day",
+        "days",
+        "week",
+        "weeks",
+        "month",
+        "months",
+        "cost",
+        "expensive",
+        "cheap",
+        "latency",
+        "running two",
+        "another database"
+      ],
+      "decision_with_consequence": [
+        "just to",
+        "worth it",
+        "without",
+        "at what cost",
+        "tradeoff",
+        "give up",
+        "avoid",
+        "keep"
+      ]
+    },
+    "notes": "Anonymous titles must expose a concrete engineering tension, not merely label a topic or turn it into a generic How/Where/Which question. Accept a strong contrast or reversal on its own, or at least two weaker signal groups such as failure plus time/cost or a decision plus its consequence. Every signal must remain source-backed; never invent elapsed time, incidents, benchmarks, or personal experience for a hook."
+  },
   "opening_perspective_policy": {
     "scope": "first_sentence",
+    "route_scope": "anonymous_route_only",
     "severity": "error",
     "notes": "The first sentence must establish a source-supported first-person perspective. Do not delay the account voice or invent personal history."
   },
   "language_buffer_policy": {
+    "scope": "anonymous_route_only",
     "minimum_matches_per_body": 1,
     "severity": "error",
     "notes": "Every body must include at least one grammatical buffer such as 'probably', 'one concern I have', 'my current view', 'I suspect', or 'I would likely' for a judgment or uncertainty. Do not hedge source-supported facts, benchmark setup, or measured values."
   },
   "post_type_closing_policy": {
     "Tutorial": "End with a takeaway, verification step, or next action. Do not end with a question.",
-    "Discussion": "A reply invitation is optional. When used, keep it soft and conversational, such as 'Would love to hear your thoughts.', rather than ending with a sharp question.",
+    "Discussion": "A reply invitation is optional. A Discussion may close with one or two answerable, experience-based questions about a concrete adoption, migration, or failure threshold. Reject broad opinion polling, generic engagement prompts, or a pile of loosely related questions.",
     "default": "Do not force a question ending. Match the close to the Post Type."
   },
+  "pack_surface_variation_policy": {
+    "scope": "anonymous_weekly_pack",
+    "severity": "error",
+    "max_drafts_per_scaffold": 1,
+    "repeated_scaffolds": [
+      "I have mixed feelings",
+      "The path I would",
+      "The design I would",
+      "The strongest objection",
+      "This feels reasonable",
+      "The unresolved threshold"
+    ],
+    "notes": "Anonymous drafts in one weekly pack must not reuse a recognizable opening, transition, objection label, or closing scaffold. Preserve the required reasoning elements but vary their order, syntax, paragraph rhythm, and question cadence. Do not evade this check with trivial synonym replacement."
+  },
   "milvus_mention_context_policy": {
+    "scope": "anonymous_route_only",
     "mode": "category_example_or_peer_group",
     "allow_in_title": false,
     "require_basis": true,
@@ -75,7 +161,19 @@
       "allow_inline_urls": false,
       "allow_approved_link": false,
       "require_approved_link": false
+    },
+    "source_link": {
+      "allow_inline_urls": true,
+      "allow_approved_link": true,
+      "require_approved_link": true
     }
+  },
+  "original_source_field_policy": {
+    "scope": "all_future_reddit_review_rows",
+    "effective_for": "future_drafts_only",
+    "required_feishu_field": "原文",
+    "field_value": "source_url",
+    "notes": "Every future Reddit review row must expose its SyncPost source_url in the Feishu 原文 field, regardless of route. Body-link rules remain route- and mode-specific. Do not backfill historical drafts."
   },
   "account_policies": {
     "R1": {
@@ -97,6 +195,15 @@
       "max_milvus_body_mentions": 1,
       "link_mode": "no_link",
       "default_link_policy": "no_link"
+    },
+    "R3": {
+      "identity_visibility": "disclosed_source_author_only",
+      "source_author_exact_case_insensitive": "James Luan",
+      "disclosure": "",
+      "may_mention_milvus": true,
+      "may_mention_zilliz": true,
+      "link_mode": "per_author_rewrite_mode",
+      "default_link_policy": "source_link"
     }
   },
   "brand_mention_policy": {

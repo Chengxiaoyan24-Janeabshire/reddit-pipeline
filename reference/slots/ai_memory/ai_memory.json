@@ -34,7 +34,7 @@
     "For Open Question, make the scenario answerable and group related questions into compact bullets rather than asking for broad opinions."
   ],
   "inherited_contract": {
-    "guidance": "guidance/reddit/editorial/editorial_policy.json",
+    "guidance": "guidance/reddit/editorial/editorial_routes.json",
     "account_code": "R2",
     "account_reference": "reference/accounts/",
     "resource_role": "Screenshots provide Post Type and structural cues only; they never replace the account persona or authorize copied links, metrics, or identity details."

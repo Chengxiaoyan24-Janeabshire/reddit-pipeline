@@ -1,0 +1,24 @@
+{
+  "route_order": [
+    "james_luan",
+    "anonymous_default"
+  ],
+  "routes": {
+    "james_luan": {
+      "match": {
+        "source_author_exact_case_insensitive": "James Luan"
+      },
+      "guidance": "guidance/reddit/editorial/james_luan_policy.json",
+      "reference": "reference/accounts/routes/james_luan.json",
+      "resource": "resource/reddit/routes/james_luan.json"
+    },
+    "anonymous_default": {
+      "match": {
+        "fallback": true
+      },
+      "guidance": "guidance/reddit/editorial/editorial_policy.json",
+      "reference": "reference/accounts/routes/anonymous_default.json",
+      "resource": "resource/reddit/routes/anonymous_default.json"
+    }
+  }
+}

@@ -8,9 +8,13 @@
 ## Machine sources
 
 - `guidance/reddit/editorial/editorial_policy.json`
+- `guidance/reddit/editorial/editorial_routes.json`
+- `guidance/reddit/editorial/james_luan_policy.json`
 - `guidance/reddit/editorial/content_length_rules.json`
 
-<!-- source-sha256 guidance/reddit/editorial/editorial_policy.json: d33046b985fd4c36405824ccb316aafd076342bccddb13779aa741a447c2ea0d -->
+<!-- source-sha256 guidance/reddit/editorial/editorial_policy.json: 607d3c87c19a49211848f13493209c7552b30b0e7fc71caed04667c27afcafbd -->
+<!-- source-sha256 guidance/reddit/editorial/editorial_routes.json: 3c15765ad6527cb3d795cd44274fafd204e488697e996aa2da4d2b413b7d0e01 -->
+<!-- source-sha256 guidance/reddit/editorial/james_luan_policy.json: 273223386cbbe3222d517055267d6d20703ce868c1974ae359d7427d1031a7b4 -->
 <!-- source-sha256 guidance/reddit/editorial/content_length_rules.json: 463237560833a17dda665026b6645cc98f77d7f2f512735b151a1785dd541154 -->
 
 ## editorial_policy.json
@@ -31,7 +35,7 @@ Machine source: `guidance/reddit/editorial/editorial_policy.json`
 
 - **ID:** `guidance`
 - **Rank:** `1`
-- **Notes:** Apply global Guidance first. Disclosure is resolved before the required first-person I framing and grammatical language Buffer. Other global anonymity, brand, link, title, opening, and safety rules remain mandatory at this level.
+- **Notes:** For the normal anonymous route, apply global Guidance first. Configured disclosed-author routes are selected before this precedence chain and use their own validation contract while retaining source facts and safety.
 
 ###### Controls
 
@@ -67,17 +71,94 @@ Machine source: `guidance/reddit/editorial/editorial_policy.json`
 
 ### Title Perspective Policy
 
+- **Scope:** `anonymous_route_only`
 - **Require First Person Or Question:** Yes
 - **Notes:** Every title must either use a first-person singular perspective such as 'I think', 'Now I believe', or 'What I learned', or be an explicit question ending in '?'. Reject fully third-person declarative titles.
+
+### Title Hook Policy
+
+- **Scope:** `anonymous_route_only`
+- **Severity:** `error`
+- **Minimum Signal Groups:** `2`
+- **Notes:** Anonymous titles must expose a concrete engineering tension, not merely label a topic or turn it into a generic How/Where/Which question. Accept a strong contrast or reversal on its own, or at least two weaker signal groups such as failure plus time/cost or a decision plus its consequence. Every signal must remain source-backed; never invent elapsed time, incidents, benchmarks, or personal experience for a hook.
+
+#### Strong Single Signals
+
+- the longer
+- the less
+- the more
+- more than
+- less than
+- rather than
+- instead of
+- wrong question
+- was the problem
+- was actually
+- turns out
+
+#### Signal Groups
+
+##### Contrast Or Reversal
+
+- `but`
+- `instead`
+- rather than
+- more than
+- less than
+- wrong question
+- was the
+- turns out
+
+##### Failure Or Diagnosis
+
+- `blamed`
+- `failed`
+- `failure`
+- `broke`
+- `broken`
+- bad results
+- `worse`
+- `miss`
+- `problem`
+
+##### Time Or Cost
+
+- `hour`
+- `hours`
+- `day`
+- `days`
+- `week`
+- `weeks`
+- `month`
+- `months`
+- `cost`
+- `expensive`
+- `cheap`
+- `latency`
+- running two
+- another database
+
+##### Decision With Consequence
+
+- just to
+- worth it
+- `without`
+- at what cost
+- `tradeoff`
+- give up
+- `avoid`
+- `keep`
 
 ### Opening Perspective Policy
 
 - **Scope:** `first_sentence`
+- **Route Scope:** `anonymous_route_only`
 - **Severity:** `error`
 - **Notes:** The first sentence must establish a source-supported first-person perspective. Do not delay the account voice or invent personal history.
 
 ### Language Buffer Policy
 
+- **Scope:** `anonymous_route_only`
 - **Minimum Matches Per Body:** `1`
 - **Severity:** `error`
 - **Notes:** Every body must include at least one grammatical buffer such as 'probably', 'one concern I have', 'my current view', 'I suspect', or 'I would likely' for a judgment or uncertainty. Do not hedge source-supported facts, benchmark setup, or measured values.
@@ -85,11 +166,28 @@ Machine source: `guidance/reddit/editorial/editorial_policy.json`
 ### Post Type Closing Policy
 
 - **Tutorial:** End with a takeaway, verification step, or next action. Do not end with a question.
-- **Discussion:** A reply invitation is optional. When used, keep it soft and conversational, such as 'Would love to hear your thoughts.', rather than ending with a sharp question.
+- **Discussion:** A reply invitation is optional. A Discussion may close with one or two answerable, experience-based questions about a concrete adoption, migration, or failure threshold. Reject broad opinion polling, generic engagement prompts, or a pile of loosely related questions.
 - **Default:** Do not force a question ending. Match the close to the Post Type.
+
+### Pack Surface Variation Policy
+
+- **Scope:** `anonymous_weekly_pack`
+- **Severity:** `error`
+- **Max Drafts Per Scaffold:** `1`
+- **Notes:** Anonymous drafts in one weekly pack must not reuse a recognizable opening, transition, objection label, or closing scaffold. Preserve the required reasoning elements but vary their order, syntax, paragraph rhythm, and question cadence. Do not evade this check with trivial synonym replacement.
+
+#### Repeated Scaffolds
+
+- I have mixed feelings
+- The path I would
+- The design I would
+- The strongest objection
+- This feels reasonable
+- The unresolved threshold
 
 ### Milvus Mention Context Policy
 
+- **Scope:** `anonymous_route_only`
 - **Mode:** `category_example_or_peer_group`
 - **Allow In Title:** No
 - **Require Basis:** Yes
@@ -109,6 +207,20 @@ Machine source: `guidance/reddit/editorial/editorial_policy.json`
 - **Allow Inline URLs:** No
 - **Allow Approved Link:** No
 - **Require Approved Link:** No
+
+#### Source Link
+
+- **Allow Inline URLs:** Yes
+- **Allow Approved Link:** Yes
+- **Require Approved Link:** Yes
+
+### Original Source Field Policy
+
+- **Scope:** `all_future_reddit_review_rows`
+- **Effective For:** `future_drafts_only`
+- **Required Feishu Field:** 原文
+- **Field Value:** `source_url`
+- **Notes:** Every future Reddit review row must expose its SyncPost source_url in the Feishu 原文 field, regardless of route. Body-link rules remain route- and mode-specific. Do not backfill historical drafts.
 
 ### Account Policies
 
@@ -133,6 +245,16 @@ Machine source: `guidance/reddit/editorial/editorial_policy.json`
 - **Max Milvus Body Mentions:** `1`
 - **Link Mode:** `no_link`
 - **Default Link Policy:** `no_link`
+
+#### R3
+
+- **Identity Visibility:** `disclosed_source_author_only`
+- **Source Author Exact Case Insensitive:** James Luan
+- **Disclosure:** *(empty)*
+- **May Mention Milvus:** Yes
+- **May Mention Zilliz:** Yes
+- **Link Mode:** `per_author_rewrite_mode`
+- **Default Link Policy:** `source_link`
 
 ### Brand Mention Policy
 
@@ -163,6 +285,172 @@ Machine source: `guidance/reddit/editorial/editorial_policy.json`
 - `Typesense`
 - `Meilisearch`
 - `LanceDB`
+
+## editorial_routes.json
+
+Machine source: `guidance/reddit/editorial/editorial_routes.json`
+
+### Route Order
+
+- `james_luan`
+- `anonymous_default`
+
+### Routes
+
+#### James Luan
+
+- **Guidance:** `guidance/reddit/editorial/james_luan_policy.json`
+- **Reference:** `reference/accounts/routes/james_luan.json`
+- **Resource:** `resource/reddit/routes/james_luan.json`
+
+##### Match
+
+- **Source Author Exact Case Insensitive:** James Luan
+
+#### Anonymous Default
+
+- **Guidance:** `guidance/reddit/editorial/editorial_policy.json`
+- **Reference:** `reference/accounts/routes/anonymous_default.json`
+- **Resource:** `resource/reddit/routes/anonymous_default.json`
+
+##### Match
+
+- **Fallback:** Yes
+
+## james_luan_policy.json
+
+Machine source: `guidance/reddit/editorial/james_luan_policy.json`
+
+- **Route ID:** `james_luan`
+- **Validation Mode:** `disclosed_author`
+- **Required Account Code:** `R3`
+- **Source Fact Boundary:** Every claim must remain supported by the selected James Luan source. Do not invent personal experience, customers, benchmarks, metrics, or results.
+- **Required Disclosure:** *(empty)*
+- **Disclosure Placement:** `body_opening`
+
+### Identity Opening
+
+- **Scope:** `first_paragraph`
+
+#### Required Terms
+
+- `James`
+- `CTO`
+- `Zilliz`
+- `Milvus`
+- `open-source`
+- vector database
+- Vector Lakebase
+
+#### Required Phrase Groups
+
+##### Item 1
+
+- builder behind Milvus
+- built Milvus
+- creators of Milvus
+- company behind Milvus
+
+##### Item 2
+
+- store, index, and search embeddings
+- store and search embeddings
+- semantic search over unstructured data
+
+### Excluded Anonymous Checks
+
+- `title_first_person_or_question`
+- `first_sentence_i`
+- `language_buffer`
+- `r2_short_question_quota`
+- `milvus_required_mention`
+- `milvus_peer_group_placement`
+- `anonymous_brand_and_competitor_limits`
+- `anonymous_no_link_policy`
+- `anonymous_identity`
+
+### Retained Checks
+
+- `source_facts`
+- `safety`
+- `account_subreddit_slot`
+- `valid_post_type`
+- `subreddit_native_structure`
+- `subreddit_native_style`
+- `duplicate_content`
+
+### Accounts
+
+#### R3
+
+- **Identity Visibility:** `disclosed_source_author`
+
+##### Allowed Rewrite Modes
+
+- `r3_coherent_chapter_rewrite`
+- `r3_article_summary_share`
+
+##### Modes
+
+###### R3 Coherent Chapter Rewrite
+
+- **Strategy:** Open with James's disclosed identity, transition naturally into one consecutive source section, and adapt that section into a standalone Reddit post. Continue as part1, part2, and so on until the full source article has been covered.
+- **Required Source Chapter:** Yes
+- **Required Partn Pattern:** ^part[1-9][0-9]*$
+- **Partn Sequence:** Number section-derived posts independently for each source_url as part1, part2, part3, and so on, without gaps, reuse, or skipped source sections, until the entire source article has been covered.
+- **Repeat Policy:** `may_repeat_until_full_source_covered`
+- **Link Policy:** `no_link`
+
+**Style Contract**
+
+- **Voice:** sincere, rigorous, calm, and conversational
+- **Chapter Scope:** One post covers one consecutive source section. Later parts continue from the next uncovered section until the full article is represented.
+- **Context Continuity:** Resolve references that depend on omitted sections, briefly establish prerequisite concepts, and ensure the opening and conclusion stand on their own.
+- **Fidelity:** Keep the selected source section's claims, causal logic, terminology, and qualifications faithful. Use an identity introduction and a natural transition before the adapted excerpt; do not invent content or skip ahead to reuse a previously covered section.
+- **Ending:** Close on the selected chapter's technical implication rather than teasing missing chapters or adding the article-share closing.
+
+**Required Narrative Sequence**
+
+**Ordered Phases**
+
+- `complete_identity_and_technology_context`
+- `natural_transition_to_selected_section`
+- `minimum_prerequisite_context`
+- `chapter_reasoning_and_mechanisms`
+- `self_contained_technical_implication`
+
+###### R3 Article Summary Share
+
+- **Strategy:** Use the supplied Feishu exemplar as the structural model: introduce James directly, summarize the source article's complete argument in connected technical paragraphs, transition naturally to the original article, place the exact source URL on its own line, and close with a short invitation for reader feedback.
+- **Required Summary Scope:** `full_article`
+- **Max Rewrites Per Source URL:** `1`
+- **Required Approved Link:** `source_url`
+- **Required Inline Link:** `source_url`
+- **Required Article Bridge:** Yes
+- **Required Reply Invitation:** Yes
+- **Forbid Partn:** Yes
+- **Link Policy:** `source_link`
+
+**Style Contract**
+
+- **Voice:** first-person, reflective, technically grounded, and concise
+- **Summary Scope:** Summarize the article's full throughline rather than isolating one chapter. Preserve the source's sequence, causal logic, qualifications, and forward-looking conclusion without copying its prose.
+- **Opening:** Open with a short James/Zilliz/Milvus identity sentence, then state the conversation, observation, or question that motivated the article.
+- **Body:** Move from origin or context, through the major engineering changes and tradeoffs, to the broader implication. Use connected paragraphs and concrete technical language.
+- **Article Bridge:** After the summary, introduce the full article with one natural first-person sentence, then put source_url in a separate paragraph.
+- **Ending:** After the URL, close with one brief invitation for thoughts.
+
+**Required Narrative Sequence**
+
+**Ordered Phases**
+
+- `identity_opening`
+- `article_motivation`
+- `full_argument_summary`
+- `forward_looking_implication`
+- `article_bridge`
+- `source_url`
+- `feedback_invitation`
 
 ## content_length_rules.json
 

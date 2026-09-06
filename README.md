@@ -8,7 +8,7 @@ Chrome/Browser 页面状态监测已发布的帖子。项目不会执行任何 R
 ```text
 Content All in One / All content / all content
   -> pool 同步
-  -> 来源筛选与 R1/R2 分配
+  -> 来源筛选与 R1/R2/R3 分配
   -> 四个槽位起草
   -> 校验
   -> 飞书审核交付
@@ -24,7 +24,7 @@ Content All in One / All content / all content
 | 层级 | 职责 |
 |---|---|
 | `guidance/reddit/workflow/` | 数量、分配、时效和同步的机器 JSON 及生成的 MD 审核页 |
-| `guidance/reddit/editorial/` | 全局编辑与长度规则的机器 JSON 及生成的 MD 审核页 |
+| `guidance/reddit/editorial/` | 编辑路由、anonymous/James 独立 Guidance、长度规则及生成的 MD 审核页 |
 | `reference/accounts/` | 受众角度、路由和指纹的机器 JSON 及生成的 MD 审核页 |
 | `reference/slots/` | 每个 Subreddit 槽位及注册表的机器 JSON 和生成的 MD 审核页 |
 | `guidance/reddit/*.md` | 人工编写的运营边界、FAQ 和范例 |
@@ -43,7 +43,16 @@ Content All in One / All content / all content
 `.agents/skills/` 保存相对稳定的阶段调用逻辑，只有工作流阶段、命令、输出或
 写入门禁变化时才需要修改。这是维护边界，不是内容规则优先级。
 
-当内容规则互相作用时，按 `Guidance > Subreddit > Audience angle` 处理：
+起草和校验会先按 `source_author` 路由。James Luan 来源只使用 R3 披露作者账号，
+并可进入四个现有 Subreddit 槽位。R3 有两种互斥模式：Chapter 模式只改写一个
+完整、连贯的章节级观点，并补足脱离原文后必需的上下文；Direct Share 模式概括
+文章观点、直接分享原文链接并邀请同行讨论。该路由不继承匿名账号的标题、
+首句 `I`、Buffer words、R2 提问配额、Milvus 放置、竞品、品牌、匿名或无链接检查，
+但继续遵守来源事实、安全、R3/共享 Subreddit 槽位、有效 Post Type 和社区原生风格。
+路由清单会分别指向对应的 Guidance、Reference 和非权威 Resource manifest；运行时
+只加载命中的一条链路，不同时加载两套账号实现。
+
+非 James 内容的规则仍按 `Guidance > Subreddit > Audience angle` 处理：
 先满足全局 Disclosure 和语言要求；再满足 Subreddit 的 subrule、有效的
 Category/Post Type 和原生风格；最后才是偏好的技术角度和账号指纹。上层始终
 优先，同时来源事实约束每一层。

@@ -14,6 +14,18 @@
     "www.milvus.io"
   ],
   "required_path_prefix": "blog",
+  "author_sync_policy": {
+    "source_field_candidates": [
+      "Author",
+      "Blog Author",
+      "作者"
+    ],
+    "always_sync_authors": [
+      "James Luan"
+    ],
+    "bypass_minimum_publish_date": false,
+    "notes": "James Luan sources follow the same minimum_publish_date as every other author. Only official published Blog rows dated 2026-01-01 or later are eligible; canonical deduplication and all other source-safety checks still apply."
+  },
   "excluded_sources": [
     "Medium sync",
     "Medium Daily",

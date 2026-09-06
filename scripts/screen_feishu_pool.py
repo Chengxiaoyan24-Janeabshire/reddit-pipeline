@@ -65,10 +65,13 @@ def main():
         if args.record_id and item["record_id"] != args.record_id:
             continue
         fields = item.get("fields", {})
+        source_author = feishu_client.extract_text(fields.get("Source Author"))
+        generated_count = as_int(fields.get("已生成内容数"))
+        is_james = source_author.strip().casefold() == "james luan"
         url_status = feishu_client.extract_text(fields.get("URL 状态"))
         if not args.record_id and url_status not in {"", "Active"}:
             continue
-        if not args.record_id and as_int(fields.get("已生成内容数")) > 0:
+        if not args.record_id and generated_count > 0 and not is_james:
             continue
         row = {
             "blog_id": item["record_id"],
@@ -76,6 +79,8 @@ def main():
             "url": feishu_client.extract_url(fields.get("Blog URL")),
             "notes": feishu_client.extract_text(fields.get("备注")),
             "publish_date": fields.get("Publish Date"),
+            "source_author": source_author,
+            "generated_count": generated_count,
         }
         screened = screen_and_assign.screen_row(row, account_rules, topics, top_n=2, no_fetch=args.no_fetch)
         status_map = {
@@ -132,6 +137,7 @@ def main():
             "title": row["title"],
             "url": row["url"],
             "publish_date": row["publish_date"],
+            "source_author": row["source_author"],
             "recent_priority": screen_and_assign.weekly_post_rules.is_recent_source(
                 row["publish_date"]
             ),

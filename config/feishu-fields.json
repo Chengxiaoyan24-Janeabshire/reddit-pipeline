@@ -3,6 +3,7 @@
     "draft_id": "Draft ID",
     "source_title": "Source Blog 标题",
     "source_url": "Source Blog URL",
+    "original_source": "原文",
     "pool_record_id": "Blog Pool Record ID",
     "source_publish_date": "Source Blog Publish Date",
     "account_code": "Account Code",
@@ -16,6 +17,8 @@
     "milvus_mention_basis": "Milvus Mention Basis",
     "angle": "Angle",
     "voice_fingerprint": "Voice Fingerprint",
+    "source_chapter": "Source Chapter",
+    "partn": "partn",
     "screening_json": "Screening JSON",
     "char_count": "字符数",
     "status": "Status",
@@ -36,6 +39,7 @@
     "competitor_mentions": "Competitor Mentions",
     "reddit_monitor_status": "Reddit Monitor Status",
     "reddit_monitor_notes": "Reddit Monitor Notes",
-    "reddit_metrics_updated_at": "Reddit Metrics Updated At"
+    "reddit_metrics_updated_at": "Reddit Metrics Updated At",
+    "viral_status": "爆款是否"
   }
 }

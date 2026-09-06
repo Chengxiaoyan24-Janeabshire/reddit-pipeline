@@ -15,6 +15,8 @@ DOCUMENT_SPECS = (
         "Editorial Guidance Rules",
         (
             resource_paths.EDITORIAL_POLICY,
+            resource_paths.EDITORIAL_ROUTES,
+            resource_paths.JAMES_LUAN_POLICY,
             resource_paths.CONTENT_LENGTH_RULES,
         ),
     ),
@@ -33,6 +35,8 @@ DOCUMENT_SPECS = (
             resource_paths.ACCOUNTS,
             resource_paths.ACCOUNT_TOPIC_RULES,
             resource_paths.USER_FINGERPRINTS,
+            resource_paths.JAMES_LUAN_ACCOUNT_ROUTE,
+            resource_paths.ANONYMOUS_ACCOUNT_ROUTE,
         ),
     ),
     (

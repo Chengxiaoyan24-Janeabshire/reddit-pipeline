@@ -1,9 +1,18 @@
 {
   "active_accounts": [
     "R1",
-    "R2"
+    "R2",
+    "R3"
   ],
   "weekly_pack_size": 4,
+  "james_weekly_mode_policy": {
+    "enabled": true,
+    "james_post_count": 3,
+    "article_summary_share_count": 1,
+    "article_summary_share_mode": "r3_article_summary_share",
+    "scope": "weekly_pack",
+    "notes": "Each weekly pack contains exactly three James Luan posts. Exactly one uses the full-article summary-then-original-link structure modeled on the approved Feishu exemplar; the other James posts use the remaining configured R3 modes. Historical drafts are not backfilled."
+  },
   "source_recency_policy": {
     "priority_window_days": 7,
     "sort_order": "publish_date_desc",
@@ -13,6 +22,7 @@
   "weekly_slots": [
     {
       "account_code": "R1",
+      "allowed_accounts": ["R1", "R3"],
       "subreddit": "r/Rag",
       "lane": "rag",
       "rule_json": "reference/slots/rag/rag.json",
@@ -114,6 +124,7 @@
     },
     {
       "account_code": "R1",
+      "allowed_accounts": ["R1", "R3"],
       "subreddit": "r/AI_Agents",
       "lane": "ai_agents",
       "rule_json": "reference/slots/ai_agents/ai_agents.json",
@@ -193,6 +204,7 @@
     },
     {
       "account_code": "R2",
+      "allowed_accounts": ["R2", "R3"],
       "subreddit": "r/AIMemory",
       "lane": "ai_memory",
       "rule_json": "reference/slots/ai_memory/ai_memory.json",
@@ -299,6 +311,7 @@
     },
     {
       "account_code": "R2",
+      "allowed_accounts": ["R2", "R3"],
       "subreddit": "r/LocalLLaMA",
       "lane": "local_llama",
       "rule_json": "reference/slots/local_llama/local_llama.json",
@@ -383,6 +396,7 @@
   ],
   "r2_short_question_policy": {
     "enabled": true,
+    "scope": "anonymous_route_only",
     "account_code": "R2",
     "weekly_count": 1,
     "length_tier": "short_post",

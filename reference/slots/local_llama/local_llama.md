@@ -9,7 +9,7 @@
 
 - `reference/slots/local_llama/local_llama.json`
 
-<!-- source-sha256 reference/slots/local_llama/local_llama.json: 3d7625dd6f81f58ed3247e317df05c9b48c0e067d886c529f7dc8c4e89da8a38 -->
+<!-- source-sha256 reference/slots/local_llama/local_llama.json: cae1b96cddee202a1142f66d93a9c9985b472c362e6c6ddee629e90eaf7aec15 -->
 
 ## local_llama.json
 
@@ -55,7 +55,7 @@ Machine source: `reference/slots/local_llama/local_llama.json`
 
 ### Inherited Contract
 
-- **Guidance:** `guidance/reddit/editorial/editorial_policy.json`
+- **Guidance:** `guidance/reddit/editorial/editorial_routes.json`
 - **Account Code:** `R2`
 - **Account Reference:** `reference/accounts/`
 - **Resource Role:** Screenshots may change local structure only and never replace the account persona.

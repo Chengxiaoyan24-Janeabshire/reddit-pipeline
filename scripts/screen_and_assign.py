@@ -235,15 +235,32 @@ def choose_subreddits(row, topic_hits):
     return ranked
 
 
+def eligible_account_codes_for_author(source_author, account_rules):
+    author_route = weekly_post_rules.source_author_override(source_author)
+    required_account = author_route.get("required_account_code")
+    if required_account:
+        return {required_account}
+    return {
+        rule["account_code"] for rule in account_rules
+        if not rule.get("source_author_scope")
+    }
+
+
 def screen_row(row, account_rules, topics, top_n, no_fetch):
     title = row.get("title") or row.get("blog_title") or ""
     notes = row.get("notes", "")
     url = row.get("url") or row.get("blog_url") or ""
+    source_author = row.get("source_author", "") or ""
     fetched = "" if no_fetch else fetch_text(url)
     text = "\n".join([title, url, notes, fetched or ""]).strip()
 
     status, score, reasons = suitability(text, bool(fetched))
     scored_accounts, topic_hits = assignment_scores(text, account_rules, topics)
+    eligible_codes = eligible_account_codes_for_author(source_author, account_rules)
+    scored_accounts = [
+        account for account in scored_accounts
+        if account["account_code"] in eligible_codes
+    ]
 
     assignments = []
     if status != "unsuitable":
@@ -256,14 +273,28 @@ def screen_row(row, account_rules, topics, top_n, no_fetch):
                 subreddit: weekly_post_rules.recommend_post_type(subreddit, text)
                 for subreddit in recommended_subreddits
             }
+            author_account_override = weekly_post_rules.source_author_account_override(
+                source_author, acct["account_code"]
+            )
+            author_rewrite_modes = list(
+                author_account_override.get("allowed_rewrite_modes", [])
+            )
+            if int(row.get("generated_count") or 0) > 0:
+                author_rewrite_modes = [
+                    mode for mode in author_rewrite_modes
+                    if mode != "r3_article_summary_share"
+                ]
+            override_link_policy = author_account_override.get("link_policy")
             assignments.append({
                 "account_code": acct["account_code"],
                 "score": acct["score"],
                 "recommended_subreddits": recommended_subreddits,
                 "recommended_post_types": recommended_post_types,
                 "recommended_link_policies": {
-                    subreddit: weekly_post_rules.recommend_link_policy(
-                        acct["account_code"], subreddit, recommended_post_types[subreddit]
+                    subreddit: override_link_policy
+                    or weekly_post_rules.recommend_link_policy(
+                        acct["account_code"], subreddit,
+                        recommended_post_types[subreddit]
                     )
                     for subreddit in recommended_subreddits
                 },
@@ -273,12 +304,14 @@ def screen_row(row, account_rules, topics, top_n, no_fetch):
                 ] or [hit["topic"] for hit in topic_hits[:2]],
                 "rationale": acct["rationale"],
                 "keyword_hits": acct["keyword_hits"],
+                "author_rewrite_modes": author_rewrite_modes,
             })
 
     return {
         "blog_id": row.get("blog_id", ""),
         "title": title,
         "url": url,
+        "source_author": source_author,
         "suitability": status,
         "suitability_score": score,
         "reasons": reasons,

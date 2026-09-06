@@ -9,7 +9,7 @@
 
 - `reference/slots/ai_memory/ai_memory.json`
 
-<!-- source-sha256 reference/slots/ai_memory/ai_memory.json: 6dba130538b9475d13e5c9435752c541dae0c2dea517bc436885aca7bef26dea -->
+<!-- source-sha256 reference/slots/ai_memory/ai_memory.json: 2fb8bf6cd1778db070663444d1d4c8aaa608164021bd59d77a2d0284063c83c8 -->
 
 ## ai_memory.json
 
@@ -57,7 +57,7 @@ Machine source: `reference/slots/ai_memory/ai_memory.json`
 
 ### Inherited Contract
 
-- **Guidance:** `guidance/reddit/editorial/editorial_policy.json`
+- **Guidance:** `guidance/reddit/editorial/editorial_routes.json`
 - **Account Code:** `R2`
 - **Account Reference:** `reference/accounts/`
 - **Resource Role:** Screenshots provide Post Type and structural cues only; they never replace the account persona or authorize copied links, metrics, or identity details.

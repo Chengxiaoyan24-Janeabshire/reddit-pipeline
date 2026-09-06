@@ -149,6 +149,7 @@ def fetch_article_metadata(url):
     soup = BeautifulSoup(response.text, "html.parser")
     published = None
     title = ""
+    author = ""
 
     for attr, value in (
         ("property", "article:published_time"),
@@ -174,7 +175,19 @@ def fetch_article_metadata(url):
             published = parse_date(_find_json_value(payload, "datePublished"))
         if not title:
             title = clean_text(_find_json_value(payload, "headline"))
-        if published and title:
+        if not author:
+            raw_author = _find_json_value(payload, "author")
+            if isinstance(raw_author, dict):
+                author = clean_text(raw_author.get("name"))
+            elif isinstance(raw_author, list):
+                author = ", ".join(
+                    clean_text(item.get("name") if isinstance(item, dict) else item)
+                    for item in raw_author
+                    if clean_text(item.get("name") if isinstance(item, dict) else item)
+                )
+            else:
+                author = clean_text(raw_author)
+        if published and title and author:
             break
 
     if not title and soup.title:
@@ -183,4 +196,5 @@ def fetch_article_metadata(url):
         "title": title,
         "url": response.url or url,
         "published_at": published,
+        "author": author,
     }

@@ -1,0 +1,118 @@
+{
+  "route_id": "james_luan",
+  "validation_mode": "disclosed_author",
+  "required_account_code": "R3",
+  "source_fact_boundary": "Every claim must remain supported by the selected James Luan source. Do not invent personal experience, customers, benchmarks, metrics, or results.",
+  "required_disclosure": "",
+  "disclosure_placement": "body_opening",
+  "identity_opening": {
+    "scope": "first_paragraph",
+    "required_terms": [
+      "James",
+      "CTO",
+      "Zilliz",
+      "Milvus",
+      "open-source",
+      "vector database",
+      "Vector Lakebase"
+    ],
+    "required_phrase_groups": [
+      [
+        "builder behind Milvus",
+        "built Milvus",
+        "creators of Milvus",
+        "company behind Milvus"
+      ],
+      [
+        "store, index, and search embeddings",
+        "store and search embeddings",
+        "semantic search over unstructured data"
+      ]
+    ]
+  },
+  "excluded_anonymous_checks": [
+    "title_first_person_or_question",
+    "first_sentence_i",
+    "language_buffer",
+    "r2_short_question_quota",
+    "milvus_required_mention",
+    "milvus_peer_group_placement",
+    "anonymous_brand_and_competitor_limits",
+    "anonymous_no_link_policy",
+    "anonymous_identity"
+  ],
+  "retained_checks": [
+    "source_facts",
+    "safety",
+    "account_subreddit_slot",
+    "valid_post_type",
+    "subreddit_native_structure",
+    "subreddit_native_style",
+    "duplicate_content"
+  ],
+  "accounts": {
+    "R3": {
+      "identity_visibility": "disclosed_source_author",
+      "allowed_rewrite_modes": [
+        "r3_coherent_chapter_rewrite",
+        "r3_article_summary_share"
+      ],
+      "modes": {
+        "r3_coherent_chapter_rewrite": {
+          "strategy": "Open with James's disclosed identity, transition naturally into one consecutive source section, and adapt that section into a standalone Reddit post. Continue as part1, part2, and so on until the full source article has been covered.",
+          "style_contract": {
+            "voice": "sincere, rigorous, calm, and conversational",
+            "chapter_scope": "One post covers one consecutive source section. Later parts continue from the next uncovered section until the full article is represented.",
+            "context_continuity": "Resolve references that depend on omitted sections, briefly establish prerequisite concepts, and ensure the opening and conclusion stand on their own.",
+            "fidelity": "Keep the selected source section's claims, causal logic, terminology, and qualifications faithful. Use an identity introduction and a natural transition before the adapted excerpt; do not invent content or skip ahead to reuse a previously covered section.",
+            "ending": "Close on the selected chapter's technical implication rather than teasing missing chapters or adding the article-share closing."
+          },
+          "required_narrative_sequence": {
+            "ordered_phases": [
+              "complete_identity_and_technology_context",
+              "natural_transition_to_selected_section",
+              "minimum_prerequisite_context",
+              "chapter_reasoning_and_mechanisms",
+              "self_contained_technical_implication"
+            ]
+          },
+          "required_source_chapter": true,
+          "required_partn_pattern": "^part[1-9][0-9]*$",
+          "partn_sequence": "Number section-derived posts independently for each source_url as part1, part2, part3, and so on, without gaps, reuse, or skipped source sections, until the entire source article has been covered.",
+          "repeat_policy": "may_repeat_until_full_source_covered",
+          "link_policy": "no_link"
+        },
+        "r3_article_summary_share": {
+          "strategy": "Use the supplied Feishu exemplar as the structural model: introduce James directly, summarize the source article's complete argument in connected technical paragraphs, transition naturally to the original article, place the exact source URL on its own line, and close with a short invitation for reader feedback.",
+          "style_contract": {
+            "voice": "first-person, reflective, technically grounded, and concise",
+            "summary_scope": "Summarize the article's full throughline rather than isolating one chapter. Preserve the source's sequence, causal logic, qualifications, and forward-looking conclusion without copying its prose.",
+            "opening": "Open with a short James/Zilliz/Milvus identity sentence, then state the conversation, observation, or question that motivated the article.",
+            "body": "Move from origin or context, through the major engineering changes and tradeoffs, to the broader implication. Use connected paragraphs and concrete technical language.",
+            "article_bridge": "After the summary, introduce the full article with one natural first-person sentence, then put source_url in a separate paragraph.",
+            "ending": "After the URL, close with one brief invitation for thoughts."
+          },
+          "required_narrative_sequence": {
+            "ordered_phases": [
+              "identity_opening",
+              "article_motivation",
+              "full_argument_summary",
+              "forward_looking_implication",
+              "article_bridge",
+              "source_url",
+              "feedback_invitation"
+            ]
+          },
+          "required_summary_scope": "full_article",
+          "max_rewrites_per_source_url": 1,
+          "required_approved_link": "source_url",
+          "required_inline_link": "source_url",
+          "required_article_bridge": true,
+          "required_reply_invitation": true,
+          "forbid_partn": true,
+          "link_policy": "source_link"
+        }
+      }
+    }
+  }
+}

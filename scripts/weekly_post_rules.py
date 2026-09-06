@@ -8,6 +8,7 @@ import resource_paths
 
 WORKFLOW_PATH = resource_paths.WEEKLY_WORKFLOW
 GUIDANCE_PATH = resource_paths.EDITORIAL_POLICY
+ROUTES_PATH = resource_paths.EDITORIAL_ROUTES
 EXPECTED_INSTRUCTION_LEVELS = {
     "guidance": (
         "disclosure",
@@ -32,11 +33,21 @@ EXPECTED_INSTRUCTION_LEVELS = {
 def load_rules():
     workflow = json.loads(WORKFLOW_PATH.read_text())
     guidance = json.loads(GUIDANCE_PATH.read_text())
+    routing = json.loads(ROUTES_PATH.read_text())
+    route_guidance = {}
+    for route_id, route in routing.get("routes", {}).items():
+        guidance_path = resource_paths.ROOT / route["guidance"]
+        route_guidance[route_id] = json.loads(guidance_path.read_text())
     overlap = set(workflow).intersection(guidance)
     if overlap:
         names = ", ".join(sorted(overlap))
         raise ValueError(f"Workflow and guidance keys must not overlap: {names}")
-    rules = {**guidance, **workflow}
+    rules = {
+        **guidance,
+        **workflow,
+        "editorial_routing": routing,
+        "editorial_routes": route_guidance,
+    }
     validate_contract(rules)
     return rules
 
@@ -110,6 +121,17 @@ def validate_contract(rules):
         post_types = slot.get("post_types", [])
         if account_code not in active_accounts:
             errors.append(f"{account_code!r} for {subreddit!r} is not active")
+        allowed_accounts = slot.get("allowed_accounts") or [account_code]
+        if account_code not in allowed_accounts:
+            errors.append(
+                f"{subreddit!r} allowed_accounts must include its owning account "
+                f"{account_code!r}"
+            )
+        unknown_allowed = set(allowed_accounts) - active_accounts
+        if unknown_allowed:
+            errors.append(
+                f"{subreddit!r} allows inactive accounts {sorted(unknown_allowed)}"
+            )
 
         if slot.get("default_post_type") not in post_types:
             errors.append(f"{subreddit!r} default_post_type is not in post_types")
@@ -152,6 +174,10 @@ def validate_contract(rules):
     r2_policy = rules.get("r2_short_question_policy")
     if r2_policy:
         if r2_policy.get("enabled"):
+            if r2_policy.get("scope") != "anonymous_route_only":
+                errors.append(
+                    "r2_short_question_policy must apply only to the anonymous route"
+                )
             if r2_policy.get("account_code") != "R2":
                 errors.append("r2_short_question_policy must target account R2")
             if int(r2_policy.get("weekly_count") or 0) != 1:
@@ -178,16 +204,171 @@ def validate_contract(rules):
                         f"valid for {subreddit!r}"
                     )
 
+    anonymous_scoped_policies = (
+        "title_perspective_policy",
+        "title_hook_policy",
+        "language_buffer_policy",
+        "milvus_mention_context_policy",
+    )
+    for policy_name in anonymous_scoped_policies:
+        if (rules.get(policy_name) or {}).get("scope") != "anonymous_route_only":
+            errors.append(f"{policy_name} must apply only to the anonymous route")
+    if (rules.get("opening_perspective_policy") or {}).get("route_scope") != "anonymous_route_only":
+        errors.append(
+            "opening_perspective_policy must apply only to the anonymous route"
+        )
+    surface_policy = rules.get("pack_surface_variation_policy") or {}
+    if surface_policy.get("scope") != "anonymous_weekly_pack":
+        errors.append(
+            "pack_surface_variation_policy must apply to the anonymous weekly pack"
+        )
+    if int(surface_policy.get("max_drafts_per_scaffold") or 0) != 1:
+        errors.append(
+            "pack_surface_variation_policy max_drafts_per_scaffold must be 1"
+        )
+
     for account_code in active_accounts:
         account_policy = rules.get("account_policies", {}).get(account_code)
         if not account_policy:
             errors.append(f"active account {account_code!r} has no editorial policy")
             continue
         account_mode = account_policy.get("link_mode")
-        if account_mode and account_mode != "per_post_type" and account_mode not in link_modes:
+        if (
+            account_mode
+            and account_mode not in {"per_post_type", "per_author_rewrite_mode"}
+            and account_mode not in link_modes
+        ):
             errors.append(
                 f"active account {account_code!r} uses unknown link mode {account_mode!r}"
             )
+
+    routing = rules.get("editorial_routing") or {}
+    if routing.get("route_order") != ["james_luan", "anonymous_default"]:
+        errors.append("editorial routing must check james_luan before anonymous_default")
+    route_specs = routing.get("routes") or {}
+    if not (route_specs.get("anonymous_default", {}).get("match") or {}).get("fallback"):
+        errors.append("anonymous_default editorial route must be the fallback")
+    for route_id, route_spec in route_specs.items():
+        for key in ("guidance", "reference", "resource"):
+            path_value = route_spec.get(key)
+            if not path_value or not (resource_paths.ROOT / path_value).is_file():
+                errors.append(f"editorial route {route_id!r} has invalid {key} path")
+
+    disclosed_routes = {
+        route_id: override
+        for route_id, override in rules.get("editorial_routes", {}).items()
+        if override.get("validation_mode") == "disclosed_author"
+    }
+    for author, override in disclosed_routes.items():
+        if override.get("validation_mode") != "disclosed_author":
+            errors.append(
+                f"source-author override {author!r} must use validation_mode "
+                "'disclosed_author'"
+            )
+            continue
+        opening = override.get("identity_opening") or {}
+        required_terms = {
+            str(term).strip().casefold()
+            for term in opening.get("required_terms", [])
+            if str(term).strip()
+        }
+        if opening.get("scope") != "first_paragraph":
+            errors.append(
+                f"source-author override {author!r} identity opening must target "
+                "the first_paragraph"
+            )
+        if not {"james", "cto", "zilliz"}.issubset(required_terms):
+            errors.append(
+                f"source-author override {author!r} identity opening must require "
+                "James, CTO, and Zilliz"
+            )
+        if override.get("required_disclosure"):
+            errors.append(
+                f"source-author override {author!r} must disclose identity in the "
+                "body opening, not append a disclosure block"
+            )
+        required_account = override.get("required_account_code")
+        accounts = override.get("accounts") or {}
+        if required_account != "R3" or set(accounts) != {"R3"}:
+            errors.append(
+                f"source-author override {author!r} must route only through R3"
+            )
+            continue
+        r3_override = accounts["R3"]
+        expected_modes = {
+            "r3_coherent_chapter_rewrite",
+            "r3_article_summary_share",
+        }
+        if set(r3_override.get("allowed_rewrite_modes") or []) != expected_modes:
+            errors.append(
+                f"source-author override {author!r}/R3 must expose exactly the "
+                f"configured chapter-series and article-summary modes"
+            )
+        modes = r3_override.get("modes") or {}
+        if set(modes) != expected_modes:
+            errors.append(
+                f"source-author override {author!r}/R3 mode definitions are incomplete"
+            )
+        for mode_id, mode in modes.items():
+            if mode.get("link_policy") not in link_modes:
+                errors.append(
+                    f"source-author override {author!r}/R3/{mode_id} uses an "
+                    "unknown link policy"
+                )
+            if not (mode.get("style_contract") or {}).get("voice"):
+                errors.append(
+                    f"source-author override {author!r}/R3/{mode_id} must define "
+                    "a style_contract voice"
+                )
+            if not mode.get("required_narrative_sequence"):
+                errors.append(
+                    f"source-author override {author!r}/R3/{mode_id} must define "
+                    "a narrative sequence"
+                )
+        summary_share = modes.get("r3_article_summary_share") or {}
+        chapter = modes.get("r3_coherent_chapter_rewrite") or {}
+        if chapter.get("required_partn_pattern") != "^part[1-9][0-9]*$":
+            errors.append(
+                f"source-author override {author!r}/R3 chapter mode must require "
+                "partn values part1, part2, and so on"
+            )
+        if chapter.get("link_policy") != "no_link":
+            errors.append(
+                f"source-author override {author!r}/R3 chapter mode must keep "
+                "the Reddit body link-free"
+            )
+        if chapter.get("repeat_policy") != "may_repeat_until_full_source_covered":
+            errors.append(
+                f"source-author override {author!r}/R3 chapter mode must continue "
+                "until the whole source is covered"
+            )
+        if summary_share.get("required_inline_link") != "source_url":
+            errors.append(
+                f"source-author override {author!r}/R3 article-summary mode must "
+                "require source_url directly in the body"
+            )
+        if int(summary_share.get("max_rewrites_per_source_url") or 0) != 1:
+            errors.append(
+                f"source-author override {author!r}/R3 article-summary mode must "
+                "allow exactly one rewrite per source_url"
+            )
+
+    source_field_policy = rules.get("original_source_field_policy") or {}
+    if source_field_policy.get("scope") != "all_future_reddit_review_rows":
+        errors.append("original_source_field_policy must cover every future review row")
+    if source_field_policy.get("required_feishu_field") != "原文":
+        errors.append("original_source_field_policy must write the Feishu 原文 field")
+    if source_field_policy.get("field_value") != "source_url":
+        errors.append("original_source_field_policy must map source_url to 原文")
+
+    james_weekly = rules.get("james_weekly_mode_policy") or {}
+    if james_weekly.get("enabled"):
+        if int(james_weekly.get("james_post_count") or 0) != 3:
+            errors.append("james_weekly_mode_policy james_post_count must be 3")
+        if int(james_weekly.get("article_summary_share_count") or 0) != 1:
+            errors.append("james_weekly_mode_policy article_summary_share_count must be 1")
+        if james_weekly.get("article_summary_share_mode") != "r3_article_summary_share":
+            errors.append("james_weekly_mode_policy must use r3_article_summary_share")
 
     if errors:
         raise ValueError("Invalid merged Reddit workflow/guidance contract: " + "; ".join(errors))
@@ -196,6 +377,45 @@ def validate_contract(rules):
 def r2_short_question_policy(rules=None):
     rules = rules or load_rules()
     return rules.get("r2_short_question_policy") or {}
+
+
+def source_author_override(source_author, rules=None):
+    rules = rules or load_rules()
+    normalized = str(source_author or "").strip().casefold()
+    routing = rules.get("editorial_routing") or {}
+    for route_id in routing.get("route_order", []):
+        route = (routing.get("routes") or {}).get(route_id, {})
+        expected = (route.get("match") or {}).get(
+            "source_author_exact_case_insensitive"
+        )
+        if expected and normalized == expected.strip().casefold():
+            return (rules.get("editorial_routes") or {}).get(route_id, {})
+    return {}
+
+
+def editorial_route_id(source_author, rules=None):
+    rules = rules or load_rules()
+    normalized = str(source_author or "").strip().casefold()
+    routing = rules.get("editorial_routing") or {}
+    for route_id in routing.get("route_order", []):
+        match = ((routing.get("routes") or {}).get(route_id, {}).get("match") or {})
+        expected = match.get("source_author_exact_case_insensitive")
+        if expected and normalized == expected.strip().casefold():
+            return route_id
+        if match.get("fallback"):
+            return route_id
+    raise ValueError("No editorial route matched source_author")
+
+
+def source_author_account_override(
+    source_author, account_code, rules=None, author_rewrite_mode=""
+):
+    override = source_author_override(source_author, rules)
+    account_override = (override.get("accounts") or {}).get(account_code, {})
+    modes = account_override.get("modes") or {}
+    if author_rewrite_mode in modes:
+        return {**account_override, **modes[author_rewrite_mode]}
+    return account_override
 
 
 def r2_question_post_type_for(subreddit, rules=None):
@@ -269,8 +489,15 @@ def allowed_subreddits(account_code, rules=None):
     return {
         slot["subreddit"]
         for slot in rules.get("weekly_slots", [])
-        if slot.get("account_code") == account_code
+        if account_code in (slot.get("allowed_accounts") or [slot.get("account_code")])
     }
+
+
+def allowed_accounts_for_subreddit(subreddit, rules=None):
+    slot = slot_for(subreddit, rules)
+    if not slot:
+        return set()
+    return set(slot.get("allowed_accounts") or [slot.get("account_code")])
 
 
 def recommend_post_type(subreddit, text, rules=None):

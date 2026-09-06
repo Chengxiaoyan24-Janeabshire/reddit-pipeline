@@ -77,5 +77,36 @@
     ],
     "preferred_subreddits": ["r/AIMemory", "r/LocalLLaMA"],
     "assignment_reason": "Preserve the production-minded systems persona: memory state and governance, local inference, benchmark quality, scale, and operational caveats. Choose a matching Post Type without changing the topic voice."
+  },
+  {
+    "account_code": "R3",
+    "source_author_scope": "James Luan",
+    "technical_lane": "James Luan disclosed-author technical writing",
+    "keyword_signals": [
+      "rag",
+      "retrieval",
+      "vector database",
+      "milvus",
+      "vector lakebase",
+      "agent",
+      "agent memory",
+      "local llm",
+      "production",
+      "scale",
+      "governance"
+    ],
+    "preferred_topics": [
+      "RAG and retrieval architecture",
+      "AI agent infrastructure",
+      "agent memory lifecycle",
+      "local and production AI systems"
+    ],
+    "preferred_subreddits": [
+      "r/Rag",
+      "r/AI_Agents",
+      "r/AIMemory",
+      "r/LocalLLaMA"
+    ],
+    "assignment_reason": "Use only for James Luan sources. Select one of the two R3 rewrite modes, then choose the best-fitting one of the four shared slots without weakening its Subreddit rules."
   }
 ]

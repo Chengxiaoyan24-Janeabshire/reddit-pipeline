@@ -1,6 +1,6 @@
 ---
 name: reddit-browser-monitor
-description: Monitor Reddit posts published within the last 14 days through the user-selected Chrome or in-app Browser session, prioritizing posts within 7 days, then preview or write visible metrics, weighted comment sentiment, comment summaries, and review signals to Feishu while preserving the separately populated Impression (7 days) field. Use for "$reddit-browser-monitor", "检查已发布 Reddit 帖子", "自动监测 Reddit 评论", or replacing the retired pasted Reddit JSON workflow. Read visible page state only; never use Reddit JSON/API responses or perform Reddit account activity.
+description: Monitor recent Reddit posts, or explicitly requested older published posts, through the user-selected Chrome or in-app Browser session, then preview or write visible metrics, weighted comment sentiment, comment summaries, and review signals to Feishu while preserving the separately populated Impression (7 days) field. Use for "$reddit-browser-monitor", "检查已发布 Reddit 帖子", "自动监测 Reddit 评论", or replacing the retired pasted Reddit JSON workflow. Read visible page state only; never use Reddit JSON/API responses or perform Reddit account activity.
 ---
 
 # Reddit Browser Monitor
@@ -23,6 +23,17 @@ reported as skipped and must not be opened for monitoring:
 ```bash
 python3 scripts/reddit_browser_monitor.py --list-targets
 ```
+
+When the user explicitly requests a historical backcheck, add `--include-older`.
+This includes Published rows older than 14 days while still skipping missing or
+future Publish Dates:
+
+```bash
+python3 scripts/reddit_browser_monitor.py --list-targets --include-older
+```
+
+Add `--include-undated` only when the user explicitly requests Published rows
+whose Publish Date is missing. Future dates remain skipped.
 
 2. Open each target URL in the returned order. Read visible page state only.
 Do not use `.json` URLs, Reddit APIs, browser network-response inspection, raw
@@ -56,7 +67,9 @@ validate and create the exact write-bound preview snapshot:
 ```bash
 python3 scripts/reddit_browser_monitor.py \
   --observations-file packs/reddit-browser-observations.json \
-  --snapshot-out packs/reddit-browser-monitor-preview.json
+  --snapshot-out packs/reddit-browser-monitor-preview.json \
+  --include-older \
+  --include-undated
 ```
 
 5. Report every observation and limitation. Stop after preview unless the user
@@ -68,6 +81,8 @@ explicitly approves that exact snapshot for Feishu write.
 python3 scripts/reddit_browser_monitor.py \
   --snapshot-in packs/reddit-browser-monitor-preview.json \
   --ensure-fields \
+  --include-older \
+  --include-undated \
   --write
 ```
 

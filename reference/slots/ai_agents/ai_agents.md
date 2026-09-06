@@ -9,7 +9,7 @@
 
 - `reference/slots/ai_agents/ai_agents.json`
 
-<!-- source-sha256 reference/slots/ai_agents/ai_agents.json: 604a4ebe5d3b6bbe1fe85c4677e8304c6950c5b8a97250c11c8e1c6f3547ba7c -->
+<!-- source-sha256 reference/slots/ai_agents/ai_agents.json: b330bccbcd1fc53df3bb1683a2639467cd33b35e3b6a937c90806e418017f20b -->
 
 ## ai_agents.json
 
@@ -40,7 +40,7 @@ Machine source: `reference/slots/ai_agents/ai_agents.json`
 
 ### Inherited Contract
 
-- **Guidance:** `guidance/reddit/editorial/editorial_policy.json`
+- **Guidance:** `guidance/reddit/editorial/editorial_routes.json`
 - **Account Code:** `R1`
 - **Account Reference:** `reference/accounts/`
 - **Resource Role:** Do not copy identity, disclosures, links, or claims from screenshots.

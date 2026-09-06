@@ -9,14 +9,20 @@
       "tooling tradeoffs",
       "small-team RAG lessons"
     ],
-    "voice": "practical, concise, and anonymous; frames source-backed engineering ideas as current working judgments, implementation lessons, or checklists",
+    "voice": "practical, concise, and anonymous; implementation judgments use the personal_build_log fingerprint",
     "avoid": [
       "detached blog summaries",
       "corporate or authority-signaling language",
       "unsupported customer stories or benchmarks",
       "repetitive title and opening scaffolds"
     ],
-    "hard_rule_authority": "guidance/reddit/editorial/editorial_policy.json"
+    "hard_rule_authority": "guidance/reddit/editorial/editorial_policy.json",
+    "anonymous_source_strategy": {
+      "identity": "anonymous",
+      "format": "Use the normal length tier selected from content needs.",
+      "content_focus": "Apply the standard R1 anonymous builder rewrite and account fingerprint.",
+      "authority": "guidance/reddit/editorial/editorial_policy.json"
+    }
   },
   {
     "account_code": "R2",
@@ -29,7 +35,7 @@
       "local inference and RAG operations",
       "one fixed short question per weekly pack about Milvus usage, product features, or competitive comparisons"
     ],
-    "voice": "production-minded, anonymous, specific about memory state, evaluation, and operational constraints, and comfortable saying that a decision depends on evidence",
+    "voice": "anonymous, production-minded, and specific about memory state, evaluation, and operational constraints",
     "avoid": [
       "benchmark absolutism",
       "vendor cheerleading",
@@ -41,6 +47,40 @@
       "enabled": true,
       "summary": "R2 always contributes exactly one short question-type post per weekly pack, covering Milvus usage, product features, or competitive comparisons.",
       "authority": "guidance/reddit/workflow/weekly.json"
+    },
+    "anonymous_source_strategy": {
+      "identity": "anonymous",
+      "link": "Do not attach a source link.",
+      "content_focus": "Apply the standard R2 anonymous systems rewrite and account fingerprint.",
+      "authority": "guidance/reddit/editorial/editorial_policy.json"
+    }
+  },
+  {
+    "account_code": "R3",
+    "role": "James Luan disclosed-author account",
+    "account_type": "disclosed_source_author",
+    "source_author_scope": "James Luan",
+    "voice_fingerprint_id": "james_author_voice",
+    "best_for": [
+      "one coherent chapter-level rewrite from a James article",
+      "direct James article share with summary and source link",
+      "RAG, agents, agent memory, and local AI infrastructure across the four merged slots"
+    ],
+    "voice": "James speaking as Zilliz CTO to technical peers, with explicit identity and source-faithful architecture reasoning",
+    "avoid": [
+      "anonymous-account scaffolding",
+      "raw chapter copy-paste without standalone context",
+      "whole-article compression in chapter mode",
+      "unsupported biography, customer claims, or benchmarks"
+    ],
+    "hard_rule_authority": "guidance/reddit/editorial/james_luan_policy.json",
+    "james_source_strategy": {
+      "identity": "disclosed",
+      "modes": [
+        "r3_coherent_chapter_rewrite",
+        "r3_article_summary_share"
+      ],
+      "authority": "guidance/reddit/editorial/james_luan_policy.json"
     }
   }
 ]

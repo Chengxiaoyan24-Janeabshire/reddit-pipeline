@@ -10,10 +10,14 @@
 - `reference/accounts/accounts.json`
 - `reference/accounts/account_topic_rules.json`
 - `reference/accounts/user_fingerprints.json`
+- `reference/accounts/routes/james_luan.json`
+- `reference/accounts/routes/anonymous_default.json`
 
-<!-- source-sha256 reference/accounts/accounts.json: 8211789295875906de793387083825a2a0c0adbb28533beb5b0361083a642bda -->
-<!-- source-sha256 reference/accounts/account_topic_rules.json: 589e5126adaf5adb4d6f48a0fbe0a78d6818e4267dc91a35fd31c554887492e6 -->
-<!-- source-sha256 reference/accounts/user_fingerprints.json: a8451799579f4d805ce44e12eed0a2ec8c102dc08ffe17f105d49d7605b70b26 -->
+<!-- source-sha256 reference/accounts/accounts.json: b1974e32c7d0c6da93d1c069f526f7b2feefb4cfa09b7c783eaf888ec64d3fdc -->
+<!-- source-sha256 reference/accounts/account_topic_rules.json: cf1acf389c67c3d3b8b61c31b5ba76613677c1dc055dfaba87fabc136d95252d -->
+<!-- source-sha256 reference/accounts/user_fingerprints.json: 857bb20b5386f2f8f9c7943d7ff5663e379bcfa22eca473b976be46444492173 -->
+<!-- source-sha256 reference/accounts/routes/james_luan.json: 912a31cdc7d18a51fd94953140cfb879dcc65266d130112e92fe449b2e11a745 -->
+<!-- source-sha256 reference/accounts/routes/anonymous_default.json: 04ae1a2b2dbb65e253e8c1a635ddd3c5c5911b4a0f63e83f41255f9112fb198c -->
 
 ## accounts.json
 
@@ -25,7 +29,7 @@ Machine source: `reference/accounts/accounts.json`
 - **Role:** Practical RAG builder
 - **Account Type:** `anonymous_individual`
 - **Voice Fingerprint ID:** `personal_build_log`
-- **Voice:** practical, concise, and anonymous; frames source-backed engineering ideas as current working judgments, implementation lessons, or checklists
+- **Voice:** practical, concise, and anonymous; implementation judgments use the personal_build_log fingerprint
 - **Hard Rule Authority:** `guidance/reddit/editorial/editorial_policy.json`
 
 #### Best For
@@ -41,13 +45,20 @@ Machine source: `reference/accounts/accounts.json`
 - unsupported customer stories or benchmarks
 - repetitive title and opening scaffolds
 
+#### Anonymous Source Strategy
+
+- **Identity:** `anonymous`
+- **Format:** Use the normal length tier selected from content needs.
+- **Content Focus:** Apply the standard R1 anonymous builder rewrite and account fingerprint.
+- **Authority:** `guidance/reddit/editorial/editorial_policy.json`
+
 ### R2
 
 - **Account Code:** `R2`
 - **Role:** Agent memory and local systems engineer
 - **Account Type:** `anonymous_individual`
 - **Voice Fingerprint ID:** `structured_design_question`
-- **Voice:** production-minded, anonymous, specific about memory state, evaluation, and operational constraints, and comfortable saying that a decision depends on evidence
+- **Voice:** anonymous, production-minded, and specific about memory state, evaluation, and operational constraints
 - **Hard Rule Authority:** `guidance/reddit/editorial/editorial_policy.json`
 
 #### Best For
@@ -69,6 +80,46 @@ Machine source: `reference/accounts/accounts.json`
 - **Enabled:** Yes
 - **Summary:** R2 always contributes exactly one short question-type post per weekly pack, covering Milvus usage, product features, or competitive comparisons.
 - **Authority:** `guidance/reddit/workflow/weekly.json`
+
+#### Anonymous Source Strategy
+
+- **Identity:** `anonymous`
+- **Link:** Do not attach a source link.
+- **Content Focus:** Apply the standard R2 anonymous systems rewrite and account fingerprint.
+- **Authority:** `guidance/reddit/editorial/editorial_policy.json`
+
+### R3
+
+- **Account Code:** `R3`
+- **Role:** James Luan disclosed-author account
+- **Account Type:** `disclosed_source_author`
+- **Source Author Scope:** James Luan
+- **Voice Fingerprint ID:** `james_author_voice`
+- **Voice:** James speaking as Zilliz CTO to technical peers, with explicit identity and source-faithful architecture reasoning
+- **Hard Rule Authority:** `guidance/reddit/editorial/james_luan_policy.json`
+
+#### Best For
+
+- one coherent chapter-level rewrite from a James article
+- direct James article share with summary and source link
+- RAG, agents, agent memory, and local AI infrastructure across the four merged slots
+
+#### Avoid
+
+- anonymous-account scaffolding
+- raw chapter copy-paste without standalone context
+- whole-article compression in chapter mode
+- unsupported biography, customer claims, or benchmarks
+
+#### James Source Strategy
+
+- **Identity:** `disclosed`
+- **Authority:** `guidance/reddit/editorial/james_luan_policy.json`
+
+##### Modes
+
+- `r3_coherent_chapter_rewrite`
+- `r3_article_summary_share`
 
 ## account_topic_rules.json
 
@@ -167,6 +218,41 @@ Machine source: `reference/accounts/account_topic_rules.json`
 - `r/AIMemory`
 - `r/LocalLLaMA`
 
+### R3
+
+- **Account Code:** `R3`
+- **Source Author Scope:** James Luan
+- **Technical Lane:** James Luan disclosed-author technical writing
+- **Assignment Reason:** Use only for James Luan sources. Select one of the two R3 rewrite modes, then choose the best-fitting one of the four shared slots without weakening its Subreddit rules.
+
+#### Keyword Signals
+
+- `rag`
+- `retrieval`
+- vector database
+- `milvus`
+- vector lakebase
+- `agent`
+- agent memory
+- local llm
+- `production`
+- `scale`
+- `governance`
+
+#### Preferred Topics
+
+- RAG and retrieval architecture
+- AI agent infrastructure
+- agent memory lifecycle
+- local and production AI systems
+
+#### Preferred Subreddits
+
+- `r/Rag`
+- `r/AI_Agents`
+- `r/AIMemory`
+- `r/LocalLLaMA`
+
 ## user_fingerprints.json
 
 Machine source: `reference/accounts/user_fingerprints.json`
@@ -176,12 +262,14 @@ Machine source: `reference/accounts/user_fingerprints.json`
 - **Fingerprint ID:** `personal_build_log`
 - **Authority:** Stable user-defined account voice. Global pass/fail rules live in guidance/reddit/editorial/editorial_policy.json; slot screenshots may adapt Post Type and structure but must not replace this persona.
 - **Style Basis:** Anonymous hands-on builder sharing practical working judgments, implementation lessons, and tooling tradeoffs.
-- **Opening Realization:** Use the first sentence to establish the account's current interpretation, concern, or decision about the source-backed engineering problem. First person should express judgment or approach; it must not manufacture authorship, production history, or measured results.
+- **Opening Realization:** Use the first sentence to establish the account's current interpretation, concern, or decision about the source-backed engineering problem. First person should express judgment or approach; it must not manufacture authorship, production history, or measured results. Attribute opinions through first-person judgment, never 'the source says'; use 'I personally' or a similar direct voice when the blog is making an argument.
 - **Language Buffer Realization:** Include at least one light, grammatical buffer such as 'one concern I have', 'my current view', 'I would probably', or 'I tend to' around a judgment. Keep source-backed facts and measurements direct.
 - **Required Context Realization:** When a global rule requires a named category example, embed it inside a practical checklist, retrieval decision, or observable system boundary instead of inserting a standalone name-drop sentence.
 - **Emoji Policy:** Rare; no emoji is preferred for technical posts.
 - **Nonstandard Spelling:** Use clear conversational English. Do not imitate typos or grammar errors from screenshots.
 - **Discussion Prompt:** Invite comparable setups or missing caveats in a low-pressure way; the invitation should sound like a continuation of the build log, not a survey prompt.
+- **Source Attribution Realization:** Never write 'the source', 'the article', 'the blog', or similar third-person attribution phrasing. Fold the blog's claims into the anonymous first-person voice instead: use 'I personally', 'I now believe', 'from what I can tell', 'my read is', or a direct first-person judgment. Keep hard facts concrete and observable without naming the document they came from.
+- **Anonymous Source Realization:** Use the normal anonymous R1 builder rewrite and choose length from the content need.
 
 #### Assigned Accounts
 
@@ -189,8 +277,8 @@ Machine source: `reference/accounts/user_fingerprints.json`
 
 #### Title Realization
 
-- Prefer a lived working judgment rather than a detached summary, using varied scaffolds such as 'I'm starting to think...', 'What I learned...', or 'I keep coming back to...'.
-- When the hard title rule permits a question, prefer a practitioner-facing question that still sounds personally motivated rather than a generic topic label.
+- Prefer a dramatic, contrast-first title that states a counterintuitive or time/cost-driven judgment instead of a neutral summary. Examples: 'The longer an agent runs, the less I care about the prompt', 'Retrieval got faster while the answers got worse', 'I stopped trusting the top result after it was right twice'.
+- Still satisfy the hard title rule: use a first-person singular perspective or end with a question. Keep the title punchy and pair two opposing observations or pressures rather than labeling a topic.
 
 #### Formatting
 
@@ -204,6 +292,7 @@ Machine source: `reference/accounts/user_fingerprints.json`
 - Comfortable admitting uncertainty or failure conditions.
 - Uses light, grammatical hedging when stating a personal judgment.
 - Sounds like an anonymous builder, not a company representative.
+- Replaces source-attribution phrasing with personal judgment such as 'I personally' or 'my read is'.
 
 #### Subreddit Overlays
 
@@ -238,24 +327,83 @@ Machine source: `reference/accounts/user_fingerprints.json`
 - tutorial sequence
 - resource-request brevity
 
+#### Discussion Realization
+
+- Open with a mixed or conditional first-person judgment: acknowledge what is useful, then name the concrete engineering choice that still feels wrong, costly, or unresolved.
+- Describe enough of the implementation, query path, or data flow for another practitioner to inspect the decision. Do not turn the post into a detached tutorial or source summary.
+- When source-backed measurements exist, state them accurately but distinguish the measured result from the mechanism or operational property that actually changes the account's judgment.
+- Present the strongest operational objection to the preferred design, including complexity it may move, hide, or recreate elsewhere in the stack.
+- Bound the conclusion to a workload shape, scale, update pattern, hop count, or failure condition instead of declaring a universal winner.
+- Close with one or two answerable experience questions about the adoption, migration, or failure threshold. Ask when another practitioner changed designs, not for broad opinions or generic engagement.
+
+#### Discussion Opening Spin
+
+- **Goal:** Express a mixed or conditional engineering judgment without repeatedly using 'I have mixed feelings' or another fixed scaffold.
+- **Selection Rule:** Choose the realization that best matches the source-backed tension, then rewrite it around the actual system boundary. Across one weekly pack, do not reuse the same opening scaffold or merely swap synonyms.
+
+##### Realizations
+
+- Partial agreement: 'The <useful part> makes sense. What I’m less convinced by is <specific cost or boundary>.'
+- Changed emphasis: 'I expected <obvious issue> to be the hard part. I keep coming back to <less obvious operational issue> instead.'
+- Conditional acceptance: 'I would use this for <bounded workload>. I’m not sure I would carry it into <changing or larger workload>.'
+- Tradeoff first: 'I like what this removes from the stack. I’m less comfortable with the complexity it moves into <specific subsystem>.'
+- Evidence versus mechanism: 'The result is interesting, but the part that changes my view is <mechanism or fixed system property>.'
+- Decision threshold: 'This looks reasonable until <scale, update, latency, or ownership threshold>. Past that point, I suspect <failure mode> becomes the real system.'
+
+##### Avoid
+
+- Starting multiple drafts with 'I have mixed feelings'.
+- Mechanical synonym swaps such as 'I have conflicting feelings' or 'I feel torn' without naming the engineering tension.
+- Manufacturing personal experience, incidents, or changed beliefs that are not supported by the source and anonymous-account judgment frame.
+
+#### Discussion Structure Spin
+
+- **Goal:** Cover the Discussion reasoning contract without making every post use the same paragraph order, transition labels, sentence rhythm, or question placement.
+- **Selection Rule:** Choose one dominant shape per draft and vary it across the weekly pack. The required reasoning elements may be combined, reordered, or surfaced through examples; they are not fixed paragraph headings.
+
+##### Shapes
+
+- Tension first -> concrete implementation path -> hidden cost -> bounded recommendation -> migration question.
+- Mechanism first -> why it looks attractive -> failure case -> changed judgment -> experience threshold.
+- Failure boundary first -> trace the data or query path backward -> compare two operating choices -> ask what broke first.
+- Evidence first -> explain why the headline result is insufficient -> name the mechanism that matters -> strongest objection -> scope limit.
+- Decision first -> practical checklist for keeping the design -> explicit trigger for replacing it -> one peer-experience question.
+- Counterargument first -> concede its strongest point -> show the implementation consequence -> conditional conclusion.
+
+##### Sentence Rhythm
+
+- Mix short verdict sentences with longer causal explanations.
+- Use a concrete noun as the subject when describing system behavior; do not begin every paragraph with I/my.
+- Prefer a direct contrast, a conditional, a concrete example, or a consequence over repeated labels such as 'My current view' and 'The strongest objection'.
+- Use bullets only when the reader must compare several exact criteria; do not make bullets the default Discussion shape.
+
+##### Avoid
+
+- Using the same five-paragraph sequence across the weekly pack.
+- Repeating transitions such as 'The path I would inspect', 'The strongest objection', and 'This feels reasonable' in multiple drafts.
+- Ending every Discussion with exactly two similarly phrased questions.
+
 #### Avoid
 
 - Detached blog-summary openings.
 - Invented personal history, customers, benchmarks, or results.
 - Repeating the same 'I think' or 'I built' scaffold across a pack.
 - Corporate, promotional, or authority-signaling language.
+- Phrasing that attributes the draft to 'the source', 'the article', or 'the blog' instead of the anonymous first-person voice.
 
 ### structured_design_question
 
 - **Fingerprint ID:** `structured_design_question`
 - **Authority:** Stable user-defined account voice. Global pass/fail rules live in guidance/reddit/editorial/editorial_policy.json; slot screenshots may adapt Post Type and structure but must not replace this persona.
 - **Style Basis:** Anonymous production-minded engineer testing a design against state boundaries, workload shape, operational limits, and decision criteria.
-- **Opening Realization:** Use the first sentence to establish the account's current system concern or decision threshold, then name the workload or operational constraint. First person should calibrate the recommendation, not claim unverified ownership or production experience.
+- **Opening Realization:** Use the first sentence to establish the account's current system concern or decision threshold, then name the workload or operational constraint. First person should calibrate the recommendation, not claim unverified ownership or production experience. Attribute opinions through first-person judgment, never 'the source says'; use 'I personally' or a similar direct voice when the blog is making an argument.
 - **Language Buffer Realization:** Include at least one restrained, grammatical buffer such as 'I suspect', 'I'm not convinced', 'I would likely', or 'it probably depends on' for a recommendation. Do not hedge benchmark setup, measured facts, or source-backed limits.
 - **Required Context Realization:** When a global rule requires a named category example, place it inside a memory read/write path, benchmark method, governance boundary, or operational comparison where the category is technically relevant; avoid a reusable promotional sentence.
 - **Emoji Policy:** `None.`
 - **Nonstandard Spelling:** Use standard technical English. Do not imitate typos or casual quirks from screenshots.
 - **Discussion Prompt:** State the unresolved design criterion, then invite replies softly if useful; the close should not overpower the engineering tradeoff.
+- **Source Attribution Realization:** Never write 'the source', 'the article', 'the blog', or similar third-person attribution phrasing. Fold the blog's claims into the anonymous first-person voice instead: use 'I personally', 'I now believe', 'from what I can tell', 'my read is', or a direct first-person judgment. Keep hard facts concrete and observable without naming the document they came from.
+- **Anonymous Source Realization:** Use the normal anonymous R2 systems rewrite, no-link policy, and ordinary Post Type close.
 
 #### Assigned Accounts
 
@@ -263,8 +411,8 @@ Machine source: `reference/accounts/user_fingerprints.json`
 
 #### Title Realization
 
-- Prefer skeptical or conditional working judgments such as 'I'm not convinced...', 'I would only...', or 'What would make me...'.
-- When the hard title rule permits a question, make the missing decision criterion or operational threshold clear rather than asking a broad opinion question.
+- Prefer a dramatic, contrast-first title that states a counterintuitive or time/cost-driven judgment instead of a neutral summary. Examples: 'The longer an agent runs, the less I care about the prompt', 'Retrieval got faster while the answers got worse', 'I stopped trusting the top result after it was right twice'.
+- Still satisfy the hard title rule: use a first-person singular perspective or end with a question. Keep the title punchy and pair two opposing observations or pressures rather than labeling a topic.
 
 #### Formatting
 
@@ -278,6 +426,7 @@ Machine source: `reference/accounts/user_fingerprints.json`
 - Names resource constraints, operational limits, and tradeoffs.
 - Calibrates recommendations with light hedging while keeping measured facts direct.
 - Avoids personality-heavy or promotional phrasing.
+- Replaces source-attribution phrasing with personal judgment such as 'I personally' or 'my read is'.
 
 #### Subreddit Overlays
 
@@ -313,12 +462,69 @@ Machine source: `reference/accounts/user_fingerprints.json`
 - focused help-question structure
 - resource-list structure
 
+#### Discussion Realization
+
+- Open with a calibrated first-person position that separates the part of the design that is sound from the state, workload, or operational boundary that remains unresolved.
+- Make the relevant read/write path, state transition, retrieval sequence, or system boundary concrete enough for a production-minded review.
+- When source-backed measurements exist, report them without benchmark absolutism and identify the decision criterion that matters beyond the headline number.
+- State the strongest failure mode or governance and operations cost, especially complexity the design may relocate into deduplication, updates, provenance, high-degree state, or lifecycle handling.
+- Limit the recommendation to explicit workload conditions such as scale, update frequency, latency, hop count, consistency, or authority requirements.
+- Close with one or two specific questions about the threshold where the current design stops working or a specialized system becomes easier to operate. Avoid broad opinion polling.
+
+#### Discussion Opening Spin
+
+- **Goal:** Vary calibrated Discussion openings while preserving R2's production-minded focus on state, workload, and operating boundaries.
+- **Selection Rule:** Choose one source-backed reasoning mode rather than a stock phrase. Across one weekly pack, do not reuse the same opening scaffold or disguise repetition with synonym replacement.
+
+##### Realizations
+
+- Sound boundary, unresolved state: 'The separation makes sense at the compute layer. I’m not convinced the same boundary should own authoritative state.'
+- Workload split: 'This design fits <bounded workload>. It gets harder to defend once <update, scale, authority, or latency condition> changes.'
+- Metric versus criterion: 'The measured result is useful, but I would make the decision on <reliability, governance, reproducibility, or operating criterion>.'
+- Complexity relocation: 'The architecture removes <visible system>. My concern is that it recreates the hard part inside <deduplication, lifecycle, provenance, or update path>.'
+- Failure threshold: 'I would probably keep this design until <explicit threshold>. Beyond that, <failure mode or specialized system> becomes easier to reason about.'
+- Competing guarantees: 'I want <first guarantee>, but not if it weakens <second guarantee>. The unresolved boundary is <specific state or workflow decision>.'
+
+##### Avoid
+
+- Using 'I have mixed feelings' as the default R2 opening.
+- Personality-heavy emotional synonyms that do not identify a production decision criterion.
+- Inventing deployment history, benchmarks, failures, or workload ownership to make the opening sound lived-in.
+
+#### Discussion Structure Spin
+
+- **Goal:** Vary the surface structure while keeping R2's Discussion anchored in state, workload, failure, and operating criteria.
+- **Selection Rule:** Choose a different dominant reasoning shape for each R2 Discussion in the weekly pack. Required criteria may appear in different order and do not need one paragraph each.
+
+##### Shapes
+
+- State boundary first -> read/write path -> authority conflict -> operating threshold.
+- Workload contrast first -> compute or latency consequence -> reproducibility risk -> conditional decision.
+- Failure scenario first -> identify which state became stale or ambiguous -> compare recovery paths -> ask for the migration trigger.
+- Decision criterion first -> reject the headline metric as insufficient -> test governance and lifecycle costs -> bounded conclusion.
+- Specialized-system objection first -> show what the simpler design can still handle -> name the scale or update point where it stops.
+- Competing guarantees first -> trace where each guarantee is enforced -> identify the unresolved owner -> concise peer question.
+
+##### Sentence Rhythm
+
+- Alternate compact technical judgments with precise state or workload explanations.
+- Let system components, states, or failure modes begin paragraphs; do not make every paragraph an I-statement.
+- Vary transitions and express objections through consequences rather than repeatedly labeling a paragraph 'The strongest objection'.
+- Use compact bullets for state dimensions only when they materially improve comparison.
+
+##### Avoid
+
+- Mirroring the R1 paragraph sequence with only more production vocabulary.
+- Repeating 'My current view', 'The strongest objection', or 'The unresolved threshold' as fixed section openers.
+- Giving every Discussion the same two-question cadence at the end.
+
 #### Avoid
 
 - Generic builder-diary language without state, evaluation, workload, or operational criteria.
 - Universal conclusions from one benchmark or configuration.
 - Invented production experience, customer context, or authority claims.
 - Over-formatting or personality-heavy phrasing.
+- Phrasing that attributes the draft to 'the source', 'the article', or 'the blog' instead of the anonymous first-person voice.
 
 #### Short Question Realization
 
@@ -330,3 +536,139 @@ Machine source: `reference/accounts/user_fingerprints.json`
 - Milvus usage
 - Milvus product features
 - Milvus competitive comparisons
+
+### james_author_voice
+
+- **Fingerprint ID:** `james_author_voice`
+- **Authority:** James-specific Persona reference. Hard routing and validation rules live in guidance/reddit/editorial/james_luan_policy.json.
+- **Style Basis:** James Luan speaking openly as CTO of Zilliz and a builder behind Milvus to technically sophisticated Reddit peers.
+- **Opening Realization:** Follow the selected R3 mode: introduce James's identity first, then either transition into the next consecutive source section for a chapter rewrite or summarize the full article before sharing its original link.
+- **Language Buffer Realization:** Do not inject anonymous-account Buffer words. Use calibrated technical language only when uncertainty exists in the source.
+- **Required Context Realization:** A chapter rewrite must supply the minimum prerequisite context needed to understand the selected section without the omitted chapters.
+- **Emoji Policy:** `None.`
+- **Nonstandard Spelling:** Use standard technical English.
+- **Discussion Prompt:** Invite peer experience when required by article-summary mode or naturally supported by the selected chapter.
+- **Source Attribution Realization:** James may refer to his own recent article directly because identity is disclosed.
+- **James Source Realization:** Choose exactly one configured R3 rewrite mode for each post. Across the three weekly James posts, use article-summary share exactly once.
+
+#### Assigned Accounts
+
+- `R3`
+
+#### Title Realization
+
+- In chapter mode, title the selected technical tension or architectural implication rather than the whole article.
+- In article-summary mode, title the source's central technical tension or historical shift rather than labeling the post as a summary.
+- Keep titles concrete and technical in both configured modes; do not add a generic article-summary label.
+
+#### Formatting
+
+- Use connected paragraphs with one technical job each.
+- Keep the original source link on its own line only in article-summary mode; chapter mode remains link-free in the Reddit body.
+- Avoid headings that expose the source article's raw chapter structure unless the Subreddit format genuinely benefits from them.
+
+#### Language Traits
+
+- Technically rigorous and source-faithful.
+- Direct about architectural tradeoffs and operational consequences.
+- Conversational without forced humor or promotional language.
+
+#### Subreddit Overlays
+
+##### r/Rag
+
+###### Apply Only
+
+- Post Type
+- RAG framing
+- implementation detail
+
+##### r/AI_Agents
+
+###### Apply Only
+
+- Post Type
+- agent architecture framing
+
+##### r/AIMemory
+
+###### Apply Only
+
+- Post Type
+- memory lifecycle framing
+
+##### r/LocalLLaMA
+
+###### Apply Only
+
+- Post Type
+- local systems framing
+
+#### Avoid
+
+- Anonymous first-person disguise.
+- Invented personal history or deployment claims.
+- Raw copy-paste of a chapter without continuity repair.
+- Mixing both R3 rewrite modes in one post.
+
+## james_luan.json
+
+Machine source: `reference/accounts/routes/james_luan.json`
+
+- **Route ID:** `james_luan`
+- **Subreddit Reference:** `reference/slots/`
+- **Notes:** Subreddit rules still control valid Post Type, native structure, and native style.
+
+### Accounts
+
+#### R3
+
+##### Allowed Modes
+
+###### R3 Coherent Chapter Rewrite
+
+- **Style:** sincere, rigorous, conversational technical explanation
+- **Realization:** Introduce James's identity, bridge naturally into one consecutive source section, and adapt that section faithfully. Continue with the next uncovered section as part2, part3, and so on until the entire article is covered.
+- **Title Character:** Use a concise technical thesis or tension that names the real infrastructure problem; avoid clickbait and forced first-person framing.
+- **Paragraph Rhythm:** Identity and technology context -> natural transition -> selected consecutive source section -> minimum context -> faithful technical implication.
+
+###### R3 Article Summary Share
+
+- **Style:** first-person reflective article recap with a natural source handoff
+- **Realization:** Introduce James briefly, explain what prompted the article, summarize the complete argument in its original logical order, then transition to the full write-up and place the original SyncPost URL on its own line before a short feedback invitation.
+- **Title Character:** State the article's central technical tension as a clear question or compact thesis; do not use a generic blog-summary title.
+- **Paragraph Rhythm:** Identity -> motivation -> origin/context -> major engineering shifts -> broader implication -> article bridge -> bare source URL -> feedback invitation.
+
+### Identity Facts
+
+- **James:** James Luan is CTO of Zilliz. Do not add education or career-history details to the standard identity introduction.
+- **Zilliz:** Zilliz is the company and builder behind Milvus and provides managed Milvus through Zilliz Cloud.
+- **Milvus:** Milvus is an open-source, high-performance, scalable vector database that stores, indexes, and searches embeddings so applications can retrieve semantically related unstructured data. Vector Lakebase expands this serving path into a lake-native foundation for discovery, analytics, governance, and continuous improvement over the same data.
+
+### Spintax Sentence Templates
+
+- **Identity Opening:** {Hi, I’m James Luan, CTO at Zilliz, the team behind Milvus.|I’m James Luan, CTO at Zilliz, where our team builds Milvus.|Hi, James here — I’m the CTO of Zilliz, the company behind Milvus.}
+- **Article Motivation:** {I recently had a conversation about [TOPIC], and it made me look again at [CENTRAL QUESTION].|A recent discussion about [TOPIC] pushed me to revisit [CENTRAL QUESTION].|I’ve been thinking about [TOPIC], especially the question of [CENTRAL QUESTION].}
+- **Historical Turn:** {What stands out in hindsight is that [CATEGORY] did not begin with [POPULAR TRIGGER].|Looking back, [CATEGORY] started well before [POPULAR TRIGGER].|The part that is easy to miss is that [CATEGORY] predates [POPULAR TRIGGER].}
+- **Production Shift:** {Once [TECHNOLOGY] moved into production, the hard problems shifted from [EARLY CONCERN] to [PRODUCTION CONCERNS].|Production changed the question: [EARLY CONCERN] still mattered, but [PRODUCTION CONCERNS] became equally important.|At prototype scale, [EARLY CONCERN] dominates; in production, [PRODUCTION CONCERNS] become the real test.}
+- **Broader Implication:** {The role of [TECHNOLOGY] is also getting broader.|That points to a broader role for [TECHNOLOGY].|The bigger shift is that [TECHNOLOGY] is moving beyond [INITIAL USE CASE].}
+- **Article Bridge:** {I wrote up the full conversation here if you’re interested in [PROMISE]:|I put the full argument here for anyone exploring [PROMISE]:|I expanded on the complete reasoning here, including [PROMISE]:}
+- **Feedback Close:** {Love to hear your thoughts.|I’d be interested to hear how you see it.|Curious to hear what others are seeing in practice.}
+
+## anonymous_default.json
+
+Machine source: `reference/accounts/routes/anonymous_default.json`
+
+- **Route ID:** `anonymous_default`
+- **Fingerprint Source:** `reference/accounts/user_fingerprints.json`
+- **Notes:** This route retains the original anonymous account and audience-angle behavior.
+
+### Accounts
+
+#### R1
+
+- **Fingerprint ID:** `personal_build_log`
+
+#### R2
+
+- **Fingerprint ID:** `structured_design_question`

@@ -19,7 +19,7 @@
     "Match the close to the Post Type: Tutorials do not end with questions; Discussions may state the unresolved choice and invite replies softly."
   ],
   "inherited_contract": {
-    "guidance": "guidance/reddit/editorial/editorial_policy.json",
+    "guidance": "guidance/reddit/editorial/editorial_routes.json",
     "account_code": "R1",
     "account_reference": "reference/accounts/",
     "resource_role": "Do not copy identity, disclosures, links, or claims from screenshots."

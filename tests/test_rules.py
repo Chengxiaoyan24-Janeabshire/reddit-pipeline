@@ -15,8 +15,10 @@ if str(SCRIPTS) not in sys.path:
 
 import append_pack
 import append_pack_to_feishu
+import feishu_docs
 import render_rule_docs
 import resource_paths
+import screen_and_assign
 import sync_blog_pool_from_content_all_in_one as pool_sync
 import weekly_post_rules
 
@@ -27,7 +29,7 @@ def base_item():
         "content_type": "technical_post",
         "subreddit": "r/Rag",
         "post_type": "Discussion",
-        "title": "How I would evaluate a focused retrieval tradeoff",
+        "title": "I kept tuning retrieval, but the broken chunks were the problem",
         "body": (
             "I built a small retrieval test around fixed queries and explicit "
             "failure labels. It separates parsing, chunking, filtering, ranking, "
@@ -134,8 +136,308 @@ class PoolSyncRulesTest(unittest.TestCase):
             ["rec-newer", "rec-older"],
         )
 
+    def test_james_luan_articles_follow_normal_minimum_date(self):
+        official_host = pool_sync.SOURCE_RULES["official_hosts"][0]
+        records = [{
+            "record_id": "rec-james",
+            "fields": {
+                "Category": pool_sync.REQUIRED_CATEGORY,
+                "Status": pool_sync.REQUIRED_STATUS,
+                "Publish URL": f"https://{official_host}/blog/james-article",
+                "Publish Date": int(
+                    datetime(2025, 1, 1, tzinfo=timezone.utc).timestamp() * 1000
+                ),
+                "Title & Topic": "James article",
+                "Author": "James Luan",
+            },
+        }]
+        with mock.patch.object(
+            pool_sync.feishu_client, "list_records", return_value=records
+        ), mock.patch.object(
+            pool_sync.official_blog_catalog, "lookup", return_value=None
+        ):
+            candidates, *_ = pool_sync.source_candidates(
+                "app", "table", "view", catalog={},
+                since=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            )
+        self.assertEqual(candidates, [])
+
 
 class DraftValidationRulesTest(unittest.TestCase):
+    def test_feishu_doc_title_preserves_question_mark(self):
+        title = "Would you keep the graph inside the vector DB?"
+        self.assertEqual(feishu_docs.sanitize_title(title), title)
+
+    def test_editorial_routes_separate_james_from_anonymous_content(self):
+        rules = weekly_post_rules.load_rules()
+        self.assertEqual(
+            weekly_post_rules.editorial_route_id("jAmEs LuAn", rules),
+            "james_luan",
+        )
+        self.assertEqual(
+            weekly_post_rules.editorial_route_id("Other Author", rules),
+            "anonymous_default",
+        )
+        self.assertEqual(
+            weekly_post_rules.editorial_route_id("", rules),
+            "anonymous_default",
+        )
+        self.assertTrue(
+            weekly_post_rules.source_author_override("James Luan", rules)
+        )
+        self.assertEqual(
+            weekly_post_rules.source_author_override("Other Author", rules),
+            {},
+        )
+
+    def test_route_specific_reference_and_resource_files_do_not_mix_author_rules(self):
+        accounts = json.loads(resource_paths.ACCOUNTS.read_text())
+        self.assertEqual(
+            [row["account_code"] for row in accounts if "James" in row.get("role", "")],
+            ["R3"],
+        )
+        routing = json.loads(resource_paths.EDITORIAL_ROUTES.read_text())
+        for route_id, route in routing["routes"].items():
+            reference = json.loads((ROOT / route["reference"]).read_text())
+            resource = json.loads((ROOT / route["resource"]).read_text())
+            self.assertEqual(reference["route_id"], route_id)
+            self.assertEqual(resource["route_id"], route_id)
+            self.assertEqual(resource["authority"], "non_authoritative")
+
+    def test_james_r3_modes_keep_distinct_style_and_narrative_contracts(self):
+        rules = weekly_post_rules.load_rules()
+        james = rules["editorial_routes"]["james_luan"]
+        self.assertEqual(james["required_account_code"], "R3")
+        modes = james["accounts"]["R3"]["modes"]
+        self.assertIn(
+            "context_continuity",
+            modes["r3_coherent_chapter_rewrite"]["style_contract"],
+        )
+        self.assertIn(
+            "summary_scope",
+            modes["r3_article_summary_share"]["style_contract"],
+        )
+        self.assertNotEqual(
+            modes["r3_coherent_chapter_rewrite"]["required_narrative_sequence"],
+            modes["r3_article_summary_share"]["required_narrative_sequence"],
+        )
+        resource = json.loads(
+            (ROOT / "resource/reddit/routes/james_luan.json").read_text()
+        )
+        self.assertEqual(
+            set(resource["style_exemplars"]),
+            {
+                "r3_coherent_chapter_rewrite",
+                "r3_article_summary_share",
+            },
+        )
+
+    def test_generated_james_source_keeps_only_repeatable_chapter_mode(self):
+        accounts = json.loads(resource_paths.ACCOUNT_TOPIC_RULES.read_text())
+        topics = json.loads(resource_paths.TOPIC_BANK.read_text())
+        screened = screen_and_assign.screen_row(
+            {
+                "blog_id": "source-1",
+                "title": "Milvus vector retrieval architecture",
+                "url": "https://zilliz.com/blog/example",
+                "source_author": "James Luan",
+                "generated_count": 1,
+            },
+            accounts,
+            topics,
+            top_n=2,
+            no_fetch=True,
+        )
+        modes = screened["assignments"][0]["author_rewrite_modes"]
+        self.assertEqual(modes, ["r3_coherent_chapter_rewrite"])
+
+    def test_james_luan_r3_chapter_mode_uses_separate_validation(self):
+        rules = weekly_post_rules.load_rules()
+        item = base_item()
+        item.update({
+            "account_code": "R3",
+            "subreddit": "r/Rag",
+            "voice_fingerprint": "james_author_voice",
+            "title": "Vector search grew up and brought an operations manual",
+            "body": (
+                "Hi, I'm James Luan, CTO of Zilliz, the company and builder behind "
+                "Milvus. Milvus is an open-source vector database built to store, "
+                "index, and search embeddings. Vector Lakebase is the next step.\n\n"
+                "Vector search starts as a neat algorithm and eventually turns into "
+                "a real database problem. That is less magical, but much more useful. "
+                "We'd love to hear your thoughts."
+            ),
+            "disclosure": "",
+            "milvus_mention_basis": "",
+            "author_rewrite_mode": "r3_coherent_chapter_rewrite",
+            "link_policy": "no_link",
+            "approved_link": "",
+            "source_chapter": "Why vector search becomes a database problem",
+            "partn": "part1",
+        })
+        errors, _ = append_pack.validate({
+            "source_author": "James Luan",
+            "source_url": "https://zilliz.com/blog/example",
+            "items": [item],
+        })
+        self.assertEqual(errors, [])
+        item["body"] = "A casual summary without the identity opening."
+        errors, _ = append_pack.validate({
+            "source_author": "James Luan", "items": [item]
+        })
+        self.assertTrue(any("disclosed-author opening" in error for error in errors))
+        item["body"] = (
+            "Hi, I'm James Luan, CTO of Zilliz, the company and builder behind "
+            "Milvus. Milvus is an open-source vector database built to store, "
+            "index, and search embeddings. Vector Lakebase is the next step.\n\n"
+            "A technical summary."
+        )
+        item["author_rewrite_mode"] = "anonymous_default"
+        errors, _ = append_pack.validate({
+            "source_author": "James Luan", "items": [item]
+        })
+        self.assertTrue(any("author_rewrite_mode" in error for error in errors))
+
+    def test_james_r3_chapter_partn_and_share_mode_are_separate(self):
+        item = base_item()
+        item.update({
+            "account_code": "R3",
+            "subreddit": "r/Rag",
+            "voice_fingerprint": "james_author_voice",
+            "title": "Which retrieval boundary becomes the real constraint?",
+            "body": (
+                "Hi, I'm James Luan, CTO of Zilliz, the company behind Milvus. "
+                "Milvus is an open-source vector database designed to store, index, "
+                "and search embeddings. Vector Lakebase is the next step.\n\n"
+                "This chapter explains one coherent technical boundary."
+            ),
+            "disclosure": "",
+            "milvus_mention_basis": "",
+            "author_rewrite_mode": "r3_coherent_chapter_rewrite",
+            "link_policy": "no_link",
+            "approved_link": "",
+            "source_chapter": "One coherent boundary",
+            "partn": "Part 1",
+        })
+        errors, _ = append_pack.validate({
+            "source_author": "James Luan",
+            "source_url": "https://zilliz.com/blog/example",
+            "items": [item],
+        })
+        self.assertTrue(any("part1, part2" in error for error in errors))
+
+        item["partn"] = "part1"
+        errors, _ = append_pack.validate({
+            "source_author": "James Luan",
+            "source_url": "https://zilliz.com/blog/example",
+            "items": [item],
+        })
+        self.assertEqual(errors, [])
+
+    def test_james_luan_r3_summary_mode_requires_source_link_and_reply_invitation(self):
+        source_url = "https://zilliz.com/blog/example"
+        item = base_item()
+        item.update({
+            "account_code": "R3",
+            "subreddit": "r/AIMemory",
+            "post_type": "Discussion",
+            "voice_fingerprint": "james_author_voice",
+            "title": "What changes when vector systems reach production?",
+            "body": (
+                "Hi, I'm James Luan, CTO of Zilliz, the company behind Milvus. "
+                "Milvus is an open-source vector database built to store, index, "
+                "and search embeddings. Vector Lakebase is the next step.\n\n"
+                "The article follows the system from duplicated production data "
+                "through freshness boundaries to a lake-native serving direction.\n\n"
+                f"I put the full write-up here.\n\n{source_url}\n\n"
+                "I'd welcome your thoughts."
+            ),
+            "disclosure": "",
+            "link_policy": "source_link",
+            "approved_link": source_url,
+            "author_rewrite_mode": "r3_article_summary_share",
+            "milvus_mention_basis": "",
+        })
+        errors, _ = append_pack.validate({
+            "source_author": "james luan",
+            "source_url": source_url,
+            "items": [item],
+        })
+        self.assertEqual(errors, [])
+        item["partn"] = "part1"
+        errors, _ = append_pack.validate({
+            "source_author": "james luan",
+            "source_url": source_url,
+            "items": [item],
+        })
+        self.assertTrue(any("must leave partn empty" in error for error in errors))
+
+    def test_non_james_sources_remain_anonymous_and_no_link(self):
+        item = base_item()
+        item["disclosure"] = "James Luan"
+        errors, _ = append_pack.validate({"source_author": "Other", "items": [item]})
+        self.assertTrue(any("anonymous" in error for error in errors))
+
+    def test_inline_source_link_is_not_duplicated_in_final_post(self):
+        rendered = append_pack_to_feishu.build_content_markdown({
+            "body": "Hi, I'm James, CTO of Zilliz.\n\nhttps://zilliz.com/blog/example",
+            "disclosure": "",
+            "approved_link": "https://zilliz.com/blog/example",
+        })
+        self.assertEqual(
+            rendered,
+            "Hi, I'm James, CTO of Zilliz.\n\n"
+            "https://zilliz.com/blog/example\n",
+        )
+
+    def test_james_weekly_pack_bypasses_anonymous_r2_question_quota(self):
+        specs = [
+            {
+                "source_author": "James Luan",
+                "items": [
+                    {"account_code": "R3", "subreddit": "r/Rag", "post_type": "Discussion", "author_rewrite_mode": "r3_article_summary_share"},
+                    {"account_code": "R3", "subreddit": "r/AI_Agents", "post_type": "Discussion", "author_rewrite_mode": "r3_coherent_chapter_rewrite"},
+                    {"account_code": "R3", "subreddit": "r/AIMemory", "post_type": "Discussion", "author_rewrite_mode": "r3_coherent_chapter_rewrite"},
+                ],
+            },
+            {
+                "source_author": "Other",
+                "items": [
+                    {"account_code": "R2", "subreddit": "r/LocalLLaMA", "post_type": "Question | Help"},
+                ],
+            },
+        ]
+        self.assertEqual(append_pack_to_feishu.validate_weekly_specs(specs), [])
+
+        specs[0]["items"][0]["author_rewrite_mode"] = "r3_coherent_chapter_rewrite"
+        errors = append_pack_to_feishu.validate_weekly_specs(specs)
+        self.assertTrue(any("article_summary_share" in error for error in errors))
+
+    def test_every_future_draft_exposes_original_source_url_in_feishu(self):
+        spec = {
+            "source_title": "Example",
+            "source_url": "https://zilliz.com/blog/example",
+            "source_author": "James Luan",
+            "items": [base_item()],
+        }
+        drafts = append_pack_to_feishu.build_drafts(spec, 1, [])
+        record = append_pack_to_feishu.build_records(
+            spec, drafts, "https://example.feishu.cn/docx/example",
+            {"Source Blog URL", "原文"},
+        )[0]
+        self.assertEqual(record["原文"]["link"], "https://zilliz.com/blog/example")
+        anonymous_spec = {
+            "source_author": "Other",
+            "source_url": "https://zilliz.com/blog/example",
+            "items": [base_item()],
+        }
+        anonymous_drafts = append_pack_to_feishu.build_drafts(anonymous_spec, 1, [])
+        anonymous_record = append_pack_to_feishu.build_records(
+            anonymous_spec, anonymous_drafts, "https://example.feishu.cn/docx/example",
+            {"Source Blog URL", "原文"},
+        )[0]
+        self.assertEqual(anonymous_record["原文"]["link"], "https://zilliz.com/blog/example")
+
     def test_checked_in_reference_examples_follow_current_contract(self):
         paths = [
             ROOT / "guidance/reddit/Milvus blog for repurpose.md",
@@ -185,6 +487,17 @@ class DraftValidationRulesTest(unittest.TestCase):
             errors, warnings = append_pack.validate(spec)
             self.assertEqual(errors, [])
             self.assertEqual(warnings, [])
+
+    def test_weekly_pack_rejects_repeated_surface_scaffold(self):
+        specs = json.loads((ROOT / "samples/weekly_pack.example.json").read_text())
+        specs[0]["items"][0]["body"] = (
+            "I have mixed feelings. " + specs[0]["items"][0]["body"]
+        )
+        specs[1]["items"][0]["body"] = (
+            "I have mixed feelings. " + specs[1]["items"][0]["body"]
+        )
+        errors = append_pack_to_feishu.validate_weekly_specs(specs)
+        self.assertTrue(any("repeats surface scaffold" in error for error in errors))
 
     def test_feishu_date_field_uses_millisecond_timestamp(self):
         self.assertEqual(
@@ -240,11 +553,28 @@ class DraftValidationRulesTest(unittest.TestCase):
             )
         )
         for slot in slots:
+            self.assertIn(slot["account_code"], slot["allowed_accounts"])
+            self.assertIn("R3", slot["allowed_accounts"])
             self.assertIn(slot["default_post_type"], slot["post_types"])
             self.assertEqual(
                 weekly_post_rules.recommend_post_type(slot["subreddit"], "", rules),
                 slot["default_post_type"],
             )
+
+    def test_screening_routes_james_only_to_r3(self):
+        account_rules = json.loads(resource_paths.ACCOUNT_TOPIC_RULES.read_text())
+        self.assertEqual(
+            screen_and_assign.eligible_account_codes_for_author(
+                "James Luan", account_rules
+            ),
+            {"R3"},
+        )
+        self.assertEqual(
+            screen_and_assign.eligible_account_codes_for_author(
+                "Other Author", account_rules
+            ),
+            {"R1", "R2"},
+        )
 
     def test_weekly_slot_reference_files_exist(self):
         for slot in weekly_post_rules.load_rules()["weekly_slots"]:
@@ -327,8 +657,8 @@ class DraftValidationRulesTest(unittest.TestCase):
 
         expected_specs[-1]["items"][0]["subreddit"] = "r/__unexpected__"
         errors = append_pack_to_feishu.validate_weekly_specs(expected_specs)
-        self.assertTrue(any("missing slots" in error for error in errors))
-        self.assertTrue(any("unexpected slots" in error for error in errors))
+        self.assertTrue(any("missing subreddit slots" in error for error in errors))
+        self.assertTrue(any("unexpected subreddit slots" in error for error in errors))
 
     def test_discussion_direct_question_gets_soft_close_warning(self):
         declarative = base_item()
@@ -341,7 +671,16 @@ class DraftValidationRulesTest(unittest.TestCase):
 
         errors, warnings = errors_for(question)
         self.assertEqual(errors, [])
-        self.assertTrue(any("interrogative" in warning.lower() for warning in warnings))
+        self.assertFalse(any("asks too many questions" in warning.lower() for warning in warnings))
+
+    def test_discussion_question_pile_warns(self):
+        item = base_item()
+        item["body"] += (
+            " When would you migrate? What failed first? Which system replaced it?"
+        )
+        errors, warnings = errors_for(item)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("asks too many questions" in warning.lower() for warning in warnings))
 
     def test_discussion_soft_invitation_avoids_question_warning(self):
         item = base_item()
@@ -419,12 +758,19 @@ class DraftValidationRulesTest(unittest.TestCase):
         for account in accounts:
             code = account["account_code"]
             self.assertNotIn("brand_policy", account)
-            self.assertEqual(
-                account["hard_rule_authority"],
-                "guidance/reddit/editorial/editorial_policy.json",
-            )
-            self.assertEqual(weekly_accounts[code]["required_milvus_body_mentions"], 1)
-            self.assertFalse(weekly_accounts[code]["may_mention_zilliz"])
+            if code == "R3":
+                self.assertEqual(
+                    account["hard_rule_authority"],
+                    "guidance/reddit/editorial/james_luan_policy.json",
+                )
+                self.assertTrue(weekly_accounts[code]["may_mention_zilliz"])
+            else:
+                self.assertEqual(
+                    account["hard_rule_authority"],
+                    "guidance/reddit/editorial/editorial_policy.json",
+                )
+                self.assertEqual(weekly_accounts[code]["required_milvus_body_mentions"], 1)
+                self.assertFalse(weekly_accounts[code]["may_mention_zilliz"])
 
         subreddits = json.loads(resource_paths.SUBREDDITS.read_text())
         for subreddit in subreddits:
@@ -435,10 +781,12 @@ class DraftValidationRulesTest(unittest.TestCase):
     def test_editorial_guidance_merges_with_weekly_workflow(self):
         rules = weekly_post_rules.load_rules()
         self.assertIn("Do not end with a question", rules["post_type_closing_policy"]["Tutorial"])
-        self.assertIn("Would love to hear your thoughts", rules["post_type_closing_policy"]["Discussion"])
+        self.assertIn("one or two answerable", rules["post_type_closing_policy"]["Discussion"])
         self.assertTrue(
             rules["title_perspective_policy"]["require_first_person_or_question"]
         )
+        self.assertEqual(rules["title_hook_policy"]["severity"], "error")
+        self.assertEqual(rules["title_hook_policy"]["minimum_signal_groups"], 2)
         self.assertEqual(
             rules["milvus_mention_context_policy"]["mode"],
             "category_example_or_peer_group",
@@ -451,6 +799,20 @@ class DraftValidationRulesTest(unittest.TestCase):
         self.assertEqual(
             rules["language_buffer_policy"]["minimum_matches_per_body"], 1
         )
+
+        fingerprints = json.loads(resource_paths.USER_FINGERPRINTS.read_text())
+        anonymous = {row["fingerprint_id"]: row for row in fingerprints[:2]}
+        for fingerprint_id in ("personal_build_log", "structured_design_question"):
+            realization = anonymous[fingerprint_id]["discussion_realization"]
+            self.assertEqual(len(realization), 6)
+            self.assertTrue(any("threshold" in line.lower() for line in realization))
+            opening_spin = anonymous[fingerprint_id]["discussion_opening_spin"]
+            self.assertGreaterEqual(len(opening_spin["realizations"]), 6)
+            self.assertIn("weekly pack", opening_spin["selection_rule"])
+            self.assertTrue(any("mixed feelings" in line.lower() for line in opening_spin["avoid"]))
+            structure_spin = anonymous[fingerprint_id]["discussion_structure_spin"]
+            self.assertGreaterEqual(len(structure_spin["shapes"]), 6)
+            self.assertTrue(any("paragraph" in line.lower() for line in structure_spin["avoid"]))
 
     def test_instruction_precedence_matches_three_level_contract(self):
         precedence = weekly_post_rules.load_rules()["instruction_precedence"]
@@ -522,10 +884,14 @@ class DraftValidationRulesTest(unittest.TestCase):
             resource_paths.WEEKLY_WORKFLOW,
             resource_paths.SOURCE_SYNC_RULES,
             resource_paths.EDITORIAL_POLICY,
+            resource_paths.EDITORIAL_ROUTES,
+            resource_paths.JAMES_LUAN_POLICY,
             resource_paths.CONTENT_LENGTH_RULES,
             resource_paths.ACCOUNTS,
             resource_paths.ACCOUNT_TOPIC_RULES,
             resource_paths.USER_FINGERPRINTS,
+            resource_paths.JAMES_LUAN_ACCOUNT_ROUTE,
+            resource_paths.ANONYMOUS_ACCOUNT_ROUTE,
             resource_paths.TOPIC_BANK,
             resource_paths.SUBREDDITS,
         ]:
@@ -545,7 +911,10 @@ class DraftValidationRulesTest(unittest.TestCase):
         workflow = json.loads(resource_paths.WEEKLY_WORKFLOW.read_text())
         guidance = json.loads(resource_paths.EDITORIAL_POLICY.read_text())
         self.assertFalse(set(workflow).intersection(guidance))
-        self.assertEqual(set(weekly_post_rules.load_rules()), set(workflow) | set(guidance))
+        self.assertEqual(
+            set(weekly_post_rules.load_rules()),
+            set(workflow) | set(guidance) | {"editorial_routing", "editorial_routes"},
+        )
 
         rules = weekly_post_rules.load_rules()
         for slot in rules["weekly_slots"]:
@@ -556,7 +925,7 @@ class DraftValidationRulesTest(unittest.TestCase):
             slot_contract = json.loads(slot_rule.read_text())
             self.assertEqual(
                 slot_contract["inherited_contract"]["guidance"],
-                "guidance/reddit/editorial/editorial_policy.json",
+                "guidance/reddit/editorial/editorial_routes.json",
             )
             self.assertTrue(slot["review_markdown"].startswith("reference/slots/"))
             self.assertTrue(slot["review_markdown"].endswith(".md"))
@@ -624,9 +993,27 @@ class DraftValidationRulesTest(unittest.TestCase):
 
     def test_question_title_passes(self):
         item = base_item()
-        item["title"] = "Is this retrieval tradeoff acceptable?"
+        item["title"] = "Would you accept more latency just to avoid another retrieval service?"
         errors, _ = errors_for(item)
         self.assertEqual(errors, [])
+
+    def test_generic_topic_question_fails_title_hook_rule(self):
+        item = base_item()
+        item["title"] = "How should I evaluate retrieval quality?"
+        errors, _ = errors_for(item)
+        self.assertTrue(any("concrete engineering hook" in error for error in errors))
+
+    def test_viral_title_hook_patterns_are_recognized(self):
+        policy = weekly_post_rules.load_rules()["title_hook_policy"]
+        titles = [
+            "Would you keep the graph inside the vector DB just to avoid running two databases?",
+            "The longer an agent runs, the less I care about the prompt",
+            "The best local model is usually the wrong question for RAG",
+            "Spent 3 weeks blaming our LLM for bad RAG results. It was the vector index.",
+        ]
+        for title in titles:
+            with self.subTest(title=title):
+                self.assertTrue(append_pack.title_has_required_hook(title, policy))
 
     def test_one_supported_milvus_body_mention_passes(self):
         item = base_item()

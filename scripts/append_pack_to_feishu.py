@@ -193,6 +193,8 @@ def build_drafts(spec, start_seq, topic_names):
                 code, subreddit, item.get("post_type", "")
             ),
             "approved_link": item.get("approved_link", ""),
+            "source_chapter": item.get("source_chapter", ""),
+            "partn": item.get("partn", ""),
             "angle": item.get("angle", ""),
             "voice_fingerprint": item.get("voice_fingerprint", "") or default_voice,
             "length_tier": length_tier,
@@ -207,7 +209,9 @@ def build_drafts(spec, start_seq, topic_names):
 
 def build_content_markdown(draft):
     parts = [draft["body"].strip()]
-    if draft.get("approved_link"):
+    if draft.get("disclosure"):
+        parts.append(draft["disclosure"].strip())
+    if draft.get("approved_link") and draft["approved_link"].strip() not in draft["body"]:
         parts.append(draft["approved_link"].strip())
     return "\n\n".join(part for part in parts if part) + "\n"
 
@@ -248,6 +252,7 @@ def build_records(spec, drafts, doc_url, existing_field_names, inline_content=Fa
             "Source Blog 标题": spec.get("source_title", ""),
             "Blog Pool Record ID": spec.get("pool_record_id", "") or spec.get("pool_blog_id", ""),
             "Source Blog Publish Date": spec.get("source_publish_date", ""),
+            "Source Author": spec.get("source_author", ""),
             "Account Code": draft["account_code"],
             "Account Role": draft["account_role"],
             "Subreddit": subreddit_value(draft, existing_field_names),
@@ -260,6 +265,8 @@ def build_records(spec, drafts, doc_url, existing_field_names, inline_content=Fa
             "Milvus Mention Basis": draft["milvus_mention_basis"],
             "Angle": draft["angle"],
             "Voice Fingerprint": draft["voice_fingerprint"],
+            "Source Chapter": draft["source_chapter"],
+            "partn": draft["partn"],
             "Source Screening Status": screening_status,
             "Source Screening Score": screening_score,
             "Source Topic Tags": source_topics,
@@ -278,6 +285,7 @@ def build_records(spec, drafts, doc_url, existing_field_names, inline_content=Fa
             record["Code Language"] = draft["code_language"]
         if source_url:
             record["Source Blog URL"] = as_url_field(source_url)
+            record["原文"] = as_url_field(source_url)
         if doc_url:
             record["Content Doc"] = as_url_field(doc_url)
         records.append(filter_existing_fields(record, existing_field_names))
@@ -294,38 +302,104 @@ def normalize_payload(payload):
 
 def validate_weekly_specs(specs):
     rules = weekly_post_rules.load_rules()
-    expected = {
-        (slot["account_code"], slot["subreddit"])
-        for slot in rules.get("weekly_slots", [])
-    }
+    slots = rules.get("weekly_slots", [])
+    expected_subreddits = {slot["subreddit"] for slot in slots}
     actual = [
         (item.get("account_code", ""), item.get("subreddit", ""))
         for spec in specs
         for item in spec.get("items", [])
     ]
     errors = []
-    if len(actual) != len(expected):
-        errors.append(f"weekly run must contain exactly {len(expected)} drafts; got {len(actual)}")
-    duplicates = sorted({slot for slot in actual if actual.count(slot) > 1})
+    james_policy = rules.get("james_weekly_mode_policy") or {}
+    if james_policy.get("enabled"):
+        james_items = [
+            item
+            for spec in specs
+            if weekly_post_rules.editorial_route_id(
+                spec.get("source_author", ""), rules
+            ) == "james_luan"
+            for item in spec.get("items", [])
+        ]
+        expected_james = int(james_policy.get("james_post_count") or 0)
+        if james_items and len(james_items) != expected_james:
+            errors.append(
+                f"weekly run must contain exactly {expected_james} James Luan drafts; "
+                f"got {len(james_items)}"
+            )
+        summary_mode = james_policy.get("article_summary_share_mode")
+        expected_summary = int(james_policy.get("article_summary_share_count") or 0)
+        summary_count = sum(
+            item.get("author_rewrite_mode") == summary_mode for item in james_items
+        )
+        if james_items and summary_count != expected_summary:
+            errors.append(
+                f"weekly James drafts must contain exactly {expected_summary} "
+                f"{summary_mode!r} post; got {summary_count}"
+            )
+    if len(actual) != len(expected_subreddits):
+        errors.append(f"weekly run must contain exactly {len(expected_subreddits)} drafts; got {len(actual)}")
+    actual_subreddits = [subreddit for _, subreddit in actual]
+    duplicates = sorted({sub for sub in actual_subreddits if actual_subreddits.count(sub) > 1})
     if duplicates:
-        errors.append(f"weekly run has duplicate account/subreddit slots: {duplicates}")
-    missing = sorted(expected - set(actual))
-    unexpected = sorted(set(actual) - expected)
+        errors.append(f"weekly run has duplicate subreddit slots: {duplicates}")
+    missing = sorted(expected_subreddits - set(actual_subreddits))
+    unexpected = sorted(set(actual_subreddits) - expected_subreddits)
     if missing:
-        errors.append(f"weekly run is missing slots: {missing}")
+        errors.append(f"weekly run is missing subreddit slots: {missing}")
     if unexpected:
-        errors.append(f"weekly run has unexpected slots: {unexpected}")
+        errors.append(f"weekly run has unexpected subreddit slots: {unexpected}")
+    for account_code, subreddit in actual:
+        allowed = weekly_post_rules.allowed_accounts_for_subreddit(subreddit, rules)
+        if subreddit in expected_subreddits and account_code not in allowed:
+            errors.append(
+                f"weekly slot {subreddit!r} does not allow account {account_code!r}; "
+                f"choose one of {sorted(allowed)}"
+            )
+
+    surface_policy = rules.get("pack_surface_variation_policy", {})
+    if surface_policy.get("scope") == "anonymous_weekly_pack":
+        scaffold_hits = {}
+        for spec in specs:
+            is_disclosed_author = (
+                weekly_post_rules.source_author_override(
+                    spec.get("source_author", ""), rules
+                ).get("validation_mode") == "disclosed_author"
+            )
+            if is_disclosed_author:
+                continue
+            for item in spec.get("items", []):
+                body = item.get("body", "") or ""
+                for scaffold in surface_policy.get("repeated_scaffolds", []):
+                    if scaffold.lower() in body.lower():
+                        scaffold_hits.setdefault(scaffold, []).append(
+                            f"{item.get('account_code', '')}/{item.get('subreddit', '')}"
+                        )
+        maximum = int(surface_policy.get("max_drafts_per_scaffold") or 1)
+        for scaffold, locations in scaffold_hits.items():
+            if len(locations) > maximum:
+                errors.append(
+                    f"weekly pack repeats surface scaffold {scaffold!r} in "
+                    f"{locations}; vary the reasoning order, syntax, and paragraph rhythm"
+                )
 
     r2_policy = weekly_post_rules.r2_short_question_policy(rules)
     if r2_policy.get("enabled"):
         r2_question_posts = []
+        eligible_non_author_r2_posts = []
         for spec in specs:
+            is_disclosed_author = (
+                weekly_post_rules.source_author_override(
+                    spec.get("source_author", ""), rules
+                ).get("validation_mode") == "disclosed_author"
+            )
             for item in spec.get("items", []):
+                if item.get("account_code") == "R2" and not is_disclosed_author:
+                    eligible_non_author_r2_posts.append(item)
                 if item.get("account_code") == "R2" and weekly_post_rules.is_r2_question_post(
                     item.get("subreddit", ""), item.get("post_type", ""), rules
-                ):
+                ) and not is_disclosed_author:
                     r2_question_posts.append(item)
-        if len(r2_question_posts) != 1:
+        if eligible_non_author_r2_posts and len(r2_question_posts) != 1:
             errors.append(
                 "weekly run must contain exactly one R2 short question post; "
                 f"found {len(r2_question_posts)}"

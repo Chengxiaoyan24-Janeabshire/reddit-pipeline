@@ -1,0 +1,13 @@
+{
+  "route_id": "anonymous_default",
+  "accounts": {
+    "R1": {
+      "fingerprint_id": "personal_build_log"
+    },
+    "R2": {
+      "fingerprint_id": "structured_design_question"
+    }
+  },
+  "fingerprint_source": "reference/accounts/user_fingerprints.json",
+  "notes": "This route retains the original anonymous account and audience-angle behavior."
+}

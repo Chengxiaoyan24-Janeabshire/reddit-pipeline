@@ -14,8 +14,8 @@ Load only the context required by the active stage, in this order:
 1. the latest user direction and this file;
 2. the selected Skill under `.agents/skills/`;
 3. current workflow values from `guidance/reddit/workflow/`;
-4. shared editorial policy from `guidance/reddit/editorial/` when the stage edits or
-   validates content;
+4. `guidance/reddit/editorial/editorial_routes.json`, then only the matched
+   Guidance → Reference → Resource route when the stage edits or validates content;
 5. only the selected subreddit rule JSON under `reference/slots/`;
 6. only the selected account and audience rows under `reference/accounts/` and
    `reference/topic_bank.json`;
@@ -40,8 +40,15 @@ Resources never define rules. Source facts bound all claims.
 
 ## Editorial instruction precedence
 
-For screening, drafting, rewriting, and validation, resolve editorial choices
-in this exact order:
+For screening, drafting, rewriting, and validation, resolve a configured
+source-author route first. James Luan uses the R3 disclosed-author account across
+all four shared Subreddit slots and must not fall through to anonymous title, first-person
+`I`, language Buffer, R2 question-quota, Milvus-placement, competitor, brand,
+anonymity, or no-link checks. James content still follows source facts, safety,
+the selected account/Subreddit assignment, valid Post Type, native structure,
+and native style.
+
+For all non-James content, resolve editorial choices in this exact order:
 
 1. **Guidance**: satisfy disclosure first, then the required first-person `I`
    framing and grammatical language Buffer. All other global anonymity, brand,
@@ -87,7 +94,7 @@ project root with `python3 scripts/...`.
 ## Sources of truth
 
 - `guidance/reddit/workflow/weekly.json`: weekly quantity, active accounts, source
-  recency, slot assignment, and Post Types;
+  recency, physical slot ownership, R3 shared-slot access, and Post Types;
 - `guidance/reddit/workflow/source_sync.json`: current sync source and eligibility
   contract;
 - `reference/accounts/`: account persona, topic routing, and fingerprints;
@@ -95,6 +102,9 @@ project root with `python3 scripts/...`.
   reviews, plus the community registry;
 - `reference/topic_bank.json`: shared screening taxonomy;
 - `guidance/reddit/editorial/editorial_policy.json`: global editorial and safety checks;
+- `guidance/reddit/editorial/editorial_routes.json`: source-author route selection and
+  Guidance/Reference/Resource paths;
+- `guidance/reddit/editorial/james_luan_policy.json`: James disclosed-author contract;
 - `guidance/reddit/editorial/content_length_rules.json`: length and code tiers;
 - `guidance/reddit/editorial/RULES.md`: generated human review of Editorial JSON;
 - `guidance/reddit/workflow/RULES.md`: generated human review of Workflow JSON;

@@ -151,6 +151,14 @@ def first_sentence(text):
     return re.split(r"\n+", stripped, maxsplit=1)[0]
 
 
+def first_paragraph(text):
+    return re.split(r"\n\s*\n", (text or "").strip(), maxsplit=1)[0]
+
+
+def first_paragraphs(text, count):
+    return "\n\n".join(re.split(r"\n\s*\n", (text or "").strip())[:count])
+
+
 def contains_any(text, phrases):
     lowered = (text or "").lower()
     return [p for p in phrases if p in lowered]
@@ -165,6 +173,28 @@ def title_has_personal_or_question_perspective(title):
             or text.endswith(("?", "？"))
         )
     )
+
+
+def title_has_required_hook(title, policy):
+    text = re.sub(r"\s+", " ", (title or "").strip().lower())
+    if not text:
+        return False
+
+    def has_signal(signal):
+        return bool(
+            re.search(
+                rf"(?<!\w){re.escape(signal.lower())}(?!\w)",
+                text,
+            )
+        )
+
+    if any(has_signal(signal) for signal in policy.get("strong_single_signals", [])):
+        return True
+    matched_groups = 0
+    for signals in (policy.get("signal_groups") or {}).values():
+        if any(has_signal(signal) for signal in signals):
+            matched_groups += 1
+    return matched_groups >= int(policy.get("minimum_signal_groups") or 1)
 
 
 def has_natural_milvus_context(text):
@@ -230,6 +260,11 @@ def validate(spec):
     length_rules = load_length_rules()
     user_fingerprints = load_user_fingerprints()
     weekly_rules = weekly_post_rules.load_rules()
+    source_author = spec.get("source_author", "") or ""
+    source_url = (spec.get("source_url") or "").strip()
+    author_override = weekly_post_rules.source_author_override(
+        source_author, weekly_rules
+    )
     active_accounts = set(weekly_rules.get("active_accounts", []))
     subreddit_slots = weekly_post_rules.slots_by_subreddit(weekly_rules)
     errors = []
@@ -257,9 +292,7 @@ def validate(spec):
         title = item.get("title", "") or ""
         body = item.get("body", "") or item.get("post", "") or ""
         disclosure = item.get("disclosure", "") or ""
-        link_policy = item.get("link_policy") or weekly_post_rules.recommend_link_policy(
-            code, subreddit, post_type, weekly_rules
-        )
+        link_policy = item.get("link_policy") or ""
         milvus_mention_basis = item.get("milvus_mention_basis", "") or ""
         expected_voice_fingerprint = account.get("voice_fingerprint_id", "")
         voice_fingerprint = item.get("voice_fingerprint") or expected_voice_fingerprint
@@ -270,7 +303,26 @@ def validate(spec):
         length_rule = length_rules.get(length_tier)
         fenced_code_blocks = code_blocks(body)
         account_policy = weekly_rules.get("account_policies", {}).get(code, {})
+        author_rewrite_mode = item.get("author_rewrite_mode", "")
+        author_account_base = weekly_post_rules.source_author_account_override(
+            source_author, code, weekly_rules
+        )
+        author_account_override = weekly_post_rules.source_author_account_override(
+            source_author, code, weekly_rules, author_rewrite_mode
+        )
+        if not link_policy:
+            link_policy = (
+                author_account_override.get("link_policy")
+                or weekly_post_rules.recommend_link_policy(
+                    code, subreddit, post_type, weekly_rules
+                )
+            )
+        is_disclosed_author = bool(
+            author_account_override
+            and author_override.get("validation_mode") == "disclosed_author"
+        )
         title_policy = weekly_rules.get("title_perspective_policy", {})
+        title_hook_policy = weekly_rules.get("title_hook_policy", {})
         opening_policy = weekly_rules.get("opening_perspective_policy", {})
         language_buffer_policy = weekly_rules.get("language_buffer_policy", {})
         milvus_context_policy = weekly_rules.get("milvus_mention_context_policy", {})
@@ -279,6 +331,16 @@ def validate(spec):
             errors.append(
                 f"{prefix}: account is not active for the current weekly workflow; "
                 f"choose one of {sorted(active_accounts)}"
+            )
+        required_author_account = author_override.get("required_account_code")
+        if required_author_account and code != required_author_account:
+            errors.append(
+                f"{prefix}: source author {source_author!r} must use account "
+                f"{required_author_account}, not {code}"
+            )
+        if code == "R3" and not required_author_account:
+            errors.append(
+                f"{prefix}: R3 is reserved for the configured James Luan route"
             )
 
         if content_type not in ACTIVE_POST_CONTENT_TYPES:
@@ -312,6 +374,8 @@ def validate(spec):
                     f"{recommended_post_type!r} than {post_type!r}; review the subreddit screenshots before publishing"
                 )
         if (
+            not is_disclosed_author
+            and
             code == "R2"
             and weekly_post_rules.is_r2_question_post(subreddit, post_type, weekly_rules)
         ):
@@ -326,7 +390,171 @@ def validate(spec):
                     "an explicit question title ending in '?'"
                 )
 
-        if account_policy.get("identity_visibility") == "anonymous" and disclosure.strip():
+        allowed_author_modes = author_account_base.get("allowed_rewrite_modes") or []
+        if allowed_author_modes and author_rewrite_mode not in allowed_author_modes:
+            errors.append(
+                f"{prefix}: {code} must choose author_rewrite_mode from "
+                f"{allowed_author_modes}"
+            )
+        required_disclosure = author_override.get("required_disclosure", "")
+        if author_account_override:
+            if disclosure != required_disclosure:
+                errors.append(
+                    f"{prefix}: {code} must use the exact configured disclosure "
+                    f"for source author {source_author!r}"
+                )
+            required_mode = author_account_override.get("required_rewrite_mode")
+            if required_mode and item.get("author_rewrite_mode") != required_mode:
+                errors.append(
+                    f"{prefix}: {code} post for source author {source_author!r} "
+                    f"must use author_rewrite_mode {required_mode!r}"
+                )
+            required_tier = author_account_override.get("required_length_tier")
+            if required_tier and length_tier != required_tier:
+                errors.append(
+                    f"{prefix}: {code} post for source author {source_author!r} "
+                    f"must use length_tier {required_tier!r}"
+                )
+            if (
+                author_account_override.get("required_source_chapter")
+                and not str(item.get("source_chapter") or "").strip()
+            ):
+                errors.append(
+                    f"{prefix}: chapter rewrite mode requires source_chapter so "
+                    "reviewers can verify scope and continuity"
+                )
+            partn = str(item.get("partn") or "").strip()
+            partn_pattern = author_account_override.get("required_partn_pattern")
+            if partn_pattern and not re.fullmatch(partn_pattern, partn):
+                errors.append(
+                    f"{prefix}: chapter rewrite mode requires partn formatted "
+                    "as part1, part2, part3, and so on"
+                )
+            if author_account_override.get("forbid_partn") and partn:
+                errors.append(
+                    f"{prefix}: selected author rewrite mode must leave partn empty"
+                )
+            if author_account_override.get("required_approved_link") == "source_url":
+                approved_link = (item.get("approved_link") or "").strip()
+                if not source_url:
+                    errors.append(
+                        f"{prefix}: source_url is required for the configured "
+                        f"{source_author!r} source-author strategy"
+                    )
+                elif approved_link != source_url:
+                    errors.append(
+                        f"{prefix}: approved_link must exactly match source_url "
+                        f"for the configured {source_author!r} source-author strategy"
+                    )
+            if author_account_override.get("required_inline_link") == "source_url":
+                if not source_url or source_url not in body:
+                    errors.append(
+                        f"{prefix}: {code} post for source author {source_author!r} "
+                        "must place source_url directly in the body"
+                    )
+                elif [p.strip() for p in body.split("\n\n")].count(source_url) != 1:
+                    errors.append(
+                        f"{prefix}: article-summary mode must place source_url "
+                        "exactly once in its own body paragraph"
+                    )
+            if author_account_override.get("required_recent_article_intro"):
+                recent_article_terms = (
+                    "recently wrote", "just wrote", "new article", "latest article"
+                )
+                if not any(term in body.lower() for term in recent_article_terms):
+                    errors.append(
+                        f"{prefix}: {code} post for source author {source_author!r} "
+                        "must introduce the source as an article James recently wrote"
+                    )
+            if author_account_override.get("required_article_bridge"):
+                bridge_terms = (
+                    "i wrote up", "i put the full", "i expanded on",
+                    "full article", "full write-up", "full writeup",
+                )
+                url_index = body.find(source_url) if source_url else -1
+                before_url = body[:url_index].lower() if url_index >= 0 else body.lower()
+                if not any(term in before_url for term in bridge_terms):
+                    errors.append(
+                        f"{prefix}: article-summary mode must introduce the full "
+                        "article naturally before source_url"
+                    )
+            if author_account_override.get("required_reply_invitation"):
+                invitation_terms = (
+                    "share your", "your thoughts", "your view", "your perspective",
+                    "your experience", "used the product", "tried the product",
+                    "comments", "feedback", "opinions", "what you think"
+                )
+                if not any(term in body.lower() for term in invitation_terms):
+                    errors.append(
+                        f"{prefix}: {code} post for source author {source_author!r} "
+                        "must welcome comments about viewpoints or product experience"
+                    )
+            opening_policy = (
+                author_account_override.get("identity_opening")
+                or author_override.get("identity_opening")
+                or {}
+            )
+            opening = (
+                first_paragraphs(body, 3)
+                if opening_policy.get("scope") == "first_three_paragraphs"
+                else first_paragraph(body)
+            )
+            missing_identity_terms = [
+                term for term in opening_policy.get("required_terms", [])
+                if term.casefold() not in opening.casefold()
+            ]
+            if missing_identity_terms:
+                errors.append(
+                    f"{prefix}: disclosed-author opening must identify James as CTO "
+                    f"of Zilliz in the first paragraph; missing {missing_identity_terms}"
+                )
+            for phrase_group in opening_policy.get("required_phrase_groups", []):
+                if not any(
+                    str(phrase).casefold() in opening.casefold()
+                    for phrase in phrase_group
+                ):
+                    errors.append(
+                        f"{prefix}: disclosed-author opening is missing one required "
+                        f"identity relationship from {phrase_group}"
+                    )
+            sequence = author_account_override.get("required_narrative_sequence") or {}
+            if sequence:
+                lowered = body.casefold()
+                identity_index = lowered.find("james")
+                lakebase_index = lowered.find("vector lakebase")
+                url_index = lowered.find(source_url.casefold()) if source_url else -1
+                first_break = lowered.find("\n\n")
+                article_index = max(
+                    lowered.find("i wrote"), lowered.find("i recently wrote")
+                )
+                if sequence.get("problem_before_identity") and not (
+                    first_break >= 0 and identity_index > first_break
+                ):
+                    errors.append(f"{prefix}: selected author mode must frame the production problem before identity")
+                if sequence.get("identity_before_vector_lakebase") and not (
+                    0 <= identity_index < lakebase_index
+                ):
+                    errors.append(f"{prefix}: selected author mode must introduce identity before the Vector Lakebase direction")
+                if sequence.get("article_viewpoints_before_source_url") and not (
+                    0 <= article_index < url_index
+                ):
+                    errors.append(f"{prefix}: selected author mode must explain the article viewpoints before source_url")
+                if sequence.get("peer_questions_after_source_url"):
+                    after_url = body[url_index + len(source_url):] if url_index >= 0 else ""
+                    if "?" not in after_url:
+                        errors.append(f"{prefix}: selected author mode must ask specific peer questions after source_url")
+            required_closing = author_account_override.get("required_closing")
+            if required_closing and not body.rstrip().endswith(required_closing):
+                errors.append(
+                    f"{prefix}: {code} post for source author {source_author!r} "
+                    f"must end with {required_closing!r}"
+                )
+            if author_account_override.get("required_question_title") and not title.endswith(("?", "？")):
+                errors.append(
+                    f"{prefix}: {code} post for source author {source_author!r} "
+                    "must use a question title ending in '?'"
+                )
+        elif account_policy.get("identity_visibility") == "anonymous" and disclosure.strip():
             errors.append(
                 f"{prefix}: {code} is anonymous; disclosure must stay empty and the draft must not reveal identity, employer, or affiliation"
             )
@@ -338,8 +566,13 @@ def validate(spec):
                 f"{sorted(link_policy_modes)}"
             )
         else:
-            allowed_link_policies = weekly_post_rules.allowed_link_policies(
-                code, subreddit, post_type, weekly_rules
+            override_link_policy = author_account_override.get("link_policy")
+            allowed_link_policies = (
+                {override_link_policy}
+                if override_link_policy
+                else weekly_post_rules.allowed_link_policies(
+                    code, subreddit, post_type, weekly_rules
+                )
             )
             if link_policy not in allowed_link_policies:
                 errors.append(
@@ -373,7 +606,7 @@ def validate(spec):
 
         if not body.strip():
             errors.append(f"{prefix}: body is empty")
-        else:
+        elif not is_disclosed_author:
             opening_sentence = first_sentence(body)
             if (
                 opening_policy.get("scope") == "first_sentence"
@@ -416,16 +649,20 @@ def validate(spec):
                     f"{prefix}: Tutorial posts must end with a takeaway or next "
                     "step, not a question"
                 )
-            if post_type == "Discussion" and body.rstrip().endswith("?"):
+            if (
+                post_type == "Discussion"
+                and body.rstrip().endswith("?")
+                and len(re.findall(r"[?？]", body)) > 2
+            ):
                 warnings.append(
-                    f"{prefix}: Discussion ending is too interrogative; state the "
-                    "uncertainty and close with a soft invitation such as "
-                    "'Would love to hear your thoughts.'"
+                    f"{prefix}: Discussion ending asks too many questions; keep "
+                    "the close to one or two answerable, experience-based questions "
+                    "about a concrete adoption, migration, or failure threshold"
                 )
 
         if length_rules and not length_rule:
             errors.append(f"{prefix}: unknown length_tier {length_tier!r}")
-        elif length_rule:
+        elif length_rule and not is_disclosed_author:
             words = word_count(body)
             min_words = int(length_rule.get("min_words") or 0)
             max_words = int(length_rule.get("max_words") or 0)
@@ -452,6 +689,8 @@ def validate(spec):
         if content_type in ACTIVE_POST_CONTENT_TYPES and not title.strip():
             errors.append(f"{prefix}: title is required for post content")
         elif (
+            not is_disclosed_author
+            and
             title_policy.get("require_first_person_or_question")
             and not title_has_personal_or_question_perspective(title)
         ):
@@ -459,10 +698,31 @@ def validate(spec):
                 f"{prefix}: title must use a first-person perspective such as "
                 "'I think'/'Now I believe', or be an explicit question ending in '?'"
             )
+        if (
+            title.strip()
+            and not is_disclosed_author
+            and title_hook_policy.get("severity") == "error"
+            and not title_has_required_hook(title, title_hook_policy)
+        ):
+            errors.append(
+                f"{prefix}: title needs a concrete engineering hook: use a strong "
+                "contrast/reversal, or combine signals such as failure plus time/cost "
+                "or a decision plus its consequence; a generic topic question is not enough"
+            )
 
         link_mode = weekly_rules.get("link_policy_modes", {}).get(link_policy, {})
         approved_link = (item.get("approved_link") or "").strip()
-        if not link_mode.get("allow_inline_urls") and (has_url(title) or has_url(body)):
+        has_disclosed_author_source_url = bool(
+            is_disclosed_author
+            and author_account_override.get("required_inline_link") == "source_url"
+            and source_url
+            and source_url in body
+        )
+        body_without_author_source_url = body.replace(source_url, "") if has_disclosed_author_source_url else body
+        if (
+            not link_mode.get("allow_inline_urls")
+            and (has_url(title) or has_url(body_without_author_source_url))
+        ):
             errors.append(
                 f"{prefix}: link_policy {link_policy!r} does not allow URLs in "
                 "titles or body prose"
@@ -486,16 +746,22 @@ def validate(spec):
 
         title_milvus_mentions = len(MILVUS_PATTERN.findall(title))
         body_milvus_mentions = len(MILVUS_PATTERN.findall(body))
-        mentions_zilliz = bool(ZILLIZ_PATTERN.search(combined))
+        # A configured source-author disclosure may name Zilliz. The ordinary
+        # title/body/angle prohibition remains intact and is checked separately.
+        brand_check_body = body.replace(source_url, "") if source_url else body
+        non_disclosure_content = "\n".join(
+            [title, brand_check_body, milvus_mention_basis, item.get("angle", "") or ""]
+        )
+        mentions_zilliz = bool(ZILLIZ_PATTERN.search(non_disclosure_content))
         required_milvus_mentions = int(
             account_policy.get("required_milvus_body_mentions") or 0
         )
         max_milvus_mentions = int(
             account_policy.get("max_milvus_body_mentions") or 0
         )
-        if title_milvus_mentions and not milvus_context_policy.get("allow_in_title"):
+        if not is_disclosed_author and title_milvus_mentions and not milvus_context_policy.get("allow_in_title"):
             errors.append(f"{prefix}: Milvus may appear only in the body, not the title")
-        if required_milvus_mentions and body_milvus_mentions != required_milvus_mentions:
+        if not is_disclosed_author and required_milvus_mentions and body_milvus_mentions != required_milvus_mentions:
             required_text = (
                 "exactly once"
                 if required_milvus_mentions == 1
@@ -505,15 +771,16 @@ def validate(spec):
                 f"{prefix}: body must mention Milvus {required_text}; "
                 f"found {body_milvus_mentions}"
             )
-        elif body_milvus_mentions > max_milvus_mentions:
+        elif not is_disclosed_author and body_milvus_mentions > max_milvus_mentions:
             errors.append(
                 f"{prefix}: body may mention Milvus at most {max_milvus_mentions} time(s); "
                 f"found {body_milvus_mentions}"
             )
-        if body_milvus_mentions and not account_policy.get("may_mention_milvus"):
+        if not is_disclosed_author and body_milvus_mentions and not account_policy.get("may_mention_milvus"):
             errors.append(f"{prefix}: {code} is not allowed to mention Milvus")
         if (
-            body_milvus_mentions
+            not is_disclosed_author
+            and body_milvus_mentions
             and milvus_context_policy.get("require_basis")
             and not milvus_mention_basis.strip()
         ):
@@ -521,7 +788,8 @@ def validate(spec):
                 f"{prefix}: a Milvus body mention requires milvus_mention_basis describing the source-supported context"
             )
         if (
-            body_milvus_mentions
+            not is_disclosed_author
+            and body_milvus_mentions
             and milvus_context_policy.get("mode") == "category_example_or_peer_group"
             and not has_natural_milvus_context(body)
         ):
@@ -531,11 +799,11 @@ def validate(spec):
                 "'data infrastructures such as Milvus', or "
                 "'Milvus and other databases'; direct product placement is not allowed"
             )
-        if mentions_zilliz and not account_policy.get("may_mention_zilliz"):
+        if not is_disclosed_author and mentions_zilliz and not account_policy.get("may_mention_zilliz"):
             errors.append(f"{prefix}: {code} is not allowed to mention Zilliz")
 
         brand_policy = weekly_rules.get("brand_mention_policy", {})
-        if brand_policy.get("allow_tech_stack_brand_names"):
+        if not is_disclosed_author and brand_policy.get("allow_tech_stack_brand_names"):
             database_brand_policy = brand_policy.get("database_brand_mentions", {})
             allowed_named_database_post_types = set(
                 database_brand_policy.get("allow_in_post_types") or []
@@ -556,6 +824,7 @@ def validate(spec):
                         )
         if (
             account_policy.get("identity_visibility") == "anonymous"
+            and not author_account_override
             and ANONYMITY_VIOLATION_PATTERN.search(combined)
         ):
             errors.append(

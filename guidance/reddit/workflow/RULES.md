@@ -10,8 +10,8 @@
 - `guidance/reddit/workflow/weekly.json`
 - `guidance/reddit/workflow/source_sync.json`
 
-<!-- source-sha256 guidance/reddit/workflow/weekly.json: 24ef0db1b5cd5a2699b5bfa66afbac8b8a6f27d5890892be60494307e3963528 -->
-<!-- source-sha256 guidance/reddit/workflow/source_sync.json: 3da96aeda8fc1a0bc01342714033a604dcb2fa6076963af26b1e4574db72864a -->
+<!-- source-sha256 guidance/reddit/workflow/weekly.json: 72bb77c5d267ea117a33a61557b9c6c948d063cad07c624896b76d4d09957d16 -->
+<!-- source-sha256 guidance/reddit/workflow/source_sync.json: 4c2aa4226006979696a125991e17dd1d23c79adc748eb13cbd1a7675a6f9e385 -->
 
 ## weekly.json
 
@@ -23,6 +23,16 @@ Machine source: `guidance/reddit/workflow/weekly.json`
 
 - `R1`
 - `R2`
+- `R3`
+
+### James Weekly Mode Policy
+
+- **Enabled:** Yes
+- **James Post Count:** `3`
+- **Article Summary Share Count:** `1`
+- **Article Summary Share Mode:** `r3_article_summary_share`
+- **Scope:** `weekly_pack`
+- **Notes:** Each weekly pack contains exactly three James Luan posts. Exactly one uses the full-article summary-then-original-link structure modeled on the approved Feishu exemplar; the other James posts use the remaining configured R3 modes. Historical drafts are not backfilled.
 
 ### Source Recency Policy
 
@@ -41,6 +51,11 @@ Machine source: `guidance/reddit/workflow/weekly.json`
 - **Rule JSON:** `reference/slots/rag/rag.json`
 - **Review Markdown:** `reference/slots/rag/rag.md`
 - **Default Post Type:** `Discussion`
+
+##### Allowed Accounts
+
+- `R1`
+- `R3`
 
 ##### Reference Screenshots
 
@@ -162,6 +177,11 @@ Machine source: `guidance/reddit/workflow/weekly.json`
 - **Review Markdown:** `reference/slots/ai_agents/ai_agents.md`
 - **Default Post Type:** `Discussion`
 
+##### Allowed Accounts
+
+- `R1`
+- `R3`
+
 ##### Reference Screenshots
 
 - `resource/reddit/slots/ai_agents/tutorial.png`
@@ -255,6 +275,11 @@ Machine source: `guidance/reddit/workflow/weekly.json`
 - **Rule JSON:** `reference/slots/ai_memory/ai_memory.json`
 - **Review Markdown:** `reference/slots/ai_memory/ai_memory.md`
 - **Default Post Type:** `Discussion`
+
+##### Allowed Accounts
+
+- `R2`
+- `R3`
 
 ##### Reference Screenshots
 
@@ -381,6 +406,11 @@ Machine source: `guidance/reddit/workflow/weekly.json`
 - **Review Markdown:** `reference/slots/local_llama/local_llama.md`
 - **Default Post Type:** `Discussion`
 
+##### Allowed Accounts
+
+- `R2`
+- `R3`
+
 ##### Reference Screenshots
 
 - `resource/reddit/slots/local_llama/discussion.png`
@@ -473,6 +503,7 @@ Machine source: `guidance/reddit/workflow/weekly.json`
 ### R2 Short Question Policy
 
 - **Enabled:** Yes
+- **Scope:** `anonymous_route_only`
 - **Account Code:** `R2`
 - **Weekly Count:** `1`
 - **Length Tier:** `short_post`
@@ -509,6 +540,21 @@ Machine source: `guidance/reddit/workflow/source_sync.json`
 - `www.zilliz.com`
 - `milvus.io`
 - `www.milvus.io`
+
+### Author Sync Policy
+
+- **Bypass Minimum Publish Date:** No
+- **Notes:** James Luan sources follow the same minimum_publish_date as every other author. Only official published Blog rows dated 2026-01-01 or later are eligible; canonical deduplication and all other source-safety checks still apply.
+
+#### Source Field Candidates
+
+- `Author`
+- Blog Author
+- 作者
+
+#### Always Sync Authors
+
+- James Luan
 
 ### Excluded Sources
 

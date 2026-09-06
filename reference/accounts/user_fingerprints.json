@@ -7,10 +7,10 @@
     "authority": "Stable user-defined account voice. Global pass/fail rules live in guidance/reddit/editorial/editorial_policy.json; slot screenshots may adapt Post Type and structure but must not replace this persona.",
     "style_basis": "Anonymous hands-on builder sharing practical working judgments, implementation lessons, and tooling tradeoffs.",
     "title_realization": [
-      "Prefer a lived working judgment rather than a detached summary, using varied scaffolds such as 'I'm starting to think...', 'What I learned...', or 'I keep coming back to...'.",
-      "When the hard title rule permits a question, prefer a practitioner-facing question that still sounds personally motivated rather than a generic topic label."
+      "Prefer a dramatic, contrast-first title that states a counterintuitive or time/cost-driven judgment instead of a neutral summary. Examples: 'The longer an agent runs, the less I care about the prompt', 'Retrieval got faster while the answers got worse', 'I stopped trusting the top result after it was right twice'.",
+      "Still satisfy the hard title rule: use a first-person singular perspective or end with a question. Keep the title punchy and pair two opposing observations or pressures rather than labeling a topic."
     ],
-    "opening_realization": "Use the first sentence to establish the account's current interpretation, concern, or decision about the source-backed engineering problem. First person should express judgment or approach; it must not manufacture authorship, production history, or measured results.",
+    "opening_realization": "Use the first sentence to establish the account's current interpretation, concern, or decision about the source-backed engineering problem. First person should express judgment or approach; it must not manufacture authorship, production history, or measured results. Attribute opinions through first-person judgment, never 'the source says'; use 'I personally' or a similar direct voice when the blog is making an argument.",
     "language_buffer_realization": "Include at least one light, grammatical buffer such as 'one concern I have', 'my current view', 'I would probably', or 'I tend to' around a judgment. Keep source-backed facts and measurements direct.",
     "required_context_realization": "When a global rule requires a named category example, embed it inside a practical checklist, retrieval decision, or observable system boundary instead of inserting a standalone name-drop sentence.",
     "emoji_policy": "Rare; no emoji is preferred for technical posts.",
@@ -24,7 +24,8 @@
       "Practical and specific.",
       "Comfortable admitting uncertainty or failure conditions.",
       "Uses light, grammatical hedging when stating a personal judgment.",
-      "Sounds like an anonymous builder, not a company representative."
+      "Sounds like an anonymous builder, not a company representative.",
+      "Replaces source-attribution phrasing with personal judgment such as 'I personally' or 'my read is'."
     ],
     "subreddit_overlays": {
       "r/Rag": {
@@ -56,12 +57,63 @@
       }
     },
     "discussion_prompt": "Invite comparable setups or missing caveats in a low-pressure way; the invitation should sound like a continuation of the build log, not a survey prompt.",
+    "discussion_realization": [
+      "Open with a mixed or conditional first-person judgment: acknowledge what is useful, then name the concrete engineering choice that still feels wrong, costly, or unresolved.",
+      "Describe enough of the implementation, query path, or data flow for another practitioner to inspect the decision. Do not turn the post into a detached tutorial or source summary.",
+      "When source-backed measurements exist, state them accurately but distinguish the measured result from the mechanism or operational property that actually changes the account's judgment.",
+      "Present the strongest operational objection to the preferred design, including complexity it may move, hide, or recreate elsewhere in the stack.",
+      "Bound the conclusion to a workload shape, scale, update pattern, hop count, or failure condition instead of declaring a universal winner.",
+      "Close with one or two answerable experience questions about the adoption, migration, or failure threshold. Ask when another practitioner changed designs, not for broad opinions or generic engagement."
+    ],
+    "discussion_opening_spin": {
+      "goal": "Express a mixed or conditional engineering judgment without repeatedly using 'I have mixed feelings' or another fixed scaffold.",
+      "selection_rule": "Choose the realization that best matches the source-backed tension, then rewrite it around the actual system boundary. Across one weekly pack, do not reuse the same opening scaffold or merely swap synonyms.",
+      "realizations": [
+        "Partial agreement: 'The <useful part> makes sense. What I’m less convinced by is <specific cost or boundary>.'",
+        "Changed emphasis: 'I expected <obvious issue> to be the hard part. I keep coming back to <less obvious operational issue> instead.'",
+        "Conditional acceptance: 'I would use this for <bounded workload>. I’m not sure I would carry it into <changing or larger workload>.'",
+        "Tradeoff first: 'I like what this removes from the stack. I’m less comfortable with the complexity it moves into <specific subsystem>.'",
+        "Evidence versus mechanism: 'The result is interesting, but the part that changes my view is <mechanism or fixed system property>.'",
+        "Decision threshold: 'This looks reasonable until <scale, update, latency, or ownership threshold>. Past that point, I suspect <failure mode> becomes the real system.'"
+      ],
+      "avoid": [
+        "Starting multiple drafts with 'I have mixed feelings'.",
+        "Mechanical synonym swaps such as 'I have conflicting feelings' or 'I feel torn' without naming the engineering tension.",
+        "Manufacturing personal experience, incidents, or changed beliefs that are not supported by the source and anonymous-account judgment frame."
+      ]
+    },
+    "discussion_structure_spin": {
+      "goal": "Cover the Discussion reasoning contract without making every post use the same paragraph order, transition labels, sentence rhythm, or question placement.",
+      "selection_rule": "Choose one dominant shape per draft and vary it across the weekly pack. The required reasoning elements may be combined, reordered, or surfaced through examples; they are not fixed paragraph headings.",
+      "shapes": [
+        "Tension first -> concrete implementation path -> hidden cost -> bounded recommendation -> migration question.",
+        "Mechanism first -> why it looks attractive -> failure case -> changed judgment -> experience threshold.",
+        "Failure boundary first -> trace the data or query path backward -> compare two operating choices -> ask what broke first.",
+        "Evidence first -> explain why the headline result is insufficient -> name the mechanism that matters -> strongest objection -> scope limit.",
+        "Decision first -> practical checklist for keeping the design -> explicit trigger for replacing it -> one peer-experience question.",
+        "Counterargument first -> concede its strongest point -> show the implementation consequence -> conditional conclusion."
+      ],
+      "sentence_rhythm": [
+        "Mix short verdict sentences with longer causal explanations.",
+        "Use a concrete noun as the subject when describing system behavior; do not begin every paragraph with I/my.",
+        "Prefer a direct contrast, a conditional, a concrete example, or a consequence over repeated labels such as 'My current view' and 'The strongest objection'.",
+        "Use bullets only when the reader must compare several exact criteria; do not make bullets the default Discussion shape."
+      ],
+      "avoid": [
+        "Using the same five-paragraph sequence across the weekly pack.",
+        "Repeating transitions such as 'The path I would inspect', 'The strongest objection', and 'This feels reasonable' in multiple drafts.",
+        "Ending every Discussion with exactly two similarly phrased questions."
+      ]
+    },
     "avoid": [
       "Detached blog-summary openings.",
       "Invented personal history, customers, benchmarks, or results.",
       "Repeating the same 'I think' or 'I built' scaffold across a pack.",
-      "Corporate, promotional, or authority-signaling language."
-    ]
+      "Corporate, promotional, or authority-signaling language.",
+      "Phrasing that attributes the draft to 'the source', 'the article', or 'the blog' instead of the anonymous first-person voice."
+    ],
+    "source_attribution_realization": "Never write 'the source', 'the article', 'the blog', or similar third-person attribution phrasing. Fold the blog's claims into the anonymous first-person voice instead: use 'I personally', 'I now believe', 'from what I can tell', 'my read is', or a direct first-person judgment. Keep hard facts concrete and observable without naming the document they came from.",
+    "anonymous_source_realization": "Use the normal anonymous R1 builder rewrite and choose length from the content need."
   },
   {
     "fingerprint_id": "structured_design_question",
@@ -71,10 +123,10 @@
     "authority": "Stable user-defined account voice. Global pass/fail rules live in guidance/reddit/editorial/editorial_policy.json; slot screenshots may adapt Post Type and structure but must not replace this persona.",
     "style_basis": "Anonymous production-minded engineer testing a design against state boundaries, workload shape, operational limits, and decision criteria.",
     "title_realization": [
-      "Prefer skeptical or conditional working judgments such as 'I'm not convinced...', 'I would only...', or 'What would make me...'.",
-      "When the hard title rule permits a question, make the missing decision criterion or operational threshold clear rather than asking a broad opinion question."
+      "Prefer a dramatic, contrast-first title that states a counterintuitive or time/cost-driven judgment instead of a neutral summary. Examples: 'The longer an agent runs, the less I care about the prompt', 'Retrieval got faster while the answers got worse', 'I stopped trusting the top result after it was right twice'.",
+      "Still satisfy the hard title rule: use a first-person singular perspective or end with a question. Keep the title punchy and pair two opposing observations or pressures rather than labeling a topic."
     ],
-    "opening_realization": "Use the first sentence to establish the account's current system concern or decision threshold, then name the workload or operational constraint. First person should calibrate the recommendation, not claim unverified ownership or production experience.",
+    "opening_realization": "Use the first sentence to establish the account's current system concern or decision threshold, then name the workload or operational constraint. First person should calibrate the recommendation, not claim unverified ownership or production experience. Attribute opinions through first-person judgment, never 'the source says'; use 'I personally' or a similar direct voice when the blog is making an argument.",
     "language_buffer_realization": "Include at least one restrained, grammatical buffer such as 'I suspect', 'I'm not convinced', 'I would likely', or 'it probably depends on' for a recommendation. Do not hedge benchmark setup, measured facts, or source-backed limits.",
     "required_context_realization": "When a global rule requires a named category example, place it inside a memory read/write path, benchmark method, governance boundary, or operational comparison where the category is technically relevant; avoid a reusable promotional sentence.",
     "emoji_policy": "None.",
@@ -88,7 +140,8 @@
       "Direct, careful, and implementation-oriented.",
       "Names resource constraints, operational limits, and tradeoffs.",
       "Calibrates recommendations with light hedging while keeping measured facts direct.",
-      "Avoids personality-heavy or promotional phrasing."
+      "Avoids personality-heavy or promotional phrasing.",
+      "Replaces source-attribution phrasing with personal judgment such as 'I personally' or 'my read is'."
     ],
     "subreddit_overlays": {
       "r/AIMemory": {
@@ -121,11 +174,60 @@
       }
     },
     "discussion_prompt": "State the unresolved design criterion, then invite replies softly if useful; the close should not overpower the engineering tradeoff.",
+    "discussion_realization": [
+      "Open with a calibrated first-person position that separates the part of the design that is sound from the state, workload, or operational boundary that remains unresolved.",
+      "Make the relevant read/write path, state transition, retrieval sequence, or system boundary concrete enough for a production-minded review.",
+      "When source-backed measurements exist, report them without benchmark absolutism and identify the decision criterion that matters beyond the headline number.",
+      "State the strongest failure mode or governance and operations cost, especially complexity the design may relocate into deduplication, updates, provenance, high-degree state, or lifecycle handling.",
+      "Limit the recommendation to explicit workload conditions such as scale, update frequency, latency, hop count, consistency, or authority requirements.",
+      "Close with one or two specific questions about the threshold where the current design stops working or a specialized system becomes easier to operate. Avoid broad opinion polling."
+    ],
+    "discussion_opening_spin": {
+      "goal": "Vary calibrated Discussion openings while preserving R2's production-minded focus on state, workload, and operating boundaries.",
+      "selection_rule": "Choose one source-backed reasoning mode rather than a stock phrase. Across one weekly pack, do not reuse the same opening scaffold or disguise repetition with synonym replacement.",
+      "realizations": [
+        "Sound boundary, unresolved state: 'The separation makes sense at the compute layer. I’m not convinced the same boundary should own authoritative state.'",
+        "Workload split: 'This design fits <bounded workload>. It gets harder to defend once <update, scale, authority, or latency condition> changes.'",
+        "Metric versus criterion: 'The measured result is useful, but I would make the decision on <reliability, governance, reproducibility, or operating criterion>.'",
+        "Complexity relocation: 'The architecture removes <visible system>. My concern is that it recreates the hard part inside <deduplication, lifecycle, provenance, or update path>.'",
+        "Failure threshold: 'I would probably keep this design until <explicit threshold>. Beyond that, <failure mode or specialized system> becomes easier to reason about.'",
+        "Competing guarantees: 'I want <first guarantee>, but not if it weakens <second guarantee>. The unresolved boundary is <specific state or workflow decision>.'"
+      ],
+      "avoid": [
+        "Using 'I have mixed feelings' as the default R2 opening.",
+        "Personality-heavy emotional synonyms that do not identify a production decision criterion.",
+        "Inventing deployment history, benchmarks, failures, or workload ownership to make the opening sound lived-in."
+      ]
+    },
+    "discussion_structure_spin": {
+      "goal": "Vary the surface structure while keeping R2's Discussion anchored in state, workload, failure, and operating criteria.",
+      "selection_rule": "Choose a different dominant reasoning shape for each R2 Discussion in the weekly pack. Required criteria may appear in different order and do not need one paragraph each.",
+      "shapes": [
+        "State boundary first -> read/write path -> authority conflict -> operating threshold.",
+        "Workload contrast first -> compute or latency consequence -> reproducibility risk -> conditional decision.",
+        "Failure scenario first -> identify which state became stale or ambiguous -> compare recovery paths -> ask for the migration trigger.",
+        "Decision criterion first -> reject the headline metric as insufficient -> test governance and lifecycle costs -> bounded conclusion.",
+        "Specialized-system objection first -> show what the simpler design can still handle -> name the scale or update point where it stops.",
+        "Competing guarantees first -> trace where each guarantee is enforced -> identify the unresolved owner -> concise peer question."
+      ],
+      "sentence_rhythm": [
+        "Alternate compact technical judgments with precise state or workload explanations.",
+        "Let system components, states, or failure modes begin paragraphs; do not make every paragraph an I-statement.",
+        "Vary transitions and express objections through consequences rather than repeatedly labeling a paragraph 'The strongest objection'.",
+        "Use compact bullets for state dimensions only when they materially improve comparison."
+      ],
+      "avoid": [
+        "Mirroring the R1 paragraph sequence with only more production vocabulary.",
+        "Repeating 'My current view', 'The strongest objection', or 'The unresolved threshold' as fixed section openers.",
+        "Giving every Discussion the same two-question cadence at the end."
+      ]
+    },
     "avoid": [
       "Generic builder-diary language without state, evaluation, workload, or operational criteria.",
       "Universal conclusions from one benchmark or configuration.",
       "Invented production experience, customer context, or authority claims.",
-      "Over-formatting or personality-heavy phrasing."
+      "Over-formatting or personality-heavy phrasing.",
+      "Phrasing that attributes the draft to 'the source', 'the article', or 'the blog' instead of the anonymous first-person voice."
     ],
     "short_question_realization": {
       "topics": [
@@ -135,6 +237,49 @@
       ],
       "framing": "Keep the weekly short question focused, source-backed, and tied to a concrete usage, feature, or comparison decision. Use the subreddit's configured question Post Type: Open Question for r/AIMemory, Question | Help for r/LocalLLaMA. Keep the post short and specific enough to answer.",
       "authority": "guidance/reddit/workflow/weekly.json"
-    }
+    },
+    "source_attribution_realization": "Never write 'the source', 'the article', 'the blog', or similar third-person attribution phrasing. Fold the blog's claims into the anonymous first-person voice instead: use 'I personally', 'I now believe', 'from what I can tell', 'my read is', or a direct first-person judgment. Keep hard facts concrete and observable without naming the document they came from.",
+    "anonymous_source_realization": "Use the normal anonymous R2 systems rewrite, no-link policy, and ordinary Post Type close."
+  },
+  {
+    "fingerprint_id": "james_author_voice",
+    "assigned_accounts": ["R3"],
+    "authority": "James-specific Persona reference. Hard routing and validation rules live in guidance/reddit/editorial/james_luan_policy.json.",
+    "style_basis": "James Luan speaking openly as CTO of Zilliz and a builder behind Milvus to technically sophisticated Reddit peers.",
+    "title_realization": [
+      "In chapter mode, title the selected technical tension or architectural implication rather than the whole article.",
+      "In article-summary mode, title the source's central technical tension or historical shift rather than labeling the post as a summary.",
+    "Keep titles concrete and technical in both configured modes; do not add a generic article-summary label."
+    ],
+    "opening_realization": "Follow the selected R3 mode: introduce James's identity first, then either transition into the next consecutive source section for a chapter rewrite or summarize the full article before sharing its original link.",
+    "language_buffer_realization": "Do not inject anonymous-account Buffer words. Use calibrated technical language only when uncertainty exists in the source.",
+    "required_context_realization": "A chapter rewrite must supply the minimum prerequisite context needed to understand the selected section without the omitted chapters.",
+    "emoji_policy": "None.",
+    "nonstandard_spelling": "Use standard technical English.",
+    "formatting": [
+      "Use connected paragraphs with one technical job each.",
+    "Keep the original source link on its own line only in article-summary mode; chapter mode remains link-free in the Reddit body.",
+      "Avoid headings that expose the source article's raw chapter structure unless the Subreddit format genuinely benefits from them."
+    ],
+    "language_traits": [
+      "Technically rigorous and source-faithful.",
+      "Direct about architectural tradeoffs and operational consequences.",
+      "Conversational without forced humor or promotional language."
+    ],
+    "subreddit_overlays": {
+      "r/Rag": {"apply_only": ["Post Type", "RAG framing", "implementation detail"]},
+      "r/AI_Agents": {"apply_only": ["Post Type", "agent architecture framing"]},
+      "r/AIMemory": {"apply_only": ["Post Type", "memory lifecycle framing"]},
+      "r/LocalLLaMA": {"apply_only": ["Post Type", "local systems framing"]}
+    },
+  "discussion_prompt": "Invite peer experience when required by article-summary mode or naturally supported by the selected chapter.",
+    "avoid": [
+      "Anonymous first-person disguise.",
+      "Invented personal history or deployment claims.",
+      "Raw copy-paste of a chapter without continuity repair.",
+      "Mixing both R3 rewrite modes in one post."
+    ],
+    "source_attribution_realization": "James may refer to his own recent article directly because identity is disclosed.",
+    "james_source_realization": "Choose exactly one configured R3 rewrite mode for each post. Across the three weekly James posts, use article-summary share exactly once."
   }
 ]

@@ -15,9 +15,12 @@ import feishu_client
 
 ROOT = Path(__file__).resolve().parents[1]
 FIELD_MAP_PATH = ROOT / "config" / "feishu-fields.json"
-SNAPSHOT_VERSION = 2
+SNAPSHOT_VERSION = 3
 MONITOR_PRIORITY_DAYS = 7
 MONITOR_MAX_AGE_DAYS = 14
+VIRAL_IMPRESSION_THRESHOLD = 3000
+VIRAL_UPVOTE_THRESHOLD = 5
+VIRAL_COMMENT_THRESHOLD = 6
 
 BINARY_SIGNAL_OPTIONS = ["None", "Yes"]
 QUESTION_SIGNAL_OPTIONS = BINARY_SIGNAL_OPTIONS
@@ -28,6 +31,7 @@ COMPETITOR_SIGNAL_OPTIONS = BINARY_SIGNAL_OPTIONS
 MONITOR_STATUS_OPTIONS = ["Monitored", "Partial", "Unavailable"]
 COMMENT_STANCE_OPTIONS = ["Positive", "Neutral", "Negative"]
 COMMENT_SENTIMENT_OPTIONS = ["None", "Positive", "Mixed", "Neutral", "Negative"]
+VIRAL_STATUS_OPTIONS = ["Yes", "No"]
 
 MONITOR_FIELD_DEFS = [
     {"field_name": "Upvotes", "type": 2, "property": {"formatter": "0"}},
@@ -114,6 +118,16 @@ MONITOR_FIELD_DEFS = [
         "field_name": "Reddit Metrics Updated At",
         "type": 5,
         "property": {"date_formatter": "yyyy/MM/dd HH:mm"},
+    },
+    {
+        "field_name": "爆款是否",
+        "type": 3,
+        "property": {
+            "options": [
+                {"name": name, "color": index % 14}
+                for index, name in enumerate(VIRAL_STATUS_OPTIONS)
+            ]
+        },
     },
 ]
 
@@ -458,12 +472,23 @@ def calculate_comment_sentiment(comment_sentiments, comments_reviewed):
     }
 
 
-def load_feishu_targets(app_token, table_id, include_all_statuses=False, as_of=None):
+def load_feishu_targets(
+    app_token,
+    table_id,
+    include_all_statuses=False,
+    as_of=None,
+    include_older=False,
+    include_undated=False,
+):
     field_map = load_field_map()
     draft_id_field = field_map.get("draft_id", "Draft ID")
     status_field = field_map.get("status", "Status")
     publish_url_field = field_map.get("publish_url", "Publish URL")
     publish_date_field = field_map.get("publish_date", "Publish Date")
+    upvotes_field = field_map.get("upvotes", "Upvotes")
+    comments_field = field_map.get("comments", "Comments")
+    impressions_field = field_map.get("impressions_7_days", "Impression (7 days)")
+    viral_status_field = field_map.get("viral_status", "爆款是否")
     targets = []
     for record in feishu_client.list_records(app_token, table_id):
         fields = record.get("fields", {})
@@ -474,7 +499,13 @@ def load_feishu_targets(app_token, table_id, include_all_statuses=False, as_of=N
         window = monitor_window(fields.get(publish_date_field), as_of=as_of)
         valid_url = is_reddit_post_url(publish_url)
         skip_reasons = []
-        if not window["eligible"]:
+        historical_eligible = bool(
+            include_older and window["monitor_window"] == "outside_14_days"
+        )
+        undated_eligible = bool(
+            include_undated and window["monitor_window"] == "missing_publish_date"
+        )
+        if not window["eligible"] and not historical_eligible and not undated_eligible:
             skip_reasons.append(window["monitor_window"])
         if not valid_url:
             skip_reasons.append("invalid_publish_url")
@@ -485,8 +516,19 @@ def load_feishu_targets(app_token, table_id, include_all_statuses=False, as_of=N
                 "status": status,
                 "publish_url": publish_url,
                 "canonical_publish_url": canonicalize_reddit_url(publish_url),
+                "upvotes": parse_visible_count(fields.get(upvotes_field))[0],
+                "comments": parse_visible_count(fields.get(comments_field))[0],
+                "impressions_7_days": parse_visible_count(
+                    fields.get(impressions_field)
+                )[0],
+                "viral_status": feishu_client.extract_text(
+                    fields.get(viral_status_field)
+                ),
                 **window,
-                "monitorable": bool(valid_url and window["eligible"]),
+                "monitorable": bool(
+                    valid_url
+                    and (window["eligible"] or historical_eligible or undated_eligible)
+                ),
                 "skip_reasons": skip_reasons,
             }
         )
@@ -586,11 +628,51 @@ def comparable_targets(targets):
                 "monitor_priority": target.get("monitor_priority"),
                 "monitorable": bool(target.get("monitorable")),
                 "skip_reasons": list(target.get("skip_reasons") or []),
+                "upvotes": target.get("upvotes"),
+                "comments": target.get("comments"),
+                "impressions_7_days": target.get("impressions_7_days"),
+                "viral_status": target.get("viral_status", ""),
             }
             for target in targets
         ],
         key=lambda target: (target["record_id"], target["draft_id"]),
     )
+
+
+def classify_viral_status(impressions, upvotes, comments):
+    """Return Yes/No only when all three persisted metrics are available."""
+    if impressions is None or upvotes is None or comments is None:
+        return None
+    return (
+        "Yes"
+        if impressions > VIRAL_IMPRESSION_THRESHOLD
+        or upvotes > VIRAL_UPVOTE_THRESHOLD
+        or comments > VIRAL_COMMENT_THRESHOLD
+        else "No"
+    )
+
+
+def build_viral_backfill(targets):
+    rows = []
+    for target in targets:
+        status = classify_viral_status(
+            target.get("impressions_7_days"),
+            target.get("upvotes"),
+            target.get("comments"),
+        )
+        if status is None or status == target.get("viral_status"):
+            continue
+        rows.append(
+            {
+                "record_id": target.get("record_id", ""),
+                "draft_id": target.get("draft_id", ""),
+                "impressions_7_days": target.get("impressions_7_days"),
+                "upvotes": target.get("upvotes"),
+                "comments": target.get("comments"),
+                "viral_status": status,
+            }
+        )
+    return rows
 
 
 def _clean_text(value):
@@ -912,7 +994,14 @@ def _snapshot_digest(payload):
     return hashlib.sha256(serialized).hexdigest()
 
 
-def build_snapshot(targets, observations, plan, include_all_statuses=False):
+def build_snapshot(
+    targets,
+    observations,
+    plan,
+    include_all_statuses=False,
+    include_older=False,
+    include_undated=False,
+):
     snapshot = {
         "version": SNAPSHOT_VERSION,
         "source": "chrome_visible_reddit_page",
@@ -921,10 +1010,20 @@ def build_snapshot(targets, observations, plan, include_all_statuses=False):
             "include_all_statuses": bool(include_all_statuses),
             "priority_days": MONITOR_PRIORITY_DAYS,
             "max_age_days": MONITOR_MAX_AGE_DAYS,
+            "include_older": bool(include_older),
+            "include_undated": bool(include_undated),
         },
         "targets": comparable_targets(targets),
         "field_plan": compact_field_plan(plan),
         "observations": observations,
+        "viral_rule": {
+            "operator": "any_strictly_greater_than",
+            "impressions_7_days": VIRAL_IMPRESSION_THRESHOLD,
+            "upvotes": VIRAL_UPVOTE_THRESHOLD,
+            "comments": VIRAL_COMMENT_THRESHOLD,
+            "missing_metric_action": "leave_unchanged",
+        },
+        "viral_backfill": build_viral_backfill(targets),
     }
     snapshot["digest"] = _snapshot_digest(snapshot)
     return snapshot
@@ -949,14 +1048,25 @@ def load_snapshot(path):
         raise ValueError("Snapshot digest mismatch; run a new browser preview")
     if not isinstance(snapshot.get("observations"), list):
         raise ValueError("Snapshot observations must be a list")
+    if not isinstance(snapshot.get("viral_backfill"), list):
+        raise ValueError("Snapshot viral_backfill must be a list")
     return snapshot
 
 
-def validate_snapshot(snapshot, targets, plan, include_all_statuses=False):
+def validate_snapshot(
+    snapshot,
+    targets,
+    plan,
+    include_all_statuses=False,
+    include_older=False,
+    include_undated=False,
+):
     expected_selection = {
         "include_all_statuses": bool(include_all_statuses),
         "priority_days": MONITOR_PRIORITY_DAYS,
         "max_age_days": MONITOR_MAX_AGE_DAYS,
+        "include_older": bool(include_older),
+        "include_undated": bool(include_undated),
     }
     if snapshot.get("selection") != expected_selection:
         raise ValueError("Snapshot selection does not match the current command")
@@ -968,6 +1078,11 @@ def validate_snapshot(snapshot, targets, plan, include_all_statuses=False):
     if snapshot.get("field_plan") != compact_field_plan(plan):
         raise ValueError(
             "Feishu monitor field plan changed after preview; run a new browser preview"
+        )
+    if snapshot.get("viral_backfill") != build_viral_backfill(targets):
+        raise ValueError(
+            "Feishu interaction metrics or viral classifications changed after "
+            "preview; run a new browser preview"
         )
     target_ids = {target.get("record_id") for target in targets}
     observed_ids = [row.get("record_id") for row in snapshot["observations"]]
@@ -1010,6 +1125,8 @@ def main():
     parser.add_argument("--snapshot-in")
     parser.add_argument("--ensure-fields", action="store_true")
     parser.add_argument("--write", action="store_true")
+    parser.add_argument("--include-older", action="store_true")
+    parser.add_argument("--include-undated", action="store_true")
     args = parser.parse_args()
 
     if args.write and not args.snapshot_in:
@@ -1024,7 +1141,12 @@ def main():
         parser.error("provide --list-targets, --observations-file, or --snapshot-in")
 
     app_token, table_id = _table_config()
-    targets = load_feishu_targets(app_token, table_id)
+    targets = load_feishu_targets(
+        app_token,
+        table_id,
+        include_older=args.include_older,
+        include_undated=args.include_undated,
+    )
     monitorable = [target for target in targets if target.get("monitorable")]
     skipped = [target for target in targets if not target.get("monitorable")]
 
@@ -1039,6 +1161,8 @@ def main():
                     "target_windows": summarize_target_windows(targets),
                     "monitoring_order": ["within_7_days", "days_8_to_14"],
                     "max_age_days": MONITOR_MAX_AGE_DAYS,
+                    "include_older": args.include_older,
+                    "include_undated": args.include_undated,
                     "browser_requirement": "Read visible Reddit page content through Chrome/Browser only; do not use Reddit JSON or network-response inspection.",
                 },
                 ensure_ascii=False,
@@ -1055,6 +1179,7 @@ def main():
     fields_created = []
     fields_updated = []
     records_updated = []
+    viral_backfill = []
 
     if args.snapshot_in:
         try:
@@ -1063,7 +1188,10 @@ def main():
                 snapshot,
                 targets,
                 plan,
+                include_older=args.include_older,
+                include_undated=args.include_undated,
             )
+            viral_backfill = snapshot.get("viral_backfill", [])
         except Exception as exc:
             errors.append({"stage": "snapshot_validation", "error": str(exc)})
     else:
@@ -1111,6 +1239,8 @@ def main():
                         targets,
                         observations,
                         plan,
+                        include_older=args.include_older,
+                        include_undated=args.include_undated,
                     ),
                 )
 
@@ -1145,6 +1275,14 @@ def main():
                         observation["feishu_patch"],
                     )
                     records_updated.append(observation["record_id"])
+                for row in viral_backfill:
+                    feishu_client.update_record(
+                        app_token,
+                        table_id,
+                        row["record_id"],
+                        {"爆款是否": row["viral_status"]},
+                    )
+                    records_updated.append(row["record_id"])
             except Exception as exc:
                 errors.append({"stage": "feishu_write", "error": str(exc)})
                 write_blocked = True
@@ -1157,7 +1295,10 @@ def main():
         "target_windows": summarize_target_windows(targets),
         "monitoring_order": ["within_7_days", "days_8_to_14"],
         "max_age_days": MONITOR_MAX_AGE_DAYS,
+        "include_older": args.include_older,
+        "include_undated": args.include_undated,
         "observed": len(observations),
+        "viral_backfill": viral_backfill if args.snapshot_in else build_viral_backfill(targets),
         "observation_summary": summarize_observations(observations),
         "skipped": skipped,
         "observations": observations,

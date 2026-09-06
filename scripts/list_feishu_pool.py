@@ -45,6 +45,7 @@ def main():
             "blog_url": feishu_client.extract_url(fields.get("Blog URL")),
             "blog_title": feishu_client.extract_text(fields.get("Blog 标题")),
             "publish_date": fields.get("Publish Date"),
+            "source_author": feishu_client.extract_text(fields.get("Source Author")),
             "recent_priority": weekly_post_rules.is_recent_source(fields.get("Publish Date")),
             "url_status": feishu_client.extract_text(fields.get("URL 状态")),
             "screening_status": feishu_client.extract_text(fields.get("筛选状态")),
@@ -60,7 +61,8 @@ def main():
         if not args.all:
             if row["url_status"] not in {"", "Active"}:
                 continue
-            if row["generated_count"] > 0:
+            is_james = row["source_author"].strip().casefold() == "james luan"
+            if row["generated_count"] > 0 and not is_james:
                 continue
         out.append(row)
     out.sort(key=lambda row: weekly_post_rules.source_priority_key(row["publish_date"]))

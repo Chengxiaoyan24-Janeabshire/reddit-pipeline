@@ -41,7 +41,18 @@ validate, or preview.
 - `guidance/reddit/workflow/` owns current execution values such as quantity,
   accounts, slots, recency, sync, and the R2 short-question quota; these values
   are outside editorial precedence.
-- For editorial decisions, apply `Guidance` first, the selected `Subreddit`
+- Resolve configured disclosed-author routes before the normal anonymous
+  Guidance route. James Luan content is assigned only to R3, which may replace
+  the owning account in any of the four physical Subreddit slots without
+  increasing weekly quantity. Each weekly pack contains exactly three James
+  posts, and exactly one uses the approved full-article summary-share mode;
+  choose a configured R3 mode for the other two while continuing to follow source facts, safety, and the selected
+  Subreddit's valid Post Types and native style.
+- Every future draft exposes the SyncPost `source_url` through the Feishu `原文`
+  field. Only James summary-share also includes that URL once in the Reddit body;
+  James chapter mode and anonymous routes retain their configured no-link body
+  policy. Do not backfill older review rows.
+- For anonymous editorial decisions, apply `Guidance` first, the selected `Subreddit`
   second, and the `Audience angle` third. Higher levels always win.
 - `guidance/` owns Disclosure, first-person `I`, language Buffer, and the other
   global editorial and safety rules.

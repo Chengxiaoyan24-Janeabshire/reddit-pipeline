@@ -9,7 +9,7 @@
 
 - `reference/slots/rag/rag.json`
 
-<!-- source-sha256 reference/slots/rag/rag.json: 32c13edb3fc7444bb890d3069b83cca812e4dc92c1f643171f70dce79dc913eb -->
+<!-- source-sha256 reference/slots/rag/rag.json: b8580dbbafb9cf455976d8d5821f15dc8f53cca658d9738fef09c66566fa0b04 -->
 
 ## rag.json
 
@@ -43,7 +43,7 @@ Machine source: `reference/slots/rag/rag.json`
 
 ### Inherited Contract
 
-- **Guidance:** `guidance/reddit/editorial/editorial_policy.json`
+- **Guidance:** `guidance/reddit/editorial/editorial_routes.json`
 - **Account Code:** `R1`
 - **Account Reference:** `reference/accounts/`
 - **Resource Role:** Screenshots provide Post Type and structural cues only.

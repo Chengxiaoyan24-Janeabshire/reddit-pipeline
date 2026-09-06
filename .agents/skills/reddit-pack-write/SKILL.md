@@ -38,7 +38,8 @@ user requested only a preview.
 ## Output Contract
 
 Create the current configured review document and structured Persona Pipeline
-metadata, then update referenced pool counters where supported. Preserve the
+metadata, including `Source Chapter` and `partn` for R3 chapter-derived posts,
+then update referenced pool counters where supported. Preserve the
 validated content and skip optional fields that do not exist in the live Base.
 
 ## Safety Boundary
